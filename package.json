@@ -1,0 +1,12 @@
+{
+  "name": "mycelium-os",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @mycelium/frontend dev",
+    "build": "pnpm --filter @mycelium/frontend build",
+    "storybook": "pnpm --filter @mycelium/frontend storybook"
+  },
+  "devDependencies": {
+    "pnpm": "^10.0.0"
+  }
+}
