@@ -23,15 +23,6 @@ agents:
   - id: compliance-agent
     role: "Compliance & Legal"
     escalates_to: ceo-agent
-  - id: support-agent
-    role: "Customer Success"
-    escalates_to: delivery-agent
-  - id: engineering-agent
-    role: "Platform Engineer"
-    escalates_to: delivery-agent
-  - id: product-agent
-    role: "Product Manager"
-    escalates_to: ceo-agent
   - id: ceo-agent
     role: "CEO / Decider"
     escalates_to: human
@@ -48,14 +39,5 @@ graph:
       to: ceo-agent
       type: reports-to
     - from: compliance-agent
-      to: ceo-agent
-      type: reports-to
-    - from: support-agent
-      to: delivery-agent
-      type: reports-to
-    - from: engineering-agent
-      to: delivery-agent
-      type: reports-to
-    - from: product-agent
       to: ceo-agent
       type: reports-to

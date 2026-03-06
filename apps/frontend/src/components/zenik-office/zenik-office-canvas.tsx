@@ -21,14 +21,11 @@ const MENU_ZONE = { x: 0.78, y: 0, w: 0.22, h: 0.18 };
 const OFFICE_BOUNDS = { xMin: 0.08, xMax: 0.78, yMin: 0.12, yMax: 0.92 };
 
 const AGENT_POSITIONS: Record<string, { x: number; y: number }> = {
-  "ceo-agent": { x: 0.65, y: 0.25 },
-  "product-agent": { x: 0.2, y: 0.3 },
-  "eng-agent": { x: 0.15, y: 0.55 },
-  "design-agent": { x: 0.25, y: 0.2 },
-  "sales-agent": { x: 0.68, y: 0.55 },
-  "support-agent": { x: 0.45, y: 0.45 },
-  "compliance-agent": { x: 0.6, y: 0.25 },
-  "marketing-agent": { x: 0.55, y: 0.75 },
+  "sales-agent": { x: 0.2, y: 0.35 },
+  "delivery-agent": { x: 0.4, y: 0.55 },
+  "billing-agent": { x: 0.6, y: 0.55 },
+  "compliance-agent": { x: 0.25, y: 0.7 },
+  "ceo-agent": { x: 0.55, y: 0.3 },
 };
 
 const WALLS: { x1: number; y1: number; x2: number; y2: number }[] = [

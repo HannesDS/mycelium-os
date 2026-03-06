@@ -1,0 +1,12 @@
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:5433:5432"
+  neo4j:
+    environment:
+      NEO4J_AUTH: none
+      NEO4J_PLUGINS: '["apoc"]'
+  minio:
+    environment:
+      MINIO_ROOT_USER: dev
+      MINIO_ROOT_PASSWORD: devdevdev
