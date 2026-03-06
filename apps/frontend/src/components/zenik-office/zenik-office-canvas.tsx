@@ -118,6 +118,7 @@ export function ZenikOfficeCanvas() {
   const [inboxVisible, setInboxVisible] = useState(false);
   const [inboxDismissing, setInboxDismissing] = useState(false);
   const bubbleIdRef = useRef(0);
+  const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const toPx = useCallback(
     (px: number, py: number) => ({
@@ -259,7 +260,7 @@ export function ZenikOfficeCanvas() {
         createdAt: Date.now(),
       },
     ].slice(-SPEECH_MAX));
-    setTimeout(() => {
+    const t1 = setTimeout(() => {
       setEscalationPhase("ceo_reviewing");
       injectEvent({
         agent_id: "ceo-agent",
@@ -280,11 +281,19 @@ export function ZenikOfficeCanvas() {
         },
       ].slice(-THOUGHT_MAX));
     }, 2000);
-    setTimeout(() => {
+    const t2 = setTimeout(() => {
       setInboxVisible(true);
       setEscalationPhase("inbox_visible");
     }, 4000);
+    timeoutRefs.current.push(t1, t2);
   }, [escalationPhase]);
+
+  useEffect(() => {
+    return () => {
+      timeoutRefs.current.forEach(clearTimeout);
+      timeoutRefs.current = [];
+    };
+  }, []);
 
   const handleApprove = useCallback(() => {
     setInboxDismissing(true);
@@ -296,11 +305,12 @@ export function ZenikOfficeCanvas() {
       payload_summary: APPROVED_MESSAGE,
       metadata: { approved: true },
     });
-    setTimeout(() => {
+    const t = setTimeout(() => {
       setInboxVisible(false);
       setInboxDismissing(false);
       setEscalationPhase("idle");
     }, 600);
+    timeoutRefs.current.push(t);
   }, []);
 
   const handleReject = useCallback(() => {
@@ -313,11 +323,12 @@ export function ZenikOfficeCanvas() {
       payload_summary: REJECTED_MESSAGE,
       metadata: { approved: false },
     });
-    setTimeout(() => {
+    const t = setTimeout(() => {
       setInboxVisible(false);
       setInboxDismissing(false);
       setEscalationPhase("idle");
     }, 600);
+    timeoutRefs.current.push(t);
   }, []);
 
   return (

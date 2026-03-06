@@ -94,7 +94,7 @@ export default function VisualOffice() {
     setSalesBubble(APPROVED_MESSAGE);
     setSalesPulse("green");
 
-    setTimeout(() => {
+    const t = setTimeout(() => {
       setInboxVisible(false);
       setInboxDismissing(false);
       setPhase("idle");
@@ -105,6 +105,7 @@ export default function VisualOffice() {
       setSalesAgentPos({ x: 150, y: 200 });
       setSalesPulse("none");
     }, 600);
+    timeoutRefs.current.push(t);
   }, [addEvent]);
 
   const handleReject = useCallback(() => {
@@ -120,7 +121,7 @@ export default function VisualOffice() {
     setSalesBubble(REJECTED_MESSAGE);
     setSalesPulse("red");
 
-    setTimeout(() => {
+    const t = setTimeout(() => {
       setInboxVisible(false);
       setInboxDismissing(false);
       setPhase("idle");
@@ -131,6 +132,7 @@ export default function VisualOffice() {
       setSalesAgentPos({ x: 150, y: 200 });
       setSalesPulse("none");
     }, 600);
+    timeoutRefs.current.push(t);
   }, [addEvent]);
 
   useEffect(() => {
