@@ -1,77 +1,60 @@
 "use client";
 
-import { Circle, Group, Text } from "react-konva";
+import { Group, Line, Text } from "react-konva";
 import type { ZenikAgent } from "@/types/agent-events";
 
 interface AgentNodeProps {
   agent: ZenikAgent;
   x: number;
   y: number;
-  pulseScale: number;
   driftX: number;
   driftY: number;
-  color: string;
+  t: number;
 }
 
-const INITIAL_COLORS: Record<string, string> = {
-  "ceo-agent": "#6366f1",
-  "product-agent": "#8b5cf6",
-  "eng-agent": "#06b6d4",
-  "design-agent": "#ec4899",
-  "sales-agent": "#f59e0b",
-  "support-agent": "#10b981",
-  "compliance-agent": "#3b82f6",
-  "marketing-agent": "#84cc16",
-};
+const BLOB_RADIUS = 10;
+const BLOB_POINTS = 12;
 
-export function AgentNode({
-  agent,
-  x,
-  y,
-  pulseScale,
-  driftX,
-  driftY,
-  color,
-}: AgentNodeProps) {
-  const initials = agent.displayName.slice(0, 2).toUpperCase();
+function getBlobPoints(t: number, seed: number): number[] {
+  const points: number[] = [];
+  for (let i = 0; i < BLOB_POINTS; i++) {
+    const angle = (i / BLOB_POINTS) * Math.PI * 2 + t * 0.001;
+    const noise = 1 + 0.25 * Math.sin(t * 0.003 + seed + i * 1.2) + 0.15 * Math.sin(t * 0.005 + i * 0.8);
+    const r = BLOB_RADIUS * noise;
+    points.push(r * Math.cos(angle), r * Math.sin(angle));
+  }
+  return points;
+}
+
+export function AgentNode({ agent, x, y, driftX, driftY, t }: AgentNodeProps) {
   const cx = x + driftX;
   const cy = y + driftY;
-  const radius = 24;
+  const seed = agent.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const points = getBlobPoints(t, seed);
 
   return (
-    <Group x={cx} y={cy} scaleX={pulseScale} scaleY={pulseScale} offsetX={radius} offsetY={radius}>
-      <Circle radius={radius} fill={color} stroke="#374151" strokeWidth={2} />
-      <Text
-        text={initials}
-        fontSize={14}
-        fontFamily="system-ui"
-        fill="white"
-        align="center"
-        verticalAlign="middle"
-        width={radius * 2}
-        height={radius * 2}
-        offsetX={radius}
-        offsetY={radius}
-        x={-radius}
-        y={-radius}
+    <Group x={cx} y={cy}>
+      <Line
+        points={points}
+        tension={0.5}
+        closed
+        fill="#ffffff"
+        stroke="#333333"
+        strokeWidth={1}
         listening={false}
       />
       <Text
         text={agent.role}
-        fontSize={11}
+        fontSize={9}
         fontFamily="system-ui"
-        fill="#9ca3af"
+        fill="#999999"
         align="center"
-        y={radius + 4}
-        width={radius * 2}
-        offsetX={radius}
-        x={-radius}
+        y={BLOB_RADIUS + 2}
+        width={BLOB_RADIUS * 2}
+        offsetX={BLOB_RADIUS}
+        x={-BLOB_RADIUS}
         listening={false}
       />
     </Group>
   );
-}
-
-export function getAgentColor(agentId: string): string {
-  return INITIAL_COLORS[agentId] ?? "#6b7280";
 }
