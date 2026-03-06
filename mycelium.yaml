@@ -1,0 +1,61 @@
+company:
+  name: "Acme AI Co"
+  instance: production
+
+agents:
+  - id: sales-agent
+    role: "Sales Development"
+    model: mistral-7b
+    can:
+      - read: [crm, emails]
+      - write: [draft_emails, crm_notes]
+      - propose: [send_email, book_meeting]
+    cannot:
+      - execute: [send_email, payments]
+    escalates_to: ceo-agent
+    sla_response_minutes: 60
+  - id: delivery-agent
+    role: "Delivery Lead"
+    escalates_to: ceo-agent
+  - id: billing-agent
+    role: "Billing & Finance"
+    escalates_to: ceo-agent
+  - id: compliance-agent
+    role: "Compliance & Legal"
+    escalates_to: ceo-agent
+  - id: support-agent
+    role: "Customer Success"
+    escalates_to: delivery-agent
+  - id: engineering-agent
+    role: "Platform Engineer"
+    escalates_to: delivery-agent
+  - id: product-agent
+    role: "Product Manager"
+    escalates_to: ceo-agent
+  - id: ceo-agent
+    role: "CEO / Decider"
+    escalates_to: human
+
+graph:
+  edges:
+    - from: sales-agent
+      to: ceo-agent
+      type: reports-to
+    - from: delivery-agent
+      to: ceo-agent
+      type: reports-to
+    - from: billing-agent
+      to: ceo-agent
+      type: reports-to
+    - from: compliance-agent
+      to: ceo-agent
+      type: reports-to
+    - from: support-agent
+      to: delivery-agent
+      type: reports-to
+    - from: engineering-agent
+      to: delivery-agent
+      type: reports-to
+    - from: product-agent
+      to: ceo-agent
+      type: reports-to

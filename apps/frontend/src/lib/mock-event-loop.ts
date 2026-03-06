@@ -33,6 +33,13 @@ function storeEvent(event: AgentEvent): void {
   eventHistory.set(event.agent_id, history);
 }
 
+let loopCallback: MockEventCallback | null = null;
+
+export function injectEvent(event: AgentEvent): void {
+  storeEvent(event);
+  loopCallback?.(event);
+}
+
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -77,6 +84,7 @@ export function createIdleEvent(agentId: string): AgentEvent {
 export type MockEventCallback = (event: AgentEvent) => void;
 
 export function startMockEventLoop(callback: MockEventCallback): () => void {
+  loopCallback = callback;
   const speechInterval = 2500 + Math.random() * 2000;
   const thoughtInterval = 3000 + Math.random() * 2500;
 
@@ -94,6 +102,7 @@ export function startMockEventLoop(callback: MockEventCallback): () => void {
   }, thoughtInterval);
 
   return () => {
+    loopCallback = null;
     clearInterval(speechTimer);
     clearInterval(thoughtTimer);
   };

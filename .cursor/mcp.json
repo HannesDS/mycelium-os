@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "linear": {
+      "command": "pnpm",
+      "args": ["exec", "mcp-remote", "https://mcp.linear.app/mcp"]
+    }
+  }
+}

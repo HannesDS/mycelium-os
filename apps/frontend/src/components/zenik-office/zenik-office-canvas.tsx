@@ -9,11 +9,13 @@ import { SpeechBubble } from "./speech-bubble";
 import { ThoughtBubble } from "./thought-bubble";
 import {
   startMockEventLoop,
+  injectEvent,
   getEventsForAgent,
   getCurrentTask,
   getCurrentStatus,
 } from "@/lib/mock-event-loop";
 import { AgentSidePanel } from "@/components/AgentSidePanel";
+import { HumanInboxCard } from "@/components/HumanInboxCard";
 
 const MENU_ZONE = { x: 0.78, y: 0, w: 0.22, h: 0.18 };
 const OFFICE_BOUNDS = { xMin: 0.08, xMax: 0.78, yMin: 0.12, yMax: 0.92 };
@@ -98,6 +100,13 @@ function clampInBounds(
   };
 }
 
+const ESCALATION_PAYLOAD = "New enterprise lead — Triodos Bank. Proposal ready for approval.";
+const CEO_THOUGHT = "Reviewing proposal...";
+const APPROVED_MESSAGE = "Proposal approved — sending to Triodos Bank";
+const REJECTED_MESSAGE = "Proposal rejected — following up with CEO";
+
+type EscalationPhase = "idle" | "escalating" | "ceo_reviewing" | "inbox_visible" | "resolved";
+
 export function ZenikOfficeCanvas() {
   const [dimensions, setDimensions] = useState({ width: 1280, height: 720 });
   const [speechBubbles, setSpeechBubbles] = useState<ActiveSpeech[]>([]);
@@ -105,7 +114,11 @@ export function ZenikOfficeCanvas() {
   const [t, setT] = useState(0);
   const [drift, setDrift] = useState<Record<string, { x: number; y: number }>>({});
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [escalationPhase, setEscalationPhase] = useState<EscalationPhase>("idle");
+  const [inboxVisible, setInboxVisible] = useState(false);
+  const [inboxDismissing, setInboxDismissing] = useState(false);
   const bubbleIdRef = useRef(0);
+  const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const toPx = useCallback(
     (px: number, py: number) => ({
@@ -216,6 +229,107 @@ export function ZenikOfficeCanvas() {
     },
     [toPx, drift, dimensions]
   );
+
+  const triggerEscalation = useCallback(() => {
+    if (escalationPhase !== "idle") return;
+    setEscalationPhase("escalating");
+    injectEvent({
+      agent_id: "sales-agent",
+      event: "escalation_raised",
+      to: "ceo-agent",
+      topic: "lead_qualified",
+      timestamp: new Date().toISOString(),
+      payload_summary: ESCALATION_PAYLOAD,
+    });
+    injectEvent({
+      agent_id: "sales-agent",
+      event: "message_sent",
+      to: "ceo-agent",
+      topic: "lead_qualified",
+      timestamp: new Date().toISOString(),
+      payload_summary: ESCALATION_PAYLOAD,
+    });
+    setSpeechBubbles((prev) => [
+      ...prev,
+      {
+        id: `s-${++bubbleIdRef.current}`,
+        from: "sales-agent",
+        to: "ceo-agent",
+        message: ESCALATION_PAYLOAD,
+        opacity: 0,
+        createdAt: Date.now(),
+      },
+    ].slice(-SPEECH_MAX));
+    const t1 = setTimeout(() => {
+      setEscalationPhase("ceo_reviewing");
+      injectEvent({
+        agent_id: "ceo-agent",
+        event: "message_sent",
+        to: "sales-agent",
+        topic: "proposal_review",
+        timestamp: new Date().toISOString(),
+        payload_summary: CEO_THOUGHT,
+      });
+      setThoughtBubbles((prev) => [
+        ...prev,
+        {
+          id: `t-${++bubbleIdRef.current}`,
+          agentId: "ceo-agent",
+          message: CEO_THOUGHT,
+          opacity: 0,
+          createdAt: Date.now(),
+        },
+      ].slice(-THOUGHT_MAX));
+    }, 2000);
+    const t2 = setTimeout(() => {
+      setInboxVisible(true);
+      setEscalationPhase("inbox_visible");
+    }, 4000);
+    timeoutRefs.current.push(t1, t2);
+  }, [escalationPhase]);
+
+  useEffect(() => {
+    return () => {
+      timeoutRefs.current.forEach(clearTimeout);
+      timeoutRefs.current = [];
+    };
+  }, []);
+
+  const handleApprove = useCallback(() => {
+    setInboxDismissing(true);
+    injectEvent({
+      agent_id: "sales-agent",
+      event: "decision_received",
+      topic: "proposal_approved",
+      timestamp: new Date().toISOString(),
+      payload_summary: APPROVED_MESSAGE,
+      metadata: { approved: true },
+    });
+    const t = setTimeout(() => {
+      setInboxVisible(false);
+      setInboxDismissing(false);
+      setEscalationPhase("idle");
+    }, 600);
+    timeoutRefs.current.push(t);
+  }, []);
+
+  const handleReject = useCallback(() => {
+    setInboxDismissing(true);
+    injectEvent({
+      agent_id: "sales-agent",
+      event: "decision_received",
+      topic: "proposal_rejected",
+      timestamp: new Date().toISOString(),
+      payload_summary: REJECTED_MESSAGE,
+      metadata: { approved: false },
+    });
+    const t = setTimeout(() => {
+      setInboxVisible(false);
+      setInboxDismissing(false);
+      setEscalationPhase("idle");
+    }, 600);
+    timeoutRefs.current.push(t);
+  }, []);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-[#0d0d0d]">
@@ -334,6 +448,20 @@ export function ZenikOfficeCanvas() {
           isOpen={!!selectedAgentId}
         />
       )}
+      <button
+        type="button"
+        className="fixed bottom-6 right-6 z-20 px-6 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        onClick={triggerEscalation}
+        disabled={escalationPhase !== "idle"}
+      >
+        Trigger escalation
+      </button>
+      <HumanInboxCard
+        isVisible={inboxVisible}
+        isDismissing={inboxDismissing}
+        onApprove={handleApprove}
+        onReject={handleReject}
+      />
     </div>
   );
 }

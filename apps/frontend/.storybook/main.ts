@@ -34,11 +34,13 @@ const config: StorybookConfig = {
           loader: require.resolve("ts-loader"),
           options: {
             transpileOnly: true,
-            compilerOptions: { jsx: "react" },
+            configFile: require.resolve("../tsconfig.json"),
+            compilerOptions: { jsx: "react-jsx" },
           },
         },
       ],
     });
+    config.resolve.extensions = [...(config.resolve.extensions || []), ".ts", ".tsx"];
     return config;
   },
 };
