@@ -203,8 +203,41 @@ pnpm dev                    # start frontend dev server on :3000
 
 ```bash
 pnpm test                             # run Vitest tests
-pnpm --filter frontend tsc --noEmit   # type check
+pnpm --filter frontend exec tsc --noEmit  # type check
 pnpm --filter frontend lint           # lint
+```
+
+### Docker Compose services
+
+| Service | Image | Ports | Notes |
+|---|---|---|---|
+| postgres | postgres:16-alpine | 5432 | user/pass/db: `mycelium` |
+| neo4j | neo4j:5 | 7474, 7687 | No auth |
+| nats | nats:latest | 4222 | JetStream enabled |
+| minio | minio/minio | 9000, 9001 | user/pass: `minioadmin` |
+| mailhog | mailhog/mailhog | 1025, 8025 | SMTP + web UI |
+
+All services have health checks. Copy `docker-compose.override.yml.example` to `docker-compose.override.yml` to customise locally.
+
+### Testing
+
+- **Framework**: Vitest + React Testing Library + jsdom
+- **Config**: `apps/frontend/vitest.config.ts`
+- **Convention**: tests live in `__tests__/` directories next to the code they test
+- **Run**: `pnpm test` (once) or `pnpm --filter frontend test:watch` (watch mode)
+
+### CI
+
+GitHub Actions runs on every PR and push to `main`:
+1. `pnpm --filter frontend lint`
+2. `pnpm --filter frontend exec tsc --noEmit`
+3. `pnpm --filter frontend test`
+
+### PR checklist
+
+Before opening a PR, verify locally:
+```bash
+pnpm --filter frontend lint && pnpm --filter frontend exec tsc --noEmit && pnpm test
 ```
 
 ### When to stop and ask (set Linear issue to Blocked)
