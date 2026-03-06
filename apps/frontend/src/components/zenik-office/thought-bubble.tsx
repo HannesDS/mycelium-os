@@ -9,11 +9,16 @@ interface ThoughtBubbleProps {
   opacity: number;
 }
 
+const LINE_HEIGHT = 13;
+const PADDING = 8;
+
 export function ThoughtBubble({ x, y, message, opacity }: ThoughtBubbleProps) {
   const bubbleY = y + 22;
-  const maxWidth = 140;
-  const padding = 8;
-  const height = 36;
+  const maxWidth = 160;
+  const charsPerLine = 28;
+  const lines = Math.min(4, Math.max(1, Math.ceil(message.length / charsPerLine)));
+  const textHeight = lines * LINE_HEIGHT;
+  const height = PADDING * 2 + textHeight;
 
   return (
     <Group opacity={opacity} listening={false} x={x - maxWidth / 2} y={bubbleY}>
@@ -30,12 +35,14 @@ export function ThoughtBubble({ x, y, message, opacity }: ThoughtBubbleProps) {
         fontSize={10}
         fontFamily="system-ui"
         fill="#e0e0e0"
-        padding={padding}
-        width={maxWidth - padding * 2}
+        padding={PADDING}
+        width={maxWidth - PADDING * 2}
+        lineHeight={LINE_HEIGHT / 10}
         wrap="word"
         align="center"
-        x={padding}
-        y={padding}
+        x={PADDING}
+        y={PADDING}
+        listening={false}
       />
     </Group>
   );

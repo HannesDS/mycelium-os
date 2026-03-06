@@ -11,12 +11,17 @@ interface SpeechBubbleProps {
   opacity: number;
 }
 
+const LINE_HEIGHT = 14;
+const PADDING = 10;
+
 export function SpeechBubble({ fromX, fromY, toX, toY, message, opacity }: SpeechBubbleProps) {
   const midX = (fromX + toX) / 2;
   const midY = (fromY + toY) / 2 + 30;
-  const maxWidth = 180;
-  const padding = 10;
-  const height = 36;
+  const maxWidth = 200;
+  const charsPerLine = 32;
+  const lines = Math.min(5, Math.max(1, Math.ceil(message.length / charsPerLine)));
+  const textHeight = lines * LINE_HEIGHT;
+  const height = PADDING * 2 + textHeight;
 
   return (
     <Group opacity={opacity} listening={false} x={midX - maxWidth / 2} y={midY}>
@@ -33,12 +38,14 @@ export function SpeechBubble({ fromX, fromY, toX, toY, message, opacity }: Speec
         fontSize={11}
         fontFamily="system-ui"
         fill="#e0e0e0"
-        padding={padding}
-        width={maxWidth - padding * 2}
+        padding={PADDING}
+        width={maxWidth - PADDING * 2}
+        lineHeight={LINE_HEIGHT / 11}
         wrap="word"
         align="center"
-        x={padding}
-        y={padding}
+        x={PADDING}
+        y={PADDING}
+        listening={false}
       />
     </Group>
   );

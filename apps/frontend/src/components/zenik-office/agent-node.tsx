@@ -50,9 +50,11 @@ export function AgentNode({ agent, x, y, driftX, driftY, t }: AgentNodeProps) {
         fill="#999999"
         align="center"
         y={BLOB_RADIUS + 2}
-        width={BLOB_RADIUS * 2}
-        offsetX={BLOB_RADIUS}
-        x={-BLOB_RADIUS}
+        width={80}
+        offsetX={40}
+        x={-40}
+        wrap="none"
+        ellipsis
         listening={false}
       />
     </Group>
