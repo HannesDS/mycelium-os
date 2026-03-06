@@ -7,7 +7,13 @@ import { ZENIK_AGENTS } from "@/types/agent-events";
 import { AgentNode } from "./agent-node";
 import { SpeechBubble } from "./speech-bubble";
 import { ThoughtBubble } from "./thought-bubble";
-import { startMockEventLoop } from "@/lib/mock-event-loop";
+import {
+  startMockEventLoop,
+  getEventsForAgent,
+  getCurrentTask,
+  getCurrentStatus,
+} from "@/lib/mock-event-loop";
+import { AgentSidePanel } from "@/components/AgentSidePanel";
 
 const MENU_ZONE = { x: 0.78, y: 0, w: 0.22, h: 0.18 };
 const OFFICE_BOUNDS = { xMin: 0.08, xMax: 0.78, yMin: 0.12, yMax: 0.92 };
@@ -98,6 +104,7 @@ export function ZenikOfficeCanvas() {
   const [thoughtBubbles, setThoughtBubbles] = useState<ActiveThought[]>([]);
   const [t, setT] = useState(0);
   const [drift, setDrift] = useState<Record<string, { x: number; y: number }>>({});
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const bubbleIdRef = useRef(0);
 
   const toPx = useCallback(
@@ -231,7 +238,16 @@ export function ZenikOfficeCanvas() {
       <div className="absolute top-6 right-8 z-10 w-24 h-8 border border-neutral-600 rounded flex items-center justify-center text-neutral-500 text-xs">
         Menu
       </div>
-      <Stage width={dimensions.width} height={dimensions.height} className="absolute inset-0">
+      <Stage
+        width={dimensions.width}
+        height={dimensions.height}
+        className="absolute inset-0"
+        onClick={(e) => {
+          if (e.target === e.target.getStage()) {
+            setSelectedAgentId(null);
+          }
+        }}
+      >
         <Layer>
           {WALLS.map((wall, i) => (
             <Line
@@ -296,11 +312,28 @@ export function ZenikOfficeCanvas() {
                 driftX={0}
                 driftY={0}
                 t={t}
+                onClick={() => setSelectedAgentId(agent.id)}
               />
             );
           })}
         </Layer>
       </Stage>
+      {selectedAgentId && (
+        <AgentSidePanel
+          agentId={selectedAgentId}
+          agentName={
+            ZENIK_AGENTS.find((a) => a.id === selectedAgentId)?.displayName ?? ""
+          }
+          agentRole={
+            ZENIK_AGENTS.find((a) => a.id === selectedAgentId)?.role ?? ""
+          }
+          status={getCurrentStatus(selectedAgentId)}
+          currentTask={getCurrentTask(selectedAgentId)}
+          recentEvents={getEventsForAgent(selectedAgentId)}
+          onClose={() => setSelectedAgentId(null)}
+          isOpen={!!selectedAgentId}
+        />
+      )}
     </div>
   );
 }

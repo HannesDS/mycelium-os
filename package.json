@@ -4,10 +4,11 @@
   "scripts": {
     "dev": "pnpm --filter frontend dev",
     "build": "pnpm --filter frontend build",
-    "storybook": "pnpm --filter frontend storybook"
+    "storybook": "pnpm --filter frontend storybook",
+    "build-storybook": "pnpm --filter frontend build-storybook"
   },
   "devDependencies": {
-    "pnpm": "^9"
+    "pnpm": "^10.0.0"
   },
   "packageManager": "pnpm@9.14.2"
 }

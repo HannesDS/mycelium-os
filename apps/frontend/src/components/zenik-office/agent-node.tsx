@@ -10,6 +10,7 @@ interface AgentNodeProps {
   driftX: number;
   driftY: number;
   t: number;
+  onClick?: () => void;
 }
 
 const BLOB_RADIUS = 10;
@@ -26,14 +27,14 @@ function getBlobPoints(t: number, seed: number): number[] {
   return points;
 }
 
-export function AgentNode({ agent, x, y, driftX, driftY, t }: AgentNodeProps) {
+export function AgentNode({ agent, x, y, driftX, driftY, t, onClick }: AgentNodeProps) {
   const cx = x + driftX;
   const cy = y + driftY;
   const seed = agent.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const points = getBlobPoints(t, seed);
 
   return (
-    <Group x={cx} y={cy}>
+    <Group x={cx} y={cy} onClick={onClick} onTap={onClick} listening={!!onClick}>
       <Line
         points={points}
         tension={0.5}
