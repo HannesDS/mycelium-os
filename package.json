@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter frontend dev",
+    "test": "pnpm --filter frontend test",
     "build": "pnpm --filter frontend build",
     "storybook": "pnpm --filter frontend storybook",
     "build-storybook": "pnpm --filter frontend build-storybook"

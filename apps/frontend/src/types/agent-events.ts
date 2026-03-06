@@ -25,12 +25,9 @@ export interface ZenikAgent {
 }
 
 export const ZENIK_AGENTS: ZenikAgent[] = [
-  { id: "ceo-agent", role: "CEO", escalatesTo: "human", displayName: "CEO" },
-  { id: "product-agent", role: "Product Manager", escalatesTo: "ceo-agent", displayName: "Product" },
-  { id: "eng-agent", role: "Lead Engineer", escalatesTo: "ceo-agent", displayName: "Engineering" },
-  { id: "design-agent", role: "UX Designer", escalatesTo: "product-agent", displayName: "Design" },
-  { id: "sales-agent", role: "Sales Lead", escalatesTo: "ceo-agent", displayName: "Sales" },
-  { id: "support-agent", role: "Customer Support", escalatesTo: "product-agent", displayName: "Support" },
-  { id: "compliance-agent", role: "Compliance Officer", escalatesTo: "ceo-agent", displayName: "Compliance" },
-  { id: "marketing-agent", role: "Content & Growth", escalatesTo: "sales-agent", displayName: "Marketing" },
+  { id: "sales-agent", role: "Sales Development", escalatesTo: "ceo-agent", displayName: "Sales" },
+  { id: "delivery-agent", role: "Delivery Lead", escalatesTo: "ceo-agent", displayName: "Delivery" },
+  { id: "billing-agent", role: "Billing & Finance", escalatesTo: "ceo-agent", displayName: "Billing" },
+  { id: "compliance-agent", role: "Compliance & Legal", escalatesTo: "ceo-agent", displayName: "Compliance" },
+  { id: "ceo-agent", role: "CEO / Decider", escalatesTo: "human", displayName: "CEO" },
 ];

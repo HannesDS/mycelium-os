@@ -186,3 +186,29 @@ Five mock agents simulating a digital agency:
 The human owner receives one real proposal to approve. That interaction is the MVP demo.
 
 Mock agents emit real events to the real NATS bus. The visual office does not know they are mocks.
+
+---
+
+## How to work in this repo
+
+### Start the stack
+
+```bash
+docker compose up -d        # Postgres, Neo4j, NATS, MinIO, Mailhog
+pnpm install                # install all workspace deps (if not done)
+pnpm dev                    # start frontend dev server on :3000
+```
+
+### Run checks
+
+```bash
+pnpm test                             # run Vitest tests
+pnpm --filter frontend tsc --noEmit   # type check
+pnpm --filter frontend lint           # lint
+```
+
+### When to stop and ask (set Linear issue to Blocked)
+
+- `docker compose up` fails with missing env vars
+- A type error cannot be resolved in 2 attempts
+- Schema changes required — never guess, flag as open question

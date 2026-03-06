@@ -2,24 +2,21 @@ import type { AgentEvent } from "@/types/agent-events";
 import { ZENIK_AGENTS } from "@/types/agent-events";
 
 const MESSAGE_SENT_PAIRS: [string, string, string][] = [
-  ["product-agent", "eng-agent", "Reviewing the Q3 compliance report"],
   ["sales-agent", "ceo-agent", "Lead qualified — ready for demo booking"],
-  ["design-agent", "product-agent", "Wireframes for onboarding flow ready"],
-  ["support-agent", "product-agent", "Escalating NPS feedback from enterprise tier"],
+  ["delivery-agent", "ceo-agent", "Sprint 12 velocity report attached"],
+  ["billing-agent", "ceo-agent", "Overdue invoice flagged for Acme Corp"],
   ["compliance-agent", "ceo-agent", "Contract renewal flagged for Acme Corp"],
-  ["marketing-agent", "sales-agent", "New case study draft for review"],
-  ["eng-agent", "product-agent", "Sprint 12 velocity report attached"],
-  ["ceo-agent", "product-agent", "Prioritise the compliance dashboard"],
+  ["ceo-agent", "delivery-agent", "Prioritise the compliance dashboard"],
+  ["ceo-agent", "sales-agent", "Approve outreach to Triodos Bank"],
+  ["delivery-agent", "billing-agent", "Project milestone reached — invoice ready"],
+  ["sales-agent", "billing-agent", "New deal closed — generate invoice"],
 ];
 
 const THOUGHT_BUBBLES: [string, string][] = [
-  ["product-agent", "Drafting proposal..."],
-  ["eng-agent", "Running migration tests..."],
-  ["design-agent", "Sketching user flows..."],
   ["sales-agent", "Qualifying leads..."],
-  ["support-agent", "Triaging tickets..."],
+  ["delivery-agent", "Tracking milestones..."],
+  ["billing-agent", "Reconciling invoices..."],
   ["compliance-agent", "Reviewing terms..."],
-  ["marketing-agent", "Writing blog post..."],
   ["ceo-agent", "Reviewing escalations..."],
 ];
 
