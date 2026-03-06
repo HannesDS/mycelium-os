@@ -1,14 +1,12 @@
+"use client";
+
 import dynamic from "next/dynamic";
 
-const OfficeCanvas = dynamic(
-  () => import("@/components/OfficeCanvas/OfficeCanvas").then((m) => ({ default: m.OfficeCanvas })),
+const ZenikOfficeCanvas = dynamic(
+  () => import("@/components/zenik-office/zenik-office-canvas").then((m) => m.ZenikOfficeCanvas),
   { ssr: false }
 );
 
 export default function Home() {
-  return (
-    <main className="h-screen w-full">
-      <OfficeCanvas />
-    </main>
-  );
+  return <ZenikOfficeCanvas />;
 }

@@ -12,31 +12,36 @@ export default meta;
 const mockEvents = [
   {
     agent_id: "compliance-agent",
-    event: "task_started",
+    event: "task_started" as const,
+    topic: "working",
     timestamp: new Date(Date.now() - 120000).toISOString(),
     payload_summary: "Reviewing DORA compliance checklist for client Rabobank",
   },
   {
     agent_id: "compliance-agent",
-    event: "message_sent",
+    event: "message_sent" as const,
+    topic: "conversation",
     timestamp: new Date(Date.now() - 300000).toISOString(),
     payload_summary: "Contract renewal flagged for Q2",
   },
   {
     agent_id: "compliance-agent",
-    event: "escalation_raised",
+    event: "escalation_raised" as const,
+    topic: "escalation",
     timestamp: new Date(Date.now() - 600000).toISOString(),
     payload_summary: "Terms review needed for new vendor",
   },
   {
     agent_id: "compliance-agent",
-    event: "task_completed",
+    event: "task_completed" as const,
+    topic: "working",
     timestamp: new Date(Date.now() - 900000).toISOString(),
     payload_summary: "DORA checklist completed",
   },
   {
     agent_id: "compliance-agent",
-    event: "idle",
+    event: "idle" as const,
+    topic: "idle",
     timestamp: new Date(Date.now() - 1200000).toISOString(),
     payload_summary: "Awaiting next review",
   },
@@ -45,8 +50,8 @@ const mockEvents = [
 export const Default = {
   args: {
     agentId: "compliance-agent",
-    agentName: "Casey",
-    agentRole: "Compliance & Legal",
+    agentName: "Compliance",
+    agentRole: "Compliance Officer",
     status: "working",
     currentTask: "Reviewing DORA compliance checklist for client Rabobank",
     recentEvents: mockEvents,
@@ -67,8 +72,8 @@ export const Idle = {
 export const InConversation = {
   args: {
     ...Default.args,
-    agentName: "Maya",
-    agentRole: "Sales Development",
+    agentName: "Sales",
+    agentRole: "Sales Lead",
     status: "in conversation",
     currentTask: "Drafting proposal for Acme Corp",
     recentEvents: mockEvents.slice(0, 3),
@@ -78,8 +83,8 @@ export const InConversation = {
 export const EmptyActivity = {
   args: {
     ...Default.args,
-    agentName: "Chris",
-    agentRole: "CEO / Decider",
+    agentName: "CEO",
+    agentRole: "CEO",
     status: "idle",
     currentTask: null,
     recentEvents: [],

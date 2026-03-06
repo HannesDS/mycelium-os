@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
-import { type AgentEvent, type AgentEventType, type AgentStatus } from "@/types/agent-event";
-import { getInitials } from "@/lib/agents";
+import type { AgentEvent, AgentEventType } from "@/types/agent-events";
+
+type AgentStatus = "idle" | "working" | "in conversation";
+
+function getInitials(displayName: string): string {
+  return displayName
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 const EVENT_ICONS: Record<AgentEventType, string> = {
   message_sent: "✉",
@@ -112,7 +119,7 @@ export function AgentSidePanel({
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-medium text-slate-700"
               aria-hidden
             >
-              {getInitials(agentName)}
+              {getInitials(agentName || agentRole)}
             </div>
             <div className="min-w-0 flex-1">
               <h2 id="agent-panel-title" className="truncate font-semibold text-slate-900">
