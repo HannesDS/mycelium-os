@@ -2,10 +2,11 @@
 
 import dynamic from "next/dynamic";
 
-const VisualOffice = dynamic(() => import("@/components/VisualOffice"), {
-  ssr: false,
-});
+const ZenikOfficeCanvas = dynamic(
+  () => import("@/components/zenik-office/zenik-office-canvas").then((m) => m.ZenikOfficeCanvas),
+  { ssr: false }
+);
 
 export default function Home() {
-  return <VisualOffice />;
+  return <ZenikOfficeCanvas />;
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@mycelium/frontend",
+  "name": "frontend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,30 +12,29 @@
   },
   "dependencies": {
     "konva": "^9.3.6",
-    "next": "14.2.15",
+    "next": "14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-konva": "^18.2.10"
   },
   "devDependencies": {
-    "@storybook/addon-essentials": "^8.3.0",
-    "@storybook/addon-interactions": "^8.3.0",
-    "@storybook/addon-links": "^8.3.0",
-    "@storybook/blocks": "^8.3.0",
-    "@storybook/nextjs": "^8.3.0",
-    "@storybook/react-webpack5": "^8.3.0",
-    "ts-loader": "^9.5.1",
-    "@storybook/react": "^8.3.0",
-    "@storybook/test": "^8.3.0",
-    "@types/node": "^20",
+    "@storybook/addon-essentials": "^8.4.5",
+    "@storybook/addon-interactions": "^8.4.5",
+    "@storybook/addon-links": "^8.4.5",
+    "@storybook/blocks": "^8.4.5",
+    "@storybook/nextjs": "^8.4.5",
+    "@storybook/react": "^8.4.5",
+    "@storybook/react-webpack5": "^8.4.5",
+    "@storybook/test": "^8.4.5",
+    "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.2.15",
-    "storybook": "^8.3.0",
-    "typescript": "^5",
-    "@babel/preset-env": "^7.24",
-    "@babel/preset-react": "^7.24",
-    "@babel/preset-typescript": "^7.24"
+    "eslint-config-next": "14.2.35",
+    "postcss": "^8",
+    "storybook": "^8.4.5",
+    "tailwindcss": "^3.4.1",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5"
   }
 }

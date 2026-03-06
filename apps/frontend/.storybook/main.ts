@@ -11,11 +11,24 @@ const config: StorybookConfig = {
     name: "@storybook/react-webpack5",
     options: {},
   },
+  typescript: {
+    check: false,
+    reactDocgen: false,
+  },
   webpackFinal: async (config) => {
-    config.module = config.module || {};
-    config.module.rules = config.module.rules || [];
+    config.resolve = config.resolve ?? {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@": require("path").resolve(__dirname, "../src"),
+    };
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      canvas: false,
+    };
+    config.module = config.module ?? { rules: [] };
     config.module.rules.push({
       test: /\.(ts|tsx)$/,
+      exclude: /node_modules/,
       use: [
         {
           loader: require.resolve("ts-loader"),
@@ -26,9 +39,7 @@ const config: StorybookConfig = {
           },
         },
       ],
-      exclude: /node_modules/,
     });
-    config.resolve = config.resolve || {};
     config.resolve.extensions = [...(config.resolve.extensions || []), ".ts", ".tsx"];
     return config;
   },

@@ -2,11 +2,13 @@
   "name": "mycelium-os",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter @mycelium/frontend dev",
-    "build": "pnpm --filter @mycelium/frontend build",
-    "storybook": "pnpm --filter @mycelium/frontend storybook"
+    "dev": "pnpm --filter frontend dev",
+    "build": "pnpm --filter frontend build",
+    "storybook": "pnpm --filter frontend storybook",
+    "build-storybook": "pnpm --filter frontend build-storybook"
   },
   "devDependencies": {
     "pnpm": "^10.0.0"
-  }
+  },
+  "packageManager": "pnpm@9.14.2"
 }

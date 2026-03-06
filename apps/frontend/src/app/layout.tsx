@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mycelium OS — Visual Office",
-  description: "A constitutional framework for AI-native organisations",
+  title: "Mycelium OS — Zenik",
+  description: "AI-native compliance for European fintechs",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

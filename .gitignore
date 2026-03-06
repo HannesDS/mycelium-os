@@ -1,5 +1,6 @@
 node_modules/
 .next/
 storybook-static/
+.env*.local
 *.log
 .DS_Store

@@ -1,10 +1,15 @@
 import "../src/app/globals.css";
 
-export const parameters = {
-  controls: {
-    matchers: {
-      color: /(background|color)$/i,
-      date: /Date$/i,
+const preview = {
+  parameters: {
+    layout: "fullscreen",
+    controls: {
+      matchers: {
+        color: /(background|color)$/i,
+        date: /Date$/i,
+      },
     },
   },
 };
+
+export default preview;
