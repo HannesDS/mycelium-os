@@ -6,9 +6,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from core.controller import ShroomController
+from core.database import Base
 from core.manifest import ShroomManifest, ShroomMetadata, ShroomSpec
+import core.models  # noqa: F401
 
 
 def _make_manifest(shroom_id: str, name: str, skills: list[str] | None = None) -> ShroomManifest:
@@ -33,9 +38,26 @@ def controller():
 
 
 @pytest.fixture()
-def client(controller):
+def _db_session_factory():
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+
+    @event.listens_for(engine, "connect")
+    def _set_sqlite_pragma(dbapi_conn, _):
+        dbapi_conn.execute("PRAGMA foreign_keys=OFF")
+
+    Base.metadata.create_all(engine)
+    return sessionmaker(bind=engine)
+
+
+@pytest.fixture()
+def client(controller, _db_session_factory):
     from main import app
     app.state.controller = controller
+    app.state.db_session_factory = _db_session_factory
     return TestClient(app, raise_server_exceptions=False)
 
 
@@ -93,7 +115,9 @@ def test_message_success(client, controller):
     data = resp.json()
     assert data["shroom_id"] == "alpha-shroom"
     assert data["response"] == "hello from agent"
-    fake_agent.run.assert_called_once_with("hi")
+    fake_agent.run.assert_called_once()
+    call_arg = fake_agent.run.call_args[0][0]
+    assert "hi" in call_arg
 
 
 def test_message_agent_error_returns_502(client, controller):

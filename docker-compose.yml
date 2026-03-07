@@ -90,6 +90,7 @@ services:
     environment:
       OLLAMA_HOST: http://ollama:11434
       MYCELIUM_CONFIG: /app/mycelium.yaml
+      DATABASE_URL: postgresql://mycelium:mycelium@postgres:5432/mycelium
     depends_on:
       postgres:
         condition: service_healthy
