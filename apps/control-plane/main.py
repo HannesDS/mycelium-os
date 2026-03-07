@@ -7,6 +7,7 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from core.controller import ShroomController
+from core.database import init_db
 from core.manifest import load_all_shroom_manifests
 from routers.shrooms import router as shrooms_router
 
@@ -37,6 +38,7 @@ async def lifespan(app: FastAPI):
         controller.register(manifest)
 
     app.state.controller = controller
+    app.state.db_session_factory = init_db()
 
     yield
 
