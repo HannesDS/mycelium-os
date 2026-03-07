@@ -7,7 +7,7 @@
     "build": "pnpm --filter frontend build",
     "storybook": "pnpm --filter frontend storybook",
     "build-storybook": "pnpm --filter frontend build-storybook",
-    "shroom": "pnpm --filter @mycelium/shroom-manifest"
+    "shroom:validate": "pnpm --filter @mycelium/shroom-manifest validate"
   },
   "devDependencies": {
     "mcp-remote": "0.1.38",

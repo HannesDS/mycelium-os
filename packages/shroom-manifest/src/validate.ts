@@ -1,19 +1,26 @@
+#!/usr/bin/env node
 import { readFileSync } from "node:fs";
-import { resolve, basename } from "node:path";
+import { resolve, basename, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 import Ajv from "ajv";
 import { parse } from "yaml";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
+const schema = JSON.parse(
+  readFileSync(resolve(__dirname, "..", "schema.json"), "utf-8")
+);
+const ajv = new Ajv({ allErrors: true });
+const validator = ajv.compile(schema);
 
-function loadSchema() {
-  const schemaPath = resolve(__dirname, "..", "schema.json");
-  return JSON.parse(readFileSync(schemaPath, "utf-8"));
+function resolvePath(filePath: string): string {
+  if (isAbsolute(filePath)) return filePath;
+  const root = process.env.INIT_CWD;
+  if (root && isAbsolute(root)) return resolve(root, filePath);
+  return resolve(process.cwd(), filePath);
 }
 
 function validate(filePath: string): boolean {
-  const cwd = process.env.INIT_CWD || process.cwd();
-  const absolutePath = resolve(cwd, filePath);
+  const absolutePath = resolvePath(filePath);
   const fileName = basename(absolutePath);
 
   let content: string;
@@ -32,17 +39,13 @@ function validate(filePath: string): boolean {
     return false;
   }
 
-  const ajv = new Ajv({ allErrors: true });
-  const schema = loadSchema();
-  const valid = ajv.validate(schema, manifest);
-
-  if (valid) {
+  if (validator(manifest)) {
     console.log(`✓ ${fileName} is valid`);
     return true;
   }
 
   console.error(`✗ ${fileName} is invalid:`);
-  for (const err of ajv.errors ?? []) {
+  for (const err of validator.errors ?? []) {
     const path = err.instancePath || "/";
     console.error(`  - ${path}: ${err.message}`);
   }
@@ -52,7 +55,9 @@ function validate(filePath: string): boolean {
 const files = process.argv.slice(2);
 
 if (files.length === 0) {
-  console.error("Usage: shroom validate <manifest.yaml> [manifest2.yaml ...]");
+  console.error(
+    "Usage: pnpm shroom:validate <manifest.yaml> [manifest2.yaml ...]"
+  );
   process.exit(1);
 }
 
