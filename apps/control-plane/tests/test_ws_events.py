@@ -60,6 +60,25 @@ def test_ws_events_endpoint_accepts_connection(client):
         assert ws is not None
 
 
+def test_ws_events_rejects_bad_token(client, monkeypatch):
+    monkeypatch.setattr("routers.events.WS_AUTH_TOKEN", "secret123")
+    with pytest.raises(Exception):
+        with client.websocket_connect("/ws/events?token=wrong"):
+            pass
+
+
+def test_ws_events_accepts_valid_token(client, monkeypatch):
+    monkeypatch.setattr("routers.events.WS_AUTH_TOKEN", "secret123")
+    with client.websocket_connect("/ws/events?token=secret123") as ws:
+        assert ws is not None
+
+
+def test_ws_events_open_when_no_token_configured(client, monkeypatch):
+    monkeypatch.setattr("routers.events.WS_AUTH_TOKEN", None)
+    with client.websocket_connect("/ws/events") as ws:
+        assert ws is not None
+
+
 def test_shroom_event_model_roundtrip():
     event = ShroomEvent(
         shroom_id="sales-shroom",

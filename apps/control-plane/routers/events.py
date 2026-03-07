@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 
 from core.nats_client import NatsEventBus
 
@@ -13,6 +14,7 @@ router = APIRouter()
 
 MAX_WS_CONNECTIONS = 100
 RELAY_QUEUE_MAX = 4096
+WS_AUTH_TOKEN = os.getenv("WS_AUTH_TOKEN")
 
 
 class ConnectionManager:
@@ -102,8 +104,18 @@ async def stop_relay() -> None:
         _relay_task = None
 
 
+def _check_ws_token(ws: WebSocket) -> bool:
+    if not WS_AUTH_TOKEN:
+        return True
+    token = ws.query_params.get("token")
+    return token == WS_AUTH_TOKEN
+
+
 @router.websocket("/ws/events")
 async def ws_events(ws: WebSocket) -> None:
+    if not _check_ws_token(ws):
+        await ws.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
     accepted = await manager.accept(ws)
     if not accepted:
         logger.warning("Rejected WebSocket client — max connections reached")
@@ -113,5 +125,7 @@ async def ws_events(ws: WebSocket) -> None:
         while True:
             await ws.receive_text()
     except WebSocketDisconnect:
+        pass
+    finally:
         manager.disconnect(ws)
         logger.info("WebSocket client disconnected (%d total)", manager.count)

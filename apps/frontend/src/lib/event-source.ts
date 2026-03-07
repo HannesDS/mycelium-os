@@ -10,7 +10,9 @@ function getWsUrl(): string | null {
   const cleaned = base.replace(/\/$/, "");
   const wsProto = cleaned.startsWith("https") ? "wss" : "ws";
   const host = cleaned.replace(/^https?:\/\//, "");
-  return `${wsProto}://${host}/ws/events`;
+  const token = process.env.NEXT_PUBLIC_WS_AUTH_TOKEN;
+  const qs = token ? `?token=${encodeURIComponent(token)}` : "";
+  return `${wsProto}://${host}/ws/events${qs}`;
 }
 
 export type EventCallback = (event: ShroomEvent) => void;

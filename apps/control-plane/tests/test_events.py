@@ -5,6 +5,7 @@ import json
 import pytest
 
 from core.events import ShroomEvent, ShroomEventType
+from core.nats_client import _redact_url
 
 
 def test_shroom_event_creation():
@@ -59,3 +60,14 @@ def test_shroom_event_optional_fields():
     assert event.to is None
     assert event.topic is None
     assert event.metadata is None
+
+
+def test_redact_url_strips_credentials():
+    assert "password" not in _redact_url("nats://user:password@nats.example.com:4222")
+    assert "user" not in _redact_url("nats://user:password@nats.example.com:4222")
+    assert "nats.example.com" in _redact_url("nats://user:password@nats.example.com:4222")
+
+
+def test_redact_url_noop_without_credentials():
+    url = "nats://localhost:4222"
+    assert _redact_url(url) == url

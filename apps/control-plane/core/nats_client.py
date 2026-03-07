@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from urllib.parse import urlparse, urlunparse
 
 import nats
 from nats.aio.client import Client as NatsClient
@@ -14,20 +15,29 @@ logger = logging.getLogger(__name__)
 NATS_URL = os.getenv("NATS_URL", "nats://localhost:4222")
 
 
+def _redact_url(url: str) -> str:
+    parsed = urlparse(url)
+    if parsed.username or parsed.password:
+        replaced = parsed._replace(netloc=f"***@{parsed.hostname}:{parsed.port or 4222}")
+        return urlunparse(replaced)
+    return url
+
+
 class NatsEventBus:
     def __init__(self) -> None:
         self._nc: NatsClient | None = None
 
     async def connect(self) -> None:
+        safe_url = _redact_url(NATS_URL)
         try:
             self._nc = await nats.connect(
                 NATS_URL,
                 reconnect_time_wait=2,
                 max_reconnect_attempts=-1,
             )
-            logger.info("Connected to NATS at %s", NATS_URL)
+            logger.info("Connected to NATS at %s", safe_url)
         except Exception:
-            logger.exception("Failed to connect to NATS at %s", NATS_URL)
+            logger.exception("Failed to connect to NATS at %s", safe_url)
             self._nc = None
 
     async def close(self) -> None:
