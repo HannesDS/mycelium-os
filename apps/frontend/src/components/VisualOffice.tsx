@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Stage, Layer } from "react-konva";
-import type { ShroomEvent } from "@/types/events";
+import type { ShroomEvent } from "@/types/shroom-events";
 import { SHROOMS } from "@/types/shrooms";
 import { createEvent } from "@/lib/mockEvents";
 import { ShroomNode } from "./ShroomNode";

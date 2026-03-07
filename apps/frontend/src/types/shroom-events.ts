@@ -11,7 +11,7 @@ export interface ShroomEvent {
   shroom_id: string;
   event: ShroomEventType;
   to?: string;
-  topic: string;
+  topic?: string;
   timestamp: string;
   payload_summary: string;
   metadata?: Record<string, unknown>;

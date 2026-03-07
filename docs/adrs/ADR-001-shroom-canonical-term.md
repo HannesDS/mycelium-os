@@ -21,6 +21,6 @@ This applies everywhere:
 ## Consequences
 
 - All new code uses `Shroom` / `shroom`
-- Existing frontend code using `agent` / `ZENIK_SHROOMS` / `ShroomEvent` has been migrated in MYC-20
+- Legacy frontend code that used `agent` / `ZENIITH_AGENTS` / `AgentEvent` has been migrated to `shroom` / `ZENIK_SHROOMS` / `ShroomEvent` in MYC-20
 - Community shroom definitions are called "shroom manifests" or "shroom definitions"
 - The north star UI refers to workers as Shrooms throughout
