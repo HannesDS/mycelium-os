@@ -1,0 +1,15 @@
+{
+  "name": "@mycelium/shroom-events",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./schema.ts",
+  "types": "./schema.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

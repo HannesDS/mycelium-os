@@ -7,7 +7,9 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from core.controller import ShroomController
+from core.events import ShroomEvent, ShroomEventType
 from core.memory.beads import append_bead, format_beads_for_context, get_recent_beads
+from core.nats_client import NatsEventBus
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,13 @@ def get_db(request: Request) -> Session:
         yield session
     finally:
         session.close()
+
+
+def get_nats_bus(request: Request) -> NatsEventBus:
+    bus = getattr(request.app.state, "nats_bus", None)
+    if bus is None:
+        raise HTTPException(status_code=503, detail="NATS bus not initialized")
+    return bus
 
 
 class MessageRequest(BaseModel):
@@ -55,17 +64,25 @@ def get_shroom(shroom_id: str, controller: ShroomController = Depends(get_contro
 
 
 @router.post("/{shroom_id}/message", response_model=MessageResponse)
-def send_message(
+async def send_message(
     shroom_id: str,
     req: MessageRequest,
     controller: ShroomController = Depends(get_controller),
     db: Session = Depends(get_db),
+    nats_bus: NatsEventBus = Depends(get_nats_bus),
 ):
     agent = controller.get_agent(shroom_id)
     if not agent:
         raise HTTPException(status_code=404, detail=f"Shroom '{shroom_id}' not found")
 
     append_bead(db, shroom_id, "message_received", f"Received: {req.message[:120]}")
+
+    await nats_bus.publish_event(ShroomEvent(
+        shroom_id=shroom_id,
+        event=ShroomEventType.MESSAGE_RECEIVED,
+        topic="message",
+        payload_summary=f"Received: {req.message[:120]}",
+    ))
 
     recent = get_recent_beads(db, shroom_id, n=10)
     context = format_beads_for_context(recent)
@@ -77,9 +94,22 @@ def send_message(
     except Exception:
         logger.exception("Agent error for shroom '%s'", shroom_id)
         db.commit()
+        await nats_bus.publish_event(ShroomEvent(
+            shroom_id=shroom_id,
+            event=ShroomEventType.ERROR,
+            topic="agent_error",
+            payload_summary=f"Agent processing failed for {shroom_id}",
+        ))
         raise HTTPException(status_code=502, detail="Agent processing failed")
 
     append_bead(db, shroom_id, "task_completed", f"Responded: {content[:120]}")
     db.commit()
+
+    await nats_bus.publish_event(ShroomEvent(
+        shroom_id=shroom_id,
+        event=ShroomEventType.MESSAGE_SENT,
+        topic="response",
+        payload_summary=f"Responded: {content[:120]}",
+    ))
 
     return MessageResponse(shroom_id=shroom_id, response=content)
