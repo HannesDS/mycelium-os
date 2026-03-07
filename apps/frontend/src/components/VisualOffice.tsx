@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Stage, Layer } from "react-konva";
-import type { AgentEvent } from "@/types/events";
-import { AGENTS } from "@/types/agents";
+import type { ShroomEvent } from "@/types/shroom-events";
+import { SHROOMS } from "@/types/shrooms";
 import { createEvent } from "@/lib/mockEvents";
-import { AgentNode } from "./AgentNode";
+import { ShroomNode } from "./ShroomNode";
 import { HumanInboxCard } from "./HumanInboxCard";
 import styles from "./VisualOffice.module.css";
 
@@ -22,19 +22,19 @@ type EscalationPhase =
   | "resolved";
 
 export default function VisualOffice() {
-  const [events, setEvents] = useState<AgentEvent[]>([]);
+  const [events, setEvents] = useState<ShroomEvent[]>([]);
   const [phase, setPhase] = useState<EscalationPhase>("idle");
   const [inboxVisible, setInboxVisible] = useState(false);
   const [inboxDismissing, setInboxDismissing] = useState(false);
   const [decision, setDecision] = useState<"approved" | "rejected" | null>(null);
-  const [salesAgentPos, setSalesAgentPos] = useState({ x: 150, y: 200 });
+  const [salesShroomPos, setSalesShroomPos] = useState({ x: 150, y: 200 });
   const [ceoBubble, setCeoBubble] = useState<string | null>(null);
   const [salesBubble, setSalesBubble] = useState<string | null>(null);
   const [ceoPulse, setCeoPulse] = useState(false);
   const [salesPulse, setSalesPulse] = useState<"none" | "green" | "red">("none");
   const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  const addEvent = useCallback((event: AgentEvent) => {
+  const addEvent = useCallback((event: ShroomEvent) => {
     setEvents((prev) => [...prev, event]);
   }, []);
 
@@ -48,9 +48,9 @@ export default function VisualOffice() {
 
     setPhase("escalating");
     const escalationEvent = createEvent({
-      agent_id: "sales-agent",
+      shroom_id: "sales-shroom",
       event: "escalation_raised",
-      to: "ceo-agent",
+      to: "ceo-shroom",
       topic: "lead_qualified",
       payload_summary: ESCALATION_PAYLOAD,
     });
@@ -58,15 +58,15 @@ export default function VisualOffice() {
 
     setCeoBubble(ESCALATION_PAYLOAD);
     setCeoPulse(true);
-    setSalesAgentPos({ x: 280, y: 150 });
+    setSalesShroomPos({ x: 280, y: 150 });
 
     const t1 = setTimeout(() => {
       setPhase("ceo_reviewing");
       setCeoBubble(CEO_THOUGHT);
       const msgEvent = createEvent({
-        agent_id: "ceo-agent",
+        shroom_id: "ceo-shroom",
         event: "message_sent",
-        to: "sales-agent",
+        to: "sales-shroom",
         topic: "proposal_review",
         payload_summary: CEO_THOUGHT,
       });
@@ -85,7 +85,7 @@ export default function VisualOffice() {
     setInboxDismissing(true);
     setDecision("approved");
     const decisionEvent = createEvent({
-      agent_id: "sales-agent",
+      shroom_id: "sales-shroom",
       event: "decision_received",
       payload_summary: APPROVED_MESSAGE,
       metadata: { approved: true },
@@ -102,7 +102,7 @@ export default function VisualOffice() {
       setCeoBubble(null);
       setSalesBubble(null);
       setCeoPulse(false);
-      setSalesAgentPos({ x: 150, y: 200 });
+      setSalesShroomPos({ x: 150, y: 200 });
       setSalesPulse("none");
     }, 600);
     timeoutRefs.current.push(t);
@@ -112,7 +112,7 @@ export default function VisualOffice() {
     setInboxDismissing(true);
     setDecision("rejected");
     const decisionEvent = createEvent({
-      agent_id: "sales-agent",
+      shroom_id: "sales-shroom",
       event: "decision_received",
       payload_summary: REJECTED_MESSAGE,
       metadata: { approved: false },
@@ -129,7 +129,7 @@ export default function VisualOffice() {
       setCeoBubble(null);
       setSalesBubble(null);
       setCeoPulse(false);
-      setSalesAgentPos({ x: 150, y: 200 });
+      setSalesShroomPos({ x: 150, y: 200 });
       setSalesPulse("none");
     }, 600);
     timeoutRefs.current.push(t);
@@ -139,8 +139,8 @@ export default function VisualOffice() {
     return () => clearTimeouts();
   }, [clearTimeouts]);
 
-  const agentsWithPositions = AGENTS.map((a) =>
-    a.id === "sales-agent" ? { ...a, ...salesAgentPos } : a
+  const shroomsWithPositions = SHROOMS.map((a) =>
+    a.id === "sales-shroom" ? { ...a, ...salesShroomPos } : a
   );
 
   return (
@@ -148,21 +148,21 @@ export default function VisualOffice() {
       <div className={styles.canvasWrapper}>
         <Stage width={800} height={500} className={styles.stage}>
           <Layer>
-            {agentsWithPositions.map((agent) => (
-              <AgentNode
-                key={agent.id}
-                agent={agent}
+            {shroomsWithPositions.map((shroom) => (
+              <ShroomNode
+                key={shroom.id}
+                shroom={shroom}
                 speechBubble={
-                  agent.id === "ceo-agent"
+                  shroom.id === "ceo-shroom"
                     ? ceoBubble
-                    : agent.id === "sales-agent"
+                    : shroom.id === "sales-shroom"
                       ? salesBubble
                       : null
                 }
                 pulse={
-                  agent.id === "ceo-agent"
+                  shroom.id === "ceo-shroom"
                     ? ceoPulse
-                    : agent.id === "sales-agent"
+                    : shroom.id === "sales-shroom"
                       ? salesPulse
                       : "none"
                 }
@@ -194,7 +194,7 @@ export default function VisualOffice() {
           {events.slice(-10).reverse().map((e, i) => (
             <li key={`${e.timestamp}-${i}`}>
               <span className={styles.eventType}>{e.event}</span>
-              <span className={styles.eventAgent}>{e.agent_id}</span>
+              <span className={styles.eventShroom}>{e.shroom_id}</span>
               {e.payload_summary}
             </li>
           ))}

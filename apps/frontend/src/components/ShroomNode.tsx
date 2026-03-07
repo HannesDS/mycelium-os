@@ -1,21 +1,21 @@
 "use client";
 
 import { Group, Circle, Text, Rect } from "react-konva";
-import type { Agent } from "@/types/agents";
+import type { Shroom } from "@/types/shrooms";
 
-interface AgentNodeProps {
-  agent: Agent;
+interface ShroomNodeProps {
+  shroom: Shroom;
   speechBubble?: string | null;
   pulse?: boolean | "green" | "red" | "none";
 }
 
-export function AgentNode({ agent, speechBubble, pulse = "none" }: AgentNodeProps) {
+export function ShroomNode({ shroom, speechBubble, pulse = "none" }: ShroomNodeProps) {
   const isPulsing = pulse === true || pulse === "green" || pulse === "red";
   const pulseColor =
     pulse === "green" ? "#22c55e" : pulse === "red" ? "#ef4444" : "#6366f1";
 
   return (
-    <Group x={agent.x} y={agent.y}>
+    <Group x={shroom.x} y={shroom.y}>
       {speechBubble && (
         <Group y={-50} x={0}>
           <Rect
@@ -62,7 +62,7 @@ export function AgentNode({ agent, speechBubble, pulse = "none" }: AgentNodeProp
         x={-40}
         y={-8}
         width={80}
-        text={agent.id.replace("-agent", "")}
+        text={shroom.id.replace("-shroom", "")}
         fontSize={10}
         fill="#94a3b8"
         align="center"

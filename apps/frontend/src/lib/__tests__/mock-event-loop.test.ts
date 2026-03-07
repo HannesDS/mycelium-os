@@ -5,7 +5,7 @@ import {
   createThoughtEvent,
   createIdleEvent,
 } from "../mock-event-loop";
-import { ZENIK_AGENTS } from "@/types/agent-events";
+import { ZENIK_SHROOMS } from "@/types/shroom-events";
 
 describe("mock-event-loop", () => {
   afterEach(() => {
@@ -14,7 +14,7 @@ describe("mock-event-loop", () => {
 
   it("createMessageSentEvent returns valid event shape", () => {
     const event = createMessageSentEvent();
-    expect(event).toHaveProperty("agent_id");
+    expect(event).toHaveProperty("shroom_id");
     expect(event).toHaveProperty("event", "message_sent");
     expect(event).toHaveProperty("to");
     expect(event).toHaveProperty("topic");
@@ -30,21 +30,21 @@ describe("mock-event-loop", () => {
     expect(typeof event.payload_summary).toBe("string");
   });
 
-  it("createIdleEvent returns idle event for given agent", () => {
-    const event = createIdleEvent("sales-agent");
-    expect(event.agent_id).toBe("sales-agent");
+  it("createIdleEvent returns idle event for given shroom", () => {
+    const event = createIdleEvent("sales-shroom");
+    expect(event.shroom_id).toBe("sales-shroom");
     expect(event.event).toBe("idle");
   });
 
-  it("events only reference MVP agent IDs", () => {
-    const validIds = new Set(ZENIK_AGENTS.map((a) => a.id));
+  it("events only reference MVP shroom IDs", () => {
+    const validIds = new Set(ZENIK_SHROOMS.map((a) => a.id));
     for (let i = 0; i < 50; i++) {
       const msg = createMessageSentEvent();
-      expect(validIds.has(msg.agent_id)).toBe(true);
+      expect(validIds.has(msg.shroom_id)).toBe(true);
       if (msg.to) expect(validIds.has(msg.to)).toBe(true);
 
       const thought = createThoughtEvent();
-      expect(validIds.has(thought.agent_id)).toBe(true);
+      expect(validIds.has(thought.shroom_id)).toBe(true);
     }
   });
 

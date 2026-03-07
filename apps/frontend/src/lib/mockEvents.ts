@@ -1,8 +1,8 @@
-import type { AgentEvent } from "@/types/events";
+import type { ShroomEvent } from "@/types/shroom-events";
 
 export function createEvent(
-  overrides: Partial<AgentEvent> & Pick<AgentEvent, "agent_id" | "event" | "payload_summary">
-): AgentEvent {
+  overrides: Partial<ShroomEvent> & Pick<ShroomEvent, "shroom_id" | "event" | "payload_summary">
+): ShroomEvent {
   return {
     to: undefined,
     topic: undefined,
