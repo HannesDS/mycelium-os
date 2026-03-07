@@ -1,0 +1,26 @@
+apiVersion: mycelium.io/v1
+kind: Shroom
+metadata:
+  id: compliance-shroom
+  name: "Compliance & Legal"
+spec:
+  model: mistral-7b
+  memory:
+    beads: true
+    rag: personal
+  rag_access:
+    - namespace: legal-docs
+      role: compliance
+  skills:
+    - contract_review
+    - renewal_tracking
+  mcps:
+    - document-management
+  can:
+    - read: [contracts, policies]
+    - write: [compliance_notes]
+    - propose: [flag_renewal, request_review]
+  cannot:
+    - execute: [sign_contract, payments]
+  escalates_to: ceo-shroom
+  sla_response_minutes: 240

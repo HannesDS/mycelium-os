@@ -1,0 +1,23 @@
+apiVersion: mycelium.io/v1
+kind: Shroom
+metadata:
+  id: delivery-shroom
+  name: "Delivery Lead"
+spec:
+  model: mistral-7b
+  memory:
+    beads: true
+    rag: personal
+  skills:
+    - project_tracking
+    - delay_detection
+  mcps:
+    - project-management
+  can:
+    - read: [projects, timelines]
+    - write: [status_updates]
+    - propose: [reschedule, escalate_delay]
+  cannot:
+    - execute: [payments, client_comms]
+  escalates_to: ceo-shroom
+  sla_response_minutes: 120

@@ -1,0 +1,21 @@
+{
+  "name": "@mycelium/shroom-manifest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "shroom-validate": "./dist/validate.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "validate": "tsx src/validate.ts"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

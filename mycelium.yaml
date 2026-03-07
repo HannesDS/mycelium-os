@@ -3,29 +3,11 @@ company:
   instance: production
 
 shrooms:
-  - id: sales-shroom
-    role: "Sales Development"
-    model: mistral-7b
-    can:
-      - read: [crm, emails]
-      - write: [draft_emails, crm_notes]
-      - propose: [send_email, book_meeting]
-    cannot:
-      - execute: [send_email, payments]
-    escalates_to: ceo-shroom
-    sla_response_minutes: 60
-  - id: delivery-shroom
-    role: "Delivery Lead"
-    escalates_to: ceo-shroom
-  - id: billing-shroom
-    role: "Billing & Finance"
-    escalates_to: ceo-shroom
-  - id: compliance-shroom
-    role: "Compliance & Legal"
-    escalates_to: ceo-shroom
-  - id: ceo-shroom
-    role: "CEO / Decider"
-    escalates_to: human
+  - examples/shrooms/sales-shroom.yaml
+  - examples/shrooms/delivery-shroom.yaml
+  - examples/shrooms/billing-shroom.yaml
+  - examples/shrooms/compliance-shroom.yaml
+  - examples/shrooms/ceo-shroom.yaml
 
 graph:
   edges:

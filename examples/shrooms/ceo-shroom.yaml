@@ -1,0 +1,21 @@
+apiVersion: mycelium.io/v1
+kind: Shroom
+metadata:
+  id: ceo-shroom
+  name: "CEO / Decider"
+spec:
+  model: mistral-7b
+  memory:
+    beads: true
+    rag: personal
+  skills:
+    - decision_routing
+    - escalation_triage
+  can:
+    - read: [all]
+    - write: [decisions, directives]
+    - propose: [approve, reject, delegate]
+  cannot:
+    - execute: [payments, send_email]
+  escalates_to: human
+  sla_response_minutes: 30
