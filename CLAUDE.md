@@ -21,6 +21,15 @@ It is NOT a runtime (that's pluggable underneath). It IS:
 
 ---
 
+## Terminology
+
+- **Shroom** = an AI agent in Mycelium OS (singular and plural: Shroom / Shrooms)
+- Never use "agent", "bot", or "worker" in product code or UI
+- In code: `shroom`, `shroom_id`, `ShroomManifest`, `ShroomEvent`
+- External SDK classes (e.g. Agno's `Agent`) are wrapped in a `Shroom` class
+
+---
+
 ## Architecture
 
 ### Two planes — always keep them separate
@@ -28,7 +37,7 @@ It is NOT a runtime (that's pluggable underneath). It IS:
 ```
 CONTROL PLANE                        DATA PLANE
 ─────────────────────────────        ──────────────────────────────
-Constitution (mycelium.yaml)         Shroom sandboxes (K8s namespaces)
+Constitution (mycelium.yaml)         Shroom sandboxes (logical, MVP)
 Graph DB (Neo4j)                     Tool execution
 Escalation engine                    MCP connectors
 Human decision inbox                 Object storage (MinIO)
@@ -42,10 +51,10 @@ Data plane = ephemeral, isolated, observable. Never put governance logic here.
 ### Event flow
 
 ```
-Shroom activity → NATS event bus → WebSocket server → Frontend (Next.js + canvas)
+Shroom activity → NATS event bus → WebSocket bridge → Frontend (Next.js + canvas)
 ```
 
-Every shroom emits structured events. The visual office consumes the event stream.
+Every shroom emits structured ShroomEvents. The visual office consumes the event stream.
 Mock shrooms emit the same events as real ones — the frontend never knows the difference.
 
 ### Repo structure
@@ -54,10 +63,14 @@ Mock shrooms emit the same events as real ones — the frontend never knows the 
 mycelium-os/
 ├── apps/
 │   ├── frontend/          # Next.js — the visual office (canvas-based)
-│   └── control-plane/     # Constitution engine, graph API, escalation
-├── shrooms/               # Shroom sandbox definitions + mock shrooms
+│   └── control-plane/     # Python FastAPI — constitution engine, graph API, escalation
+├── shrooms/               # Shroom sandbox definitions + mock shrooms (Python)
 ├── chart/                 # Helm chart — bundled stack (Postgres, Neo4j, NATS, MinIO)
-├── docs/                  # Zenicastle source — auto-published on merge
+├── docs/
+│   ├── adrs/              # Architecture Decision Records (ADR-001 through ADR-008+)
+│   ├── dev-flow/          # Development workflow docs
+│   ├── design/            # Specs, schemas, UI design docs
+│   └── project-state/     # Backlog, open questions
 ├── .github/
 │   ├── ISSUE_TEMPLATE/    # feature.md, bug.md, chore.md, spike.md, design.md
 │   └── workflows/
@@ -71,14 +84,15 @@ mycelium-os/
 | Layer | Technology | Notes |
 |---|---|---|
 | Frontend | Next.js + canvas (Konva or D3) | Real-time via WebSocket |
-| Control plane | Node.js or Python FastAPI | TBD per ticket |
+| Control plane | Python FastAPI | Agno runtime, constitution engine |
+| Runtime | Agno (Python) | Wraps LLM calls, tools, session memory |
 | Graph | Neo4j | Shroom topology |
 | Event bus | NATS | Lightweight, K8s-native |
-| Database | Postgres | Constitution, audit, inbox |
+| Database | Postgres | Constitution, audit, inbox, beads memory |
 | Object storage | MinIO | S3-compatible |
 | Mail | Mailhog (dev) / Postfix (prod) | |
 | Models | Mistral / Ollama | EU-native, open source |
-| Orchestration | Kubernetes | Namespace per shroom sandbox |
+| Orchestration | docker compose (MVP) / Kubernetes (prod) | K8s namespace per shroom deferred |
 | IaC | Helm + Pulumi | |
 | Docs | Zenicastle | Auto-sync on merge to main |
 | Cloud target | Scaleway or OVH | EU, eco-friendly |
@@ -93,7 +107,7 @@ company:
   name: "Acme AI Co"
   instance: production  # dev | staging | production
 
-shrooms:
+shrooms:                          # ← always "shrooms:", never "agents:"
   - id: sales-shroom
     role: "Sales Development"
     model: mistral-7b
@@ -115,11 +129,11 @@ graph:
 
 ---
 
-## Shroom event schema — never deviate from this
+## ShroomEvent schema — never deviate from this
 
 ```json
 {
-  "shroom_id": "sales-001",
+  "shroom_id": "sales-shroom",
   "event": "message_sent",        // message_sent | task_started | task_completed | escalation_raised | decision_received | idle | error
   "to": "ceo-shroom",             // optional
   "topic": "lead_qualified",
@@ -129,6 +143,8 @@ graph:
 }
 ```
 
+Full schema reference: `docs/design/SHROOM-EVENT-SCHEMA.md`
+
 ---
 
 ## Security rules — never violate these
@@ -136,23 +152,43 @@ graph:
 - No shroom executes financial or external actions directly. They **propose**. A human or authorised executor acts.
 - Inter-shroom messages must be signed (shroom ID + timestamp + hash).
 - Each shroom sandbox has NO access to other sandboxes or the control plane DB directly.
-- All shroom actions are written to the append-only audit log before execution.
+- All shroom actions are written to the append-only audit log **before** execution.
+- Audit log write MUST happen before the ShroomEvent is emitted to NATS. No exceptions.
 - Prompt injection defence: external data is always tagged as untrusted in shroom context.
+
+---
+
+## Architecture decisions locked (ADRs)
+
+See `docs/adrs/` for full records. Summary:
+
+| ADR | Decision |
+|---|---|
+| ADR-001 | Canonical term is "Shroom" |
+| ADR-002 | NATS as event bus |
+| ADR-003 | `mycelium.yaml` manifest format |
+| ADR-004 | Three-layer memory: working / beads / RAG |
+| ADR-005 | Agno as shroom execution runtime |
+| ADR-006 | Python / FastAPI for control plane |
+| ADR-007 | Mistral / Ollama (EU-native, open source) |
+| ADR-008 | Logical isolation for MVP (K8s namespaces deferred) |
 
 ---
 
 ## Coding conventions
 
 - TypeScript everywhere on the frontend. Strict mode on.
+- Python on the control plane and agents. Type hints required. Pydantic for all data shapes.
 - Every new component gets a Storybook story.
 - Every new API endpoint gets an OpenAPI annotation.
-- Event schema changes require a migration + changelog entry.
+- ShroomEvent schema changes require a migration + changelog entry.
 - No direct DB access from the frontend. Always via the control plane API.
 - Feature flags for anything not ready for prod.
+- Never use `agent` in new code — always `shroom`.
 
 ---
 
-## PR requirements (from issue template)
+## PR requirements
 
 Every PR must include:
 1. A working demo (video, screenshot, or live preview — Cursor native demo preferred)
@@ -162,15 +198,15 @@ Every PR must include:
 
 ---
 
-## Ticket types & what Cursor should do with each
+## Ticket types & what the Orchestrator should do with each
 
-| Type | Cursor behaviour |
+| Type | Orchestrator behaviour |
 |---|---|
 | `feature` | Implement to acceptance criteria, open PR with demo |
 | `bug` | Reproduce first (add failing test), then fix, PR with before/after |
 | `chore` | Config/infra change, no demo needed, but must not break existing tests |
-| `spike` | Produce a markdown doc in `/docs/spikes/`, no production code |
-| `design` | Produce a spec or mockup in `/docs/design/`, may include prototype code |
+| `spike` | Produce a markdown doc in `docs/spikes/`, no production code |
+| `design` | Produce a spec or mockup in `docs/design/`, may include prototype code |
 
 ---
 
@@ -189,75 +225,50 @@ Mock shrooms emit real events to the real NATS bus. The visual office does not k
 
 ---
 
-## How to work in this repo
+## Current codebase state (as of 2026-03-07)
 
-### Start the stack
+After `docker compose up`:
+- ✅ Full infra stack running (NATS, Postgres, Neo4j, MinIO)
+- ✅ Next.js frontend running at http://localhost:3000
+- ❌ No visual office — blank canvas only
+- ❌ No control plane / FastAPI service
+- ❌ No shrooms / Agno runtime
+- ❌ No NATS event emission
+- ❌ No WebSocket bridge
 
-```bash
-docker compose up -d        # Postgres, Neo4j, NATS, MinIO, Mailhog, Ollama, Control Plane
-pnpm install                # install all workspace deps (if not done)
-pnpm dev                    # start frontend dev server on :3000
-```
+Next tickets to unblock product: MYC-20 (rename), MYC-17 (spike), MYC-21 → MYC-22.
 
-#### Control plane (standalone)
+---
 
-```bash
-cd apps/control-plane && uvicorn main:app --reload  # FastAPI on :8000
-```
+## Context for the Orchestrator
 
-### Run checks
+The **Orchestrator** = Cursor (this IDE). It reads this file every session for project context.
 
-```bash
-pnpm test                             # run Vitest tests (frontend)
-pnpm --filter frontend exec tsc --noEmit  # type check
-pnpm --filter frontend lint           # lint
-pytest apps/control-plane/tests/      # control plane tests
-```
+**Before implementing any ticket:**
+1. Read this file (CLAUDE.md)
+2. Read the Linear ticket (MYC-XX) — @ mention or paste AC
+3. If schema/API work: read `docs/design/SHROOM-EVENT-SCHEMA.md` and relevant ADRs
+4. If blocked by open questions: read `docs/project-state/OPEN-QUESTIONS.md` — do NOT assume
 
-### Docker Compose services
+**@ mention these for context:**
+- `@CLAUDE.md` — always
+- `@docs/project-state/BACKLOG.md` — for dependency order
+- `@docs/project-state/OPEN-QUESTIONS.md` — before MYC-22+
+- `@docs/design/SHROOM-EVENT-SCHEMA.md` — for event work
+- `@docs/adrs/` — for architecture constraints
 
-| Service | Image | Ports | Notes |
-|---|---|---|---|
-| postgres | postgres:16-alpine | 5432 | user/pass/db: `mycelium` |
-| neo4j | neo4j:5 | 7474, 7687 | No auth |
-| nats | nats:latest | 4222 | JetStream enabled |
-| minio | minio/minio | 9000, 9001 | user/pass: `minioadmin` |
-| mailhog | mailhog/mailhog | 1025, 8025 | SMTP + web UI |
-| ollama | ollama/ollama | 11434 | LLM runtime (Mistral) |
-| control-plane | (built from source) | 8000 | FastAPI — shroom orchestration |
+**Do not assume** answers to TBD-1 through TBD-5. Flag in PR comments if ticket is ambiguous.
 
-All services have health checks. Copy `docker-compose.override.yml.example` to `docker-compose.override.yml` to customise locally.
+---
 
-### Testing
+## Development workflow
 
-#### Frontend
-- **Framework**: Vitest + React Testing Library + jsdom
-- **Config**: `apps/frontend/vitest.config.ts`
-- **Convention**: tests live in `__tests__/` directories next to the code they test
-- **Run**: `pnpm test` (once) or `pnpm --filter frontend test:watch` (watch mode)
+See `docs/dev-flow/WORKFLOW.md` for the full human + Orchestrator dev loop.
 
-#### Control plane
-- **Framework**: pytest
-- **Config**: `apps/control-plane/pyproject.toml`
-- **Run**: `pytest apps/control-plane/tests/`
+## Open architecture questions
 
-### CI
+See `docs/project-state/OPEN-QUESTIONS.md` before implementing MYC-22 onwards.
 
-GitHub Actions runs on every PR and push to `main`:
-1. `pnpm --filter frontend lint`
-2. `pnpm --filter frontend exec tsc --noEmit`
-3. `pnpm --filter frontend test`
-4. `pytest apps/control-plane/tests/`
+## Full backlog
 
-### PR checklist
-
-Before opening a PR, verify locally:
-```bash
-pnpm --filter frontend lint && pnpm --filter frontend exec tsc --noEmit && pnpm test && pytest apps/control-plane/tests/
-```
-
-### When to stop and ask (set Linear issue to Blocked)
-
-- `docker compose up` fails with missing env vars
-- A type error cannot be resolved in 2 attempts
-- Schema changes required — never guess, flag as open question
+See `docs/project-state/BACKLOG.md`.

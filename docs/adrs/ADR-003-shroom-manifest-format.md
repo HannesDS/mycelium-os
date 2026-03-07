@@ -1,66 +1,56 @@
-# ADR-003 — Shroom manifest: declarative K8s-style with pluggable controllers
+# ADR-003: Shroom Manifest Format (mycelium.yaml)
 
-**Status:** Accepted  
 **Date:** 2026-03-07  
-**Deciders:** Hannes De Smet
+**Status:** Accepted  
+**Deciders:** Hannes Desmet
+
+---
 
 ## Context
 
-We needed to decide how a shroom is defined — YAML config, Python/TS class, or both. The answer shapes what the runtime does with a shroom definition and whether shroom definitions can be shared without code.
+We needed a human-readable, version-controllable format for defining shrooms — their identity, permissions, escalation paths, and SLAs. This is the "constitution" of the org.
 
 ## Decision
 
-Each shroom is defined by a **declarative manifest file** — a YAML resource definition modelled after Kubernetes resource definitions.
-
-### Manifest format
+Shrooms are declared in `mycelium.yaml` using the following schema:
 
 ```yaml
-apiVersion: mycelium.io/v1
-kind: Shroom
-metadata:
-  id: sales-shroom
-  name: "Sales Development"
-spec:
-  model: mistral-7b
-  memory:
-    beads: true           # episodic short-term memory
-    rag: personal         # long-term case memory
-  rag_access:
-    - namespace: company-wiki
-      role: sales
-  inbox:
-    schema: ./schemas/sales-inbox.json
-  skills:
-    - lead_qualification
-    - proposal_drafting
-  mcps:
-    - crm
-    - email
-  api:
-    enabled: true
-    port: auto
-  can:
-    - read: [crm, emails]
-    - propose: [send_email, book_meeting]
-  cannot:
-    - execute: [send_email, payments]
-  escalates_to: ceo-shroom
-  sla_response_minutes: 60
+company:
+  name: "Acme AI Co"
+  instance: production  # dev | staging | production
+
+shrooms:
+  - id: sales-shroom
+    role: "Sales Development"
+    model: mistral-7b
+    can:
+      - read: [crm, emails]
+      - write: [draft_emails, crm_notes]
+      - propose: [send_email, book_meeting]
+    cannot:
+      - execute: [send_email, payments]
+    escalates_to: ceo-shroom
+    sla_response_minutes: 60
+
+graph:
+  edges:
+    - from: sales-shroom
+      to: ceo-shroom
+      type: reports-to
+      # types: reports-to | requests-from | monitors | triggers | collaborates-with
 ```
-
-### mycelium.yaml
-
-`mycelium.yaml` describes the **Mycelium itself** — name, instance, graph edges, shared RAG namespaces and role access rules. Shroom manifests are separate files, composable and independently versioned.
-
-### Controllers
-
-Mycelium OS ships a **default controller** that knows how to instantiate any valid `Shroom` manifest. In the future, users can write **custom controllers** — same manifest contract, different runtime behaviour (e.g. a controller using a different memory backend or tool runner). This is the Kubernetes CRD + custom controller pattern applied to shrooms.
 
 ## Consequences
 
-- No code required for most users — declare a shroom, the controller runs it
-- Community shroom definitions are just manifests — shareable without code
-- The manifest schema is the stable contract. The controller is pluggable underneath
-- Custom controllers are a Phase 2 extension point
-- `mycelium.yaml` schema must be extended to reference shroom manifest files (tracked in MYC-21)
-- JSON Schema validation for manifests is tracked in MYC-21
+- `mycelium.yaml` is the single source of truth. No shroom exists that is not declared here.
+- The control plane parses this file on startup and on change (hot reload in dev, rolling restart in prod)
+- The constitution viewer (MYC-30) renders this file in the UI
+- Schema v1 is formalised in MYC-21 (JSON Schema / Pydantic model)
+- **Never** use `agents:` key — always `shrooms:`
+
+## Rationale
+
+- YAML is human-readable and diff-friendly for version control
+- Explicit `can` / `cannot` makes the permission model visible without reading code
+- `escalates_to` is a first-class field — escalation is not an afterthought
+- The `graph.edges` section separates topology from capabilities

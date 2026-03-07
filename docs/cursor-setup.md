@@ -8,28 +8,65 @@ The project includes `.cursor/mcp.json` with Linear MCP preconfigured. After ope
 2. Linear will prompt for OAuth authentication on first use
 3. You can then reference Linear issues in chat (e.g. `@linear MYC-8`)
 
-If the connection fails, try disabling and re-enabling the Linear MCP server in Cursor Settings (Ctrl/Cmd + Shift + J → MCP).
+If the connection fails, try disabling and re-enabling the Linear MCP server in Cursor Settings (Ctrl/Cmd + Shift + J > MCP).
 
-## Persisting Skills in Cursor Cloud Agents
+## Skills
 
-Cursor Cloud Agents do **not** persist project knowledge or learned patterns between sessions. Each session starts fresh.
+All skills live in `.cursor/skills/`. This is the single canonical location — no other skill directories (`.agents/skills/`, `.claude/skills/`, etc.) are used. Those paths are gitignored.
 
-To persist skills across sessions:
+### Dev skills (cloud agents)
 
-1. **SKILL.md files** — Define reusable workflows in `SKILL.md` manifests. Agents discover and apply these dynamically. Place in project root or `docs/skills/`. Example:
+Used automatically by the Orchestrator (Cursor) when implementing code.
 
-   ```markdown
-   # Skill: Escalation Flow
-   When implementing escalation flows, follow CLAUDE.md event schema...
-   ```
+| Skill | Source | Purpose |
+|---|---|---|
+| `vercel-react-best-practices` | Community (Vercel) | Next.js + React performance patterns |
+| `web-design-guidelines` | Community (Vercel) | UI/UX conventions |
+| `test-driven-development` | Community (obra) | TDD workflow |
+| `verification-before-completion` | Community (obra) | Lint, type-check, test before finishing |
+| `control-plane-endpoint` | Custom | FastAPI endpoint patterns for `apps/control-plane/` |
+| `shroom-event-work` | Custom | ShroomEvent schema, NATS, audit log rules |
+| `pr-checklist` | Custom | Pre-PR verification (`/pr-checklist` to invoke manually) |
 
-2. **Project rules (CLAUDE.md)** — Already in use. These are loaded every session and provide constitutional context.
+### Management skills (story refinement)
 
-3. **Cursor Rules / .cursorrules** — Project-level instructions that persist in the repo.
+Used when refining ideas into Linear tickets.
 
-4. **Memory workarounds** — No built-in persistent memory exists. Some teams use:
-   - `MEMORY.md` or `docs/context.md` that agents update during sessions (manual sync)
-   - External knowledge bases via MCP
-   - Detailed PR descriptions and commit messages as session artifacts
+| Skill | Source | Purpose |
+|---|---|---|
+| `implement-ticket` | Custom | Step-by-step workflow for implementing a MYC-XX ticket |
+| `refine-story` | Custom | Turn rough ideas into well-specified Linear tickets |
 
-For Cloud Agents specifically: skills define *what to do* but cannot learn from doing. To "persist" expertise, encode it in SKILL.md, CLAUDE.md, or documentation the agent reads each run.
+### Adding more community skills
+
+Install to `.cursor/skills/` directly:
+
+```bash
+npx skills add <owner/repo> --skill <skill-name> -y
+```
+
+Then move from `.agents/skills/` to `.cursor/skills/` if the installer puts them elsewhere, and delete the scattered directories.
+
+Browse available skills at https://skills.sh/
+
+### How skills work
+
+- Skills are discovered automatically on Cursor startup
+- Dev skills activate when the Orchestrator determines they're relevant
+- Skills with `disable-model-invocation: true` (like `pr-checklist`) are only used when you type `/skill-name` in chat
+- Skills are version-controlled in the repo — every session picks them up fresh
+
+## Rules
+
+Always-apply rules live in `.cursor/rules/`:
+
+| Rule | Purpose |
+|---|---|
+| `frontend.md` | TypeScript strict mode, Storybook, Tailwind, testing conventions |
+| `shrooms.md` | Shroom IDs, event schema, mycelium.yaml as source of truth |
+
+Rules are injected into every conversation automatically. Skills are loaded on-demand.
+
+## Context file
+
+`CLAUDE.md` is the project-level context file loaded every session. It contains architecture, conventions, security rules, and current codebase state.
