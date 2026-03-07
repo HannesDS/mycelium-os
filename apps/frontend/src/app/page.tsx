@@ -8,5 +8,9 @@ const ZenikOfficeCanvas = dynamic(
 );
 
 export default function Home() {
-  return <ZenikOfficeCanvas />;
+  return (
+    <div className="h-full">
+      <ZenikOfficeCanvas />
+    </div>
+  );
 }

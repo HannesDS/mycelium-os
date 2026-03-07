@@ -105,6 +105,7 @@ const REJECTED_MESSAGE = "Proposal rejected — following up with CEO";
 type EscalationPhase = "idle" | "escalating" | "ceo_reviewing" | "inbox_visible" | "resolved";
 
 export function ZenikOfficeCanvas() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1280, height: 720 });
   const [speechBubbles, setSpeechBubbles] = useState<ActiveSpeech[]>([]);
   const [thoughtBubbles, setThoughtBubbles] = useState<ActiveThought[]>([]);
@@ -126,14 +127,19 @@ export function ZenikOfficeCanvas() {
   );
 
   useEffect(() => {
-    const onResize = () => {
-      const w = Math.max(320, window.innerWidth);
-      const h = Math.max(240, window.innerHeight);
+    const el = containerRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      const w = Math.max(320, el.clientWidth);
+      const h = Math.max(240, el.clientHeight);
       setDimensions({ width: w, height: h });
     };
-    onResize();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
@@ -329,7 +335,7 @@ export function ZenikOfficeCanvas() {
   }, []);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-[#0d0d0d]">
+    <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-[#0d0d0d]">
       <div
         className="absolute inset-0 opacity-[0.08]"
         style={{
@@ -447,7 +453,7 @@ export function ZenikOfficeCanvas() {
       )}
       <button
         type="button"
-        className="fixed bottom-6 right-6 z-20 px-6 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="absolute bottom-6 right-6 z-20 px-6 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         onClick={triggerEscalation}
         disabled={escalationPhase !== "idle"}
       >
