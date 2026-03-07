@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 from core.controller import ShroomController
 from core.manifest import load_all_shroom_manifests
-from routers.shrooms import init_router, router as shrooms_router
+from routers.shrooms import router as shrooms_router
 
 MYCELIUM_CONFIG = os.getenv("MYCELIUM_CONFIG", "mycelium.yaml")
 
@@ -36,7 +36,6 @@ async def lifespan(app: FastAPI):
     for manifest in manifests.values():
         controller.register(manifest)
 
-    init_router(controller)
     app.state.controller = controller
 
     yield

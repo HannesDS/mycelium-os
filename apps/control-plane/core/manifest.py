@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ShroomMetadata(BaseModel):
@@ -27,10 +27,20 @@ class ShroomSpec(BaseModel):
 
 
 class ShroomManifest(BaseModel):
-    apiVersion: str = "mycelium.io/v1"
-    kind: str = "Shroom"
+    model_config = {"extra": "forbid"}
+
+    apiVersion: str
+    kind: str
     metadata: ShroomMetadata
     spec: ShroomSpec
+
+    @model_validator(mode="after")
+    def _validate_kind_and_version(self) -> ShroomManifest:
+        if self.apiVersion != "mycelium.io/v1":
+            raise ValueError(f"Unsupported apiVersion: {self.apiVersion}")
+        if self.kind != "Shroom":
+            raise ValueError(f"Unsupported kind: {self.kind}")
+        return self
 
 
 class MyceliumConfig(BaseModel):
@@ -39,14 +49,24 @@ class MyceliumConfig(BaseModel):
     graph: dict[str, Any] = Field(default_factory=dict)
 
 
+def _safe_yaml_load(path: Path) -> dict:
+    try:
+        raw = yaml.safe_load(path.read_text())
+    except yaml.YAMLError as exc:
+        raise ValueError(f"Failed to parse YAML at {path}") from exc
+    if not isinstance(raw, dict):
+        raise ValueError(
+            f"Expected YAML mapping at {path}, got {type(raw).__name__}"
+        )
+    return raw
+
+
 def load_mycelium_config(path: Path) -> MyceliumConfig:
-    raw = yaml.safe_load(path.read_text())
-    return MyceliumConfig(**raw)
+    return MyceliumConfig(**_safe_yaml_load(path))
 
 
 def load_shroom_manifest(path: Path) -> ShroomManifest:
-    raw = yaml.safe_load(path.read_text())
-    return ShroomManifest(**raw)
+    return ShroomManifest(**_safe_yaml_load(path))
 
 
 def load_all_shroom_manifests(config_path: Path) -> dict[str, ShroomManifest]:
