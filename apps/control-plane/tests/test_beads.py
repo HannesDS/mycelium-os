@@ -134,6 +134,17 @@ def test_format_beads_for_context(db: Session):
     append_bead(db, "sales-shroom", "task_completed", "Replied")
     beads = get_recent_beads(db, "sales-shroom", n=10)
     ctx = format_beads_for_context(beads)
-    assert "Recent memory" in ctx
+    assert "UNTRUSTED CONTEXT" in ctx
+    assert "END UNTRUSTED CONTEXT" in ctx
     assert "[task_completed] Replied" in ctx
     assert "[message_received] Hello" in ctx
+
+
+def test_sanitize_strips_control_chars(db: Session):
+    bead = append_bead(db, "sales-shroom", "message_received", "clean\x00\x07\x1ftext")
+    assert bead.summary == "cleantext"
+
+
+def test_sanitize_truncates_long_summary(db: Session):
+    bead = append_bead(db, "sales-shroom", "message_received", "a" * 300)
+    assert len(bead.summary) == 200
