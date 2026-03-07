@@ -73,7 +73,7 @@
           "properties": {
             "schema": {
               "type": "string",
-              "pattern": "^(?!.*\\.\\.)(\\.?\\.?\\/)?[a-zA-Z0-9._\\-\\/]+$"
+              "pattern": "^(?!\\/)(?!.*\\.\\.)[a-zA-Z0-9._\\-\\/]+$"
             }
           }
         },
@@ -102,13 +102,13 @@
         "can": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/permissionBlock"
+            "$ref": "#/definitions/canPermissionBlock"
           }
         },
         "cannot": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/permissionBlock"
+            "$ref": "#/definitions/cannotPermissionBlock"
           }
         },
         "escalates_to": {
@@ -122,7 +122,18 @@
     }
   },
   "definitions": {
-    "permissionBlock": {
+    "canPermissionBlock": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "read": { "type": "array", "items": { "type": "string" } },
+        "write": { "type": "array", "items": { "type": "string" } },
+        "propose": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "cannotPermissionBlock": {
       "type": "object",
       "minProperties": 1,
       "maxProperties": 1,
