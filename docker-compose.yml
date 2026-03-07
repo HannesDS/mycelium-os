@@ -68,6 +68,42 @@ services:
       timeout: 5s
       retries: 3
 
+  ollama:
+    image: ollama/ollama:0.17.7
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  control-plane:
+    build:
+      context: .
+      dockerfile: apps/control-plane/Dockerfile
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      MYCELIUM_CONFIG: /app/mycelium.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   pgdata:
   miniodata:
+  ollama_data:
