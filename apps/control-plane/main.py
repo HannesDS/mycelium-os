@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from core.controller import ShroomController
 from core.database import init_db
 from core.manifest import load_all_shroom_manifests
-from core.nats_client import nats_bus
+from core.nats_client import NatsEventBus
 from routers.events import router as events_router, start_relay, stop_relay
 from routers.shrooms import router as shrooms_router
 
@@ -42,9 +42,10 @@ async def lifespan(app: FastAPI):
     app.state.controller = controller
     app.state.db_session_factory = init_db()
 
+    nats_bus = NatsEventBus()
     await nats_bus.connect()
     app.state.nats_bus = nats_bus
-    await start_relay()
+    await start_relay(nats_bus)
 
     yield
 

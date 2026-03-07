@@ -44,20 +44,23 @@ class NatsEventBus:
             logger.warning("NATS not connected — dropping event %s", event.shroom_id)
             return
 
-        payload = json.dumps(event.model_dump(), default=str).encode()
-
         shroom_subject = f"shroom.{event.shroom_id}.events"
         fanout_subject = "mycelium.events"
 
-        await self._nc.publish(shroom_subject, payload)
-        await self._nc.publish(fanout_subject, payload)
-        logger.debug("Published event to %s and %s", shroom_subject, fanout_subject)
+        try:
+            payload = json.dumps(event.model_dump(), default=str).encode()
+            await self._nc.publish(shroom_subject, payload)
+            await self._nc.publish(fanout_subject, payload)
+            logger.debug("Published event to %s and %s", shroom_subject, fanout_subject)
+        except Exception:
+            logger.exception(
+                "Failed to publish event for %s to %s",
+                event.shroom_id,
+                shroom_subject,
+            )
 
     async def subscribe(self, subject: str, callback):
         if not self.is_connected:
             logger.warning("NATS not connected — cannot subscribe to %s", subject)
             return None
         return await self._nc.subscribe(subject, cb=callback)
-
-
-nats_bus = NatsEventBus()

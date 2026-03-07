@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from core.controller import ShroomController
 from core.events import ShroomEvent, ShroomEventType
 from core.memory.beads import append_bead, format_beads_for_context, get_recent_beads
-from core.nats_client import nats_bus
+from core.nats_client import NatsEventBus
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,13 @@ def get_db(request: Request) -> Session:
         yield session
     finally:
         session.close()
+
+
+def get_nats_bus(request: Request) -> NatsEventBus:
+    bus = getattr(request.app.state, "nats_bus", None)
+    if bus is None:
+        raise HTTPException(status_code=503, detail="NATS bus not initialized")
+    return bus
 
 
 class MessageRequest(BaseModel):
@@ -62,6 +69,7 @@ async def send_message(
     req: MessageRequest,
     controller: ShroomController = Depends(get_controller),
     db: Session = Depends(get_db),
+    nats_bus: NatsEventBus = Depends(get_nats_bus),
 ):
     agent = controller.get_agent(shroom_id)
     if not agent:

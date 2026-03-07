@@ -17,6 +17,9 @@ importers:
 
   apps/frontend:
     dependencies:
+      '@mycelium/shroom-events':
+        specifier: workspace:*
+        version: link:../../packages/shroom-events
       konva:
         specifier: ^9.3.6
         version: 9.3.22
