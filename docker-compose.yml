@@ -91,6 +91,8 @@ services:
       OLLAMA_HOST: http://ollama:11434
       MYCELIUM_CONFIG: /app/mycelium.yaml
       DATABASE_URL: postgresql://mycelium:mycelium@postgres:5432/mycelium
+      NATS_URL: nats://nats:4222
+      ALLOW_INSECURE_WS: "true"
     depends_on:
       postgres:
         condition: service_healthy

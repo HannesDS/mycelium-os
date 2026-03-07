@@ -4,43 +4,29 @@ import { startMockEventLoop, type MockEventCallback } from "./mock-event-loop";
 const WS_RECONNECT_INTERVAL = 3000;
 const WS_MAX_RECONNECT_ATTEMPTS = 10;
 
-function getControlPlaneUrl(): string | null {
+function getWsUrl(): string | null {
   const base = process.env.NEXT_PUBLIC_CONTROL_PLANE_URL;
   if (!base) return null;
-  return base.replace(/\/$/, "");
-}
-
-function toWsUrl(httpBase: string, ticket: string): string {
-  const wsProto = httpBase.startsWith("https") ? "wss" : "ws";
-  const host = httpBase.replace(/^https?:\/\//, "");
-  return `${wsProto}://${host}/ws/events?ticket=${encodeURIComponent(ticket)}`;
-}
-
-async function fetchTicket(httpBase: string): Promise<string | null> {
-  try {
-    const resp = await fetch(`${httpBase}/ws/ticket`, { method: "POST" });
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    return data.ticket ?? null;
-  } catch {
-    return null;
-  }
+  const cleaned = base.replace(/\/$/, "");
+  const wsProto = cleaned.startsWith("https") ? "wss" : "ws";
+  const host = cleaned.replace(/^https?:\/\//, "");
+  return `${wsProto}://${host}/ws/events`;
 }
 
 export type EventCallback = (event: ShroomEvent) => void;
 
 export function startEventSource(callback: EventCallback): () => void {
-  const cpUrl = getControlPlaneUrl();
+  const wsUrl = getWsUrl();
 
-  if (!cpUrl) {
+  if (!wsUrl) {
     return startMockEventLoop(callback);
   }
 
-  return startWebSocketEventLoop(cpUrl, callback);
+  return startWebSocketEventLoop(wsUrl, callback);
 }
 
 function startWebSocketEventLoop(
-  cpUrl: string,
+  url: string,
   callback: EventCallback
 ): () => void {
   let ws: WebSocket | null = null;
@@ -49,23 +35,13 @@ function startWebSocketEventLoop(
   let stopped = false;
   let mockCleanup: (() => void) | null = null;
 
-  async function connect() {
+  function connect() {
     if (stopped) return;
-
-    const ticket = await fetchTicket(cpUrl);
-    if (stopped) return;
-
-    if (!ticket) {
-      scheduleReconnect();
-      return;
-    }
-
-    const url = toWsUrl(cpUrl, ticket);
 
     try {
       ws = new WebSocket(url);
     } catch {
-      scheduleReconnect();
+      fallbackToMock();
       return;
     }
 
