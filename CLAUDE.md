@@ -194,17 +194,24 @@ Mock shrooms emit real events to the real NATS bus. The visual office does not k
 ### Start the stack
 
 ```bash
-docker compose up -d        # Postgres, Neo4j, NATS, MinIO, Mailhog
+docker compose up -d        # Postgres, Neo4j, NATS, MinIO, Mailhog, Ollama, Control Plane
 pnpm install                # install all workspace deps (if not done)
 pnpm dev                    # start frontend dev server on :3000
+```
+
+#### Control plane (standalone)
+
+```bash
+cd apps/control-plane && uvicorn main:app --reload  # FastAPI on :8000
 ```
 
 ### Run checks
 
 ```bash
-pnpm test                             # run Vitest tests
+pnpm test                             # run Vitest tests (frontend)
 pnpm --filter frontend exec tsc --noEmit  # type check
 pnpm --filter frontend lint           # lint
+pytest apps/control-plane/tests/      # control plane tests
 ```
 
 ### Docker Compose services
@@ -216,15 +223,23 @@ pnpm --filter frontend lint           # lint
 | nats | nats:latest | 4222 | JetStream enabled |
 | minio | minio/minio | 9000, 9001 | user/pass: `minioadmin` |
 | mailhog | mailhog/mailhog | 1025, 8025 | SMTP + web UI |
+| ollama | ollama/ollama | 11434 | LLM runtime (Mistral) |
+| control-plane | (built from source) | 8000 | FastAPI — shroom orchestration |
 
 All services have health checks. Copy `docker-compose.override.yml.example` to `docker-compose.override.yml` to customise locally.
 
 ### Testing
 
+#### Frontend
 - **Framework**: Vitest + React Testing Library + jsdom
 - **Config**: `apps/frontend/vitest.config.ts`
 - **Convention**: tests live in `__tests__/` directories next to the code they test
 - **Run**: `pnpm test` (once) or `pnpm --filter frontend test:watch` (watch mode)
+
+#### Control plane
+- **Framework**: pytest
+- **Config**: `apps/control-plane/pyproject.toml`
+- **Run**: `pytest apps/control-plane/tests/`
 
 ### CI
 
@@ -232,12 +247,13 @@ GitHub Actions runs on every PR and push to `main`:
 1. `pnpm --filter frontend lint`
 2. `pnpm --filter frontend exec tsc --noEmit`
 3. `pnpm --filter frontend test`
+4. `pytest apps/control-plane/tests/`
 
 ### PR checklist
 
 Before opening a PR, verify locally:
 ```bash
-pnpm --filter frontend lint && pnpm --filter frontend exec tsc --noEmit && pnpm test
+pnpm --filter frontend lint && pnpm --filter frontend exec tsc --noEmit && pnpm test && pytest apps/control-plane/tests/
 ```
 
 ### When to stop and ask (set Linear issue to Blocked)
