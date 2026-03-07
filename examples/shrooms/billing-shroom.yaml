@@ -1,0 +1,24 @@
+apiVersion: mycelium.io/v1
+kind: Shroom
+metadata:
+  id: billing-shroom
+  name: "Billing & Finance"
+spec:
+  model: mistral-7b
+  memory:
+    beads: true
+    rag: personal
+  skills:
+    - invoice_tracking
+    - overdue_detection
+  mcps:
+    - accounting
+    - email
+  can:
+    - read: [invoices, payments]
+    - write: [payment_notes]
+    - propose: [chase_email, flag_overdue]
+  cannot:
+    - execute: [payments, refunds]
+  escalates_to: ceo-shroom
+  sla_response_minutes: 120

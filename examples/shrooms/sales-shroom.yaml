@@ -1,0 +1,31 @@
+apiVersion: mycelium.io/v1
+kind: Shroom
+metadata:
+  id: sales-shroom
+  name: "Sales Development"
+spec:
+  model: mistral-7b
+  memory:
+    beads: true
+    rag: personal
+  rag_access:
+    - namespace: company-wiki
+      role: sales
+  inbox:
+    schema: ./schemas/sales-inbox.json
+  skills:
+    - lead_qualification
+    - proposal_drafting
+  mcps:
+    - crm
+    - email
+  api:
+    enabled: true
+  can:
+    - read: [crm, emails]
+    - write: [draft_emails, crm_notes]
+    - propose: [send_email, book_meeting]
+  cannot:
+    - execute: [send_email, payments]
+  escalates_to: ceo-shroom
+  sla_response_minutes: 60

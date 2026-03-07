@@ -1,0 +1,149 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mycelium.io/schemas/shroom-manifest/v1",
+  "title": "Shroom Manifest",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "enum": ["mycelium.io/v1"]
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["Shroom"]
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["id", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": ["model"],
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "memory": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "beads": {
+              "type": "boolean"
+            },
+            "rag": {
+              "type": "string",
+              "enum": ["personal", "none"]
+            }
+          }
+        },
+        "rag_access": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["namespace", "role"],
+            "additionalProperties": false,
+            "properties": {
+              "namespace": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "inbox": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schema": {
+              "type": "string",
+              "pattern": "^(?!\\/)(?!.*\\.\\.)[a-zA-Z0-9._\\-\\/]+$"
+            }
+          }
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mcps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "api": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "port": {}
+          }
+        },
+        "can": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/canPermissionBlock"
+          }
+        },
+        "cannot": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cannotPermissionBlock"
+          }
+        },
+        "escalates_to": {
+          "type": "string"
+        },
+        "sla_response_minutes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  },
+  "definitions": {
+    "canPermissionBlock": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "read": { "type": "array", "items": { "type": "string" } },
+        "write": { "type": "array", "items": { "type": "string" } },
+        "propose": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "cannotPermissionBlock": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "read": { "type": "array", "items": { "type": "string" } },
+        "write": { "type": "array", "items": { "type": "string" } },
+        "propose": { "type": "array", "items": { "type": "string" } },
+        "execute": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
