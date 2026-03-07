@@ -14,6 +14,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@mycelium/shroom-events": "workspace:*",
     "konva": "^9.3.6",
     "next": "14.2.35",
     "react": "^18.3.1",

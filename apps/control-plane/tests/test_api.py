@@ -13,6 +13,7 @@ from sqlalchemy.pool import StaticPool
 from core.controller import ShroomController
 from core.database import Base
 from core.manifest import ShroomManifest, ShroomMetadata, ShroomSpec
+from core.nats_client import NatsEventBus
 import core.models  # noqa: F401
 
 
@@ -58,6 +59,7 @@ def client(controller, _db_session_factory):
     from main import app
     app.state.controller = controller
     app.state.db_session_factory = _db_session_factory
+    app.state.nats_bus = NatsEventBus()
     return TestClient(app, raise_server_exceptions=False)
 
 

@@ -8,12 +8,12 @@ import { ShroomNode } from "./shroom-node";
 import { SpeechBubble } from "./speech-bubble";
 import { ThoughtBubble } from "./thought-bubble";
 import {
-  startMockEventLoop,
   injectEvent,
   getEventsForShroom,
   getCurrentTask,
   getCurrentStatus,
 } from "@/lib/mock-event-loop";
+import { startEventSource } from "@/lib/event-source";
 import { ShroomSidePanel } from "@/components/ShroomSidePanel";
 import { HumanInboxCard } from "@/components/HumanInboxCard";
 
@@ -137,7 +137,7 @@ export function ZenikOfficeCanvas() {
   }, []);
 
   useEffect(() => {
-    const unsub = startMockEventLoop((event: ShroomEvent) => {
+    const unsub = startEventSource((event: ShroomEvent) => {
       if (event.event === "message_sent" && event.to) {
         const to = event.to;
         setSpeechBubbles((prev) => {
