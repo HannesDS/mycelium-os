@@ -69,16 +69,17 @@ def send_message(
 
     recent = get_recent_beads(db, shroom_id, n=10)
     context = format_beads_for_context(recent)
-    if context:
-        agent.instructions = (agent.instructions or []) + [context]
+    augmented = f"{context}\n\n---\n{req.message}" if context else req.message
 
     try:
-        run_response = agent.run(req.message)
+        run_response = agent.run(augmented)
         content = run_response.content if run_response.content else "No response generated."
     except Exception:
         logger.exception("Agent error for shroom '%s'", shroom_id)
+        db.commit()
         raise HTTPException(status_code=502, detail="Agent processing failed")
 
     append_bead(db, shroom_id, "task_completed", f"Responded: {content[:120]}")
+    db.commit()
 
     return MessageResponse(shroom_id=shroom_id, response=content)

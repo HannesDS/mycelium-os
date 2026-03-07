@@ -94,6 +94,28 @@ def test_retention_deletes_oldest(db: Session):
     assert "msg-4" in summaries
 
 
+def test_retention_prev_bead_links_are_consistent(db: Session):
+    created_ids = []
+    for i in range(5):
+        bead = append_bead(
+            db, "sales-shroom", "message_received", f"msg-{i}", max_beads=3,
+        )
+        created_ids.append(bead.id)
+
+    deleted_ids = set(created_ids[:2])
+    beads = get_recent_beads(db, "sales-shroom", n=10)
+    assert len(beads) == 3
+
+    remaining_ids = {b.id for b in beads}
+    assert not (remaining_ids & deleted_ids)
+
+    for bead in beads:
+        if bead.prev_bead_id is not None:
+            assert bead.prev_bead_id in remaining_ids
+
+    assert beads[0].prev_bead_id == beads[1].id
+
+
 def test_retention_per_shroom(db: Session):
     for i in range(4):
         append_bead(db, "sales-shroom", "message_received", f"sales-{i}", max_beads=2)

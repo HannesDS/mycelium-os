@@ -115,7 +115,9 @@ def test_message_success(client, controller):
     data = resp.json()
     assert data["shroom_id"] == "alpha-shroom"
     assert data["response"] == "hello from agent"
-    fake_agent.run.assert_called_once_with("hi")
+    fake_agent.run.assert_called_once()
+    call_arg = fake_agent.run.call_args[0][0]
+    assert "hi" in call_arg
 
 
 def test_message_agent_error_returns_502(client, controller):

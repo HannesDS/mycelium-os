@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select, delete, func
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
 from core.models import ShroomBead
@@ -45,7 +45,6 @@ def append_bead(
 
     _enforce_retention(session, shroom_id, max_beads)
 
-    session.commit()
     return bead
 
 
@@ -66,6 +65,11 @@ def _enforce_retention(session: Session, shroom_id: str, max_beads: int) -> None
     ).scalars().all()
 
     if oldest_ids:
+        session.execute(
+            update(ShroomBead)
+            .where(ShroomBead.prev_bead_id.in_(oldest_ids))
+            .values(prev_bead_id=None)
+        )
         session.execute(
             delete(ShroomBead).where(ShroomBead.id.in_(oldest_ids))
         )

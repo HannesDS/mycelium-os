@@ -13,7 +13,7 @@ class ShroomBead(Base):
     __tablename__ = "shroom_beads"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    shroom_id: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+    shroom_id: Mapped[str] = mapped_column(Text, nullable=False)
     created_at = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
