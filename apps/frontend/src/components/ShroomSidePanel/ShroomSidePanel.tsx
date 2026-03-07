@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
-import type { AgentEvent, AgentEventType } from "@/types/agent-events";
+import type { ShroomEvent, ShroomEventType } from "@/types/shroom-events";
 
-type AgentStatus = "idle" | "working" | "in conversation";
+type ShroomStatus = "idle" | "working" | "in conversation";
 
 function getInitials(displayName: string): string {
   return displayName
@@ -11,7 +11,7 @@ function getInitials(displayName: string): string {
     .toUpperCase();
 }
 
-const EVENT_ICONS: Record<AgentEventType, string> = {
+const EVENT_ICONS: Record<ShroomEventType, string> = {
   message_sent: "✉",
   task_started: "▶",
   task_completed: "✓",
@@ -29,27 +29,27 @@ function formatRelativeTime(iso: string): string {
   return `${Math.floor(sec / 86400)}d ago`;
 }
 
-interface AgentSidePanelProps {
-  agentId: string;
-  agentName: string;
-  agentRole: string;
-  status: AgentStatus;
+interface ShroomSidePanelProps {
+  shroomId: string;
+  shroomName: string;
+  shroomRole: string;
+  status: ShroomStatus;
   currentTask: string | null;
-  recentEvents: AgentEvent[];
+  recentEvents: ShroomEvent[];
   onClose: () => void;
   isOpen: boolean;
 }
 
-export function AgentSidePanel({
-  agentId,
-  agentName,
-  agentRole,
+export function ShroomSidePanel({
+  shroomId,
+  shroomName,
+  shroomRole,
   status,
   currentTask,
   recentEvents,
   onClose,
   isOpen,
-}: AgentSidePanelProps) {
+}: ShroomSidePanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const previousActiveRef = useRef<HTMLElement | null>(null);
 
@@ -92,7 +92,7 @@ export function AgentSidePanel({
       cleanup?.();
       previousActiveRef.current?.focus();
     };
-  }, [isOpen, agentId, trapFocus]);
+  }, [isOpen, shroomId, trapFocus]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -108,7 +108,7 @@ export function AgentSidePanel({
     <div
         ref={panelRef}
         role="dialog"
-        aria-labelledby="agent-panel-title"
+        aria-labelledby="shroom-panel-title"
         aria-modal="true"
         className="fixed right-0 top-0 z-50 h-full w-80 max-w-[90vw] animate-slide-in bg-white shadow-xl"
         style={{ animationDuration: "200ms", animationTimingFunction: "ease" }}
@@ -119,11 +119,11 @@ export function AgentSidePanel({
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-medium text-slate-700"
               aria-hidden
             >
-              {getInitials(agentName || agentRole)}
+              {getInitials(shroomName || shroomRole)}
             </div>
             <div className="min-w-0 flex-1">
-              <h2 id="agent-panel-title" className="truncate font-semibold text-slate-900">
-                {agentName} — {agentRole}
+              <h2 id="shroom-panel-title" className="truncate font-semibold text-slate-900">
+                {shroomName} — {shroomRole}
               </h2>
               <span
                 className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${

@@ -2,8 +2,8 @@ company:
   name: "Acme AI Co"
   instance: production
 
-agents:
-  - id: sales-agent
+shrooms:
+  - id: sales-shroom
     role: "Sales Development"
     model: mistral-7b
     can:
@@ -12,32 +12,32 @@ agents:
       - propose: [send_email, book_meeting]
     cannot:
       - execute: [send_email, payments]
-    escalates_to: ceo-agent
+    escalates_to: ceo-shroom
     sla_response_minutes: 60
-  - id: delivery-agent
+  - id: delivery-shroom
     role: "Delivery Lead"
-    escalates_to: ceo-agent
-  - id: billing-agent
+    escalates_to: ceo-shroom
+  - id: billing-shroom
     role: "Billing & Finance"
-    escalates_to: ceo-agent
-  - id: compliance-agent
+    escalates_to: ceo-shroom
+  - id: compliance-shroom
     role: "Compliance & Legal"
-    escalates_to: ceo-agent
-  - id: ceo-agent
+    escalates_to: ceo-shroom
+  - id: ceo-shroom
     role: "CEO / Decider"
     escalates_to: human
 
 graph:
   edges:
-    - from: sales-agent
-      to: ceo-agent
+    - from: sales-shroom
+      to: ceo-shroom
       type: reports-to
-    - from: delivery-agent
-      to: ceo-agent
+    - from: delivery-shroom
+      to: ceo-shroom
       type: reports-to
-    - from: billing-agent
-      to: ceo-agent
+    - from: billing-shroom
+      to: ceo-shroom
       type: reports-to
-    - from: compliance-agent
-      to: ceo-agent
+    - from: compliance-shroom
+      to: ceo-shroom
       type: reports-to

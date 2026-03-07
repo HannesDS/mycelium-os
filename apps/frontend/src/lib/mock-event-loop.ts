@@ -1,38 +1,38 @@
-import type { AgentEvent } from "@/types/agent-events";
-import { ZENIK_AGENTS } from "@/types/agent-events";
+import type { ShroomEvent } from "@/types/shroom-events";
+import { ZENIK_SHROOMS } from "@/types/shroom-events";
 
 const MESSAGE_SENT_PAIRS: [string, string, string][] = [
-  ["sales-agent", "ceo-agent", "Lead qualified — ready for demo booking"],
-  ["delivery-agent", "ceo-agent", "Sprint 12 velocity report attached"],
-  ["billing-agent", "ceo-agent", "Overdue invoice flagged for Acme Corp"],
-  ["compliance-agent", "ceo-agent", "Contract renewal flagged for Acme Corp"],
-  ["ceo-agent", "delivery-agent", "Prioritise the compliance dashboard"],
-  ["ceo-agent", "sales-agent", "Approve outreach to Triodos Bank"],
-  ["delivery-agent", "billing-agent", "Project milestone reached — invoice ready"],
-  ["sales-agent", "billing-agent", "New deal closed — generate invoice"],
+  ["sales-shroom", "ceo-shroom", "Lead qualified — ready for demo booking"],
+  ["delivery-shroom", "ceo-shroom", "Sprint 12 velocity report attached"],
+  ["billing-shroom", "ceo-shroom", "Overdue invoice flagged for Acme Corp"],
+  ["compliance-shroom", "ceo-shroom", "Contract renewal flagged for Acme Corp"],
+  ["ceo-shroom", "delivery-shroom", "Prioritise the compliance dashboard"],
+  ["ceo-shroom", "sales-shroom", "Approve outreach to Triodos Bank"],
+  ["delivery-shroom", "billing-shroom", "Project milestone reached — invoice ready"],
+  ["sales-shroom", "billing-shroom", "New deal closed — generate invoice"],
 ];
 
 const THOUGHT_BUBBLES: [string, string][] = [
-  ["sales-agent", "Qualifying leads..."],
-  ["delivery-agent", "Tracking milestones..."],
-  ["billing-agent", "Reconciling invoices..."],
-  ["compliance-agent", "Reviewing terms..."],
-  ["ceo-agent", "Reviewing escalations..."],
+  ["sales-shroom", "Qualifying leads..."],
+  ["delivery-shroom", "Tracking milestones..."],
+  ["billing-shroom", "Reconciling invoices..."],
+  ["compliance-shroom", "Reviewing terms..."],
+  ["ceo-shroom", "Reviewing escalations..."],
 ];
 
-const eventHistory: Map<string, AgentEvent[]> = new Map();
-ZENIK_AGENTS.forEach((a) => eventHistory.set(a.id, []));
+const eventHistory: Map<string, ShroomEvent[]> = new Map();
+ZENIK_SHROOMS.forEach((a) => eventHistory.set(a.id, []));
 
-function storeEvent(event: AgentEvent): void {
-  const history = eventHistory.get(event.agent_id) ?? [];
+function storeEvent(event: ShroomEvent): void {
+  const history = eventHistory.get(event.shroom_id) ?? [];
   history.unshift(event);
   if (history.length > 20) history.pop();
-  eventHistory.set(event.agent_id, history);
+  eventHistory.set(event.shroom_id, history);
 }
 
 let loopCallback: MockEventCallback | null = null;
 
-export function injectEvent(event: AgentEvent): void {
+export function injectEvent(event: ShroomEvent): void {
   storeEvent(event);
   loopCallback?.(event);
 }
@@ -45,10 +45,10 @@ function toISO(): string {
   return new Date().toISOString();
 }
 
-export function createMessageSentEvent(): AgentEvent {
+export function createMessageSentEvent(): ShroomEvent {
   const [from, to, summary] = pickRandom(MESSAGE_SENT_PAIRS);
   return {
-    agent_id: from,
+    shroom_id: from,
     event: "message_sent",
     to,
     topic: "conversation",
@@ -57,10 +57,10 @@ export function createMessageSentEvent(): AgentEvent {
   };
 }
 
-export function createThoughtEvent(): AgentEvent {
-  const [agentId, summary] = pickRandom(THOUGHT_BUBBLES);
+export function createThoughtEvent(): ShroomEvent {
+  const [shroomId, summary] = pickRandom(THOUGHT_BUBBLES);
   return {
-    agent_id: agentId,
+    shroom_id: shroomId,
     event: "task_started",
     topic: "working",
     timestamp: toISO(),
@@ -68,9 +68,9 @@ export function createThoughtEvent(): AgentEvent {
   };
 }
 
-export function createIdleEvent(agentId: string): AgentEvent {
+export function createIdleEvent(shroomId: string): ShroomEvent {
   return {
-    agent_id: agentId,
+    shroom_id: shroomId,
     event: "idle",
     topic: "idle",
     timestamp: toISO(),
@@ -78,14 +78,14 @@ export function createIdleEvent(agentId: string): AgentEvent {
   };
 }
 
-export type MockEventCallback = (event: AgentEvent) => void;
+export type MockEventCallback = (event: ShroomEvent) => void;
 
 export function startMockEventLoop(callback: MockEventCallback): () => void {
   loopCallback = callback;
   const speechInterval = 2500 + Math.random() * 2000;
   const thoughtInterval = 3000 + Math.random() * 2500;
 
-  const emit = (event: AgentEvent) => {
+  const emit = (event: ShroomEvent) => {
     storeEvent(event);
     callback(event);
   };
@@ -105,21 +105,21 @@ export function startMockEventLoop(callback: MockEventCallback): () => void {
   };
 }
 
-export function getEventsForAgent(agentId: string): AgentEvent[] {
-  return (eventHistory.get(agentId) ?? []).slice(0, 5);
+export function getEventsForShroom(shroomId: string): ShroomEvent[] {
+  return (eventHistory.get(shroomId) ?? []).slice(0, 5);
 }
 
-export function getCurrentTask(agentId: string): string | null {
-  const history = eventHistory.get(agentId) ?? [];
+export function getCurrentTask(shroomId: string): string | null {
+  const history = eventHistory.get(shroomId) ?? [];
   const last = history[0];
   if (!last || last.event === "idle") return null;
   return last.payload_summary;
 }
 
 export function getCurrentStatus(
-  agentId: string
+  shroomId: string
 ): "idle" | "working" | "in conversation" {
-  const history = eventHistory.get(agentId) ?? [];
+  const history = eventHistory.get(shroomId) ?? [];
   const last = history[0];
   if (!last) return "idle";
   if (last.event === "idle") return "idle";

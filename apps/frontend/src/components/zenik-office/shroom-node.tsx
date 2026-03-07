@@ -1,10 +1,10 @@
 "use client";
 
 import { Group, Line, Text } from "react-konva";
-import type { ZenikAgent } from "@/types/agent-events";
+import type { ZenikShroom } from "@/types/shroom-events";
 
-interface AgentNodeProps {
-  agent: ZenikAgent;
+interface ShroomNodeProps {
+  shroom: ZenikShroom;
   x: number;
   y: number;
   driftX: number;
@@ -27,10 +27,10 @@ function getBlobPoints(t: number, seed: number): number[] {
   return points;
 }
 
-export function AgentNode({ agent, x, y, driftX, driftY, t, onClick }: AgentNodeProps) {
+export function ShroomNode({ shroom, x, y, driftX, driftY, t, onClick }: ShroomNodeProps) {
   const cx = x + driftX;
   const cy = y + driftY;
-  const seed = agent.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const seed = shroom.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const points = getBlobPoints(t, seed);
 
   return (
@@ -45,7 +45,7 @@ export function AgentNode({ agent, x, y, driftX, driftY, t, onClick }: AgentNode
         listening={false}
       />
       <Text
-        text={agent.role}
+        text={shroom.role}
         fontSize={9}
         fontFamily="system-ui"
         fill="#999999"

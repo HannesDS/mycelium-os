@@ -16,8 +16,8 @@ export interface HumanInboxCardProps {
 
 export function HumanInboxCard({
   title = "Decision required",
-  from = "CEO Agent",
-  summary = "Sales agent has qualified a new enterprise lead — Triodos Bank. Proposal attached. Approve to send?",
+  from = "CEO Shroom",
+  summary = "Sales shroom has qualified a new enterprise lead — Triodos Bank. Proposal attached. Approve to send?",
   onApprove,
   onReject,
   isVisible = false,

@@ -1,4 +1,4 @@
-export type AgentEventType =
+export type ShroomEventType =
   | "message_sent"
   | "task_started"
   | "task_completed"
@@ -7,9 +7,9 @@ export type AgentEventType =
   | "idle"
   | "error";
 
-export interface AgentEvent {
-  agent_id: string;
-  event: AgentEventType;
+export interface ShroomEvent {
+  shroom_id: string;
+  event: ShroomEventType;
   to?: string;
   topic?: string;
   timestamp: string;

@@ -2,7 +2,7 @@
 
 - TypeScript strict mode. No `any` unless absolutely necessary.
 - Every new component gets a Storybook story in the same directory.
-- No hardcoded agent IDs — always import from `@/types/agent-events` (`ZENIK_AGENTS`) or `@/types/agents` (`AGENTS`).
+- No hardcoded shroom IDs — always import from `@/types/shroom-events` (`ZENIK_SHROOMS`) or `@/types/shrooms` (`SHROOMS`).
 - Run `pnpm --filter frontend tsc --noEmit` before opening a PR.
 - Use Tailwind for styling. CSS modules only for complex animations.
 - Path alias: `@/` maps to `src/`.

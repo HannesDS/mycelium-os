@@ -2,30 +2,30 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Layer, Line, Stage } from "react-konva";
-import type { AgentEvent } from "@/types/agent-events";
-import { ZENIK_AGENTS } from "@/types/agent-events";
-import { AgentNode } from "./agent-node";
+import type { ShroomEvent } from "@/types/shroom-events";
+import { ZENIK_SHROOMS } from "@/types/shroom-events";
+import { ShroomNode } from "./shroom-node";
 import { SpeechBubble } from "./speech-bubble";
 import { ThoughtBubble } from "./thought-bubble";
 import {
   startMockEventLoop,
   injectEvent,
-  getEventsForAgent,
+  getEventsForShroom,
   getCurrentTask,
   getCurrentStatus,
 } from "@/lib/mock-event-loop";
-import { AgentSidePanel } from "@/components/AgentSidePanel";
+import { ShroomSidePanel } from "@/components/ShroomSidePanel";
 import { HumanInboxCard } from "@/components/HumanInboxCard";
 
 const MENU_ZONE = { x: 0.78, y: 0, w: 0.22, h: 0.18 };
 const OFFICE_BOUNDS = { xMin: 0.08, xMax: 0.78, yMin: 0.12, yMax: 0.92 };
 
-const AGENT_POSITIONS: Record<string, { x: number; y: number }> = {
-  "sales-agent": { x: 0.2, y: 0.35 },
-  "delivery-agent": { x: 0.4, y: 0.55 },
-  "billing-agent": { x: 0.6, y: 0.55 },
-  "compliance-agent": { x: 0.25, y: 0.7 },
-  "ceo-agent": { x: 0.55, y: 0.3 },
+const SHROOM_POSITIONS: Record<string, { x: number; y: number }> = {
+  "sales-shroom": { x: 0.2, y: 0.35 },
+  "delivery-shroom": { x: 0.4, y: 0.55 },
+  "billing-shroom": { x: 0.6, y: 0.55 },
+  "compliance-shroom": { x: 0.25, y: 0.7 },
+  "ceo-shroom": { x: 0.55, y: 0.3 },
 };
 
 const WALLS: { x1: number; y1: number; x2: number; y2: number }[] = [
@@ -48,7 +48,7 @@ interface ActiveSpeech {
 
 interface ActiveThought {
   id: string;
-  agentId: string;
+  shroomId: string;
   message: string;
   opacity: number;
   createdAt: number;
@@ -110,7 +110,7 @@ export function ZenikOfficeCanvas() {
   const [thoughtBubbles, setThoughtBubbles] = useState<ActiveThought[]>([]);
   const [t, setT] = useState(0);
   const [drift, setDrift] = useState<Record<string, { x: number; y: number }>>({});
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [selectedShroomId, setSelectedShroomId] = useState<string | null>(null);
   const [escalationPhase, setEscalationPhase] = useState<EscalationPhase>("idle");
   const [inboxVisible, setInboxVisible] = useState(false);
   const [inboxDismissing, setInboxDismissing] = useState(false);
@@ -137,7 +137,7 @@ export function ZenikOfficeCanvas() {
   }, []);
 
   useEffect(() => {
-    const unsub = startMockEventLoop((event: AgentEvent) => {
+    const unsub = startMockEventLoop((event: ShroomEvent) => {
       if (event.event === "message_sent" && event.to) {
         const to = event.to;
         setSpeechBubbles((prev) => {
@@ -145,7 +145,7 @@ export function ZenikOfficeCanvas() {
             ...prev,
             {
               id: `s-${++bubbleIdRef.current}`,
-              from: event.agent_id,
+              from: event.shroom_id,
               to,
               message: event.payload_summary,
               opacity: 0,
@@ -161,7 +161,7 @@ export function ZenikOfficeCanvas() {
             ...prev,
             {
               id: `t-${++bubbleIdRef.current}`,
-              agentId: event.agent_id,
+              shroomId: event.shroom_id,
               message: event.payload_summary,
               opacity: 0,
               createdAt: Date.now(),
@@ -178,10 +178,10 @@ export function ZenikOfficeCanvas() {
     setT(time);
     setDrift((prev) => {
       const next = { ...prev };
-      for (const agent of ZENIK_AGENTS) {
-        next[agent.id] = {
-          x: DRIFT_AMOUNT * Math.sin(time * 0.001 + agent.id.length) + Math.sin(time * 0.0007) * 4,
-          y: DRIFT_AMOUNT * Math.cos(time * 0.0012 + agent.id.length * 0.7) + Math.cos(time * 0.0008) * 4,
+      for (const shroom of ZENIK_SHROOMS) {
+        next[shroom.id] = {
+          x: DRIFT_AMOUNT * Math.sin(time * 0.001 + shroom.id.length) + Math.sin(time * 0.0007) * 4,
+          y: DRIFT_AMOUNT * Math.cos(time * 0.0012 + shroom.id.length * 0.7) + Math.cos(time * 0.0008) * 4,
         };
       }
       return next;
@@ -216,12 +216,12 @@ export function ZenikOfficeCanvas() {
     );
   });
 
-  const getAgentPos = useCallback(
-    (agentId: string) => {
-      const pos = AGENT_POSITIONS[agentId];
+  const getShroomPos = useCallback(
+    (shroomId: string) => {
+      const pos = SHROOM_POSITIONS[shroomId];
       if (!pos) return { x: 0, y: 0 };
       const base = toPx(pos.x, pos.y);
-      const d = drift[agentId] ?? { x: 0, y: 0 };
+      const d = drift[shroomId] ?? { x: 0, y: 0 };
       return clampInBounds(base.x, base.y, d.x, d.y, dimensions.width, dimensions.height);
     },
     [toPx, drift, dimensions]
@@ -231,17 +231,17 @@ export function ZenikOfficeCanvas() {
     if (escalationPhase !== "idle") return;
     setEscalationPhase("escalating");
     injectEvent({
-      agent_id: "sales-agent",
+      shroom_id: "sales-shroom",
       event: "escalation_raised",
-      to: "ceo-agent",
+      to: "ceo-shroom",
       topic: "lead_qualified",
       timestamp: new Date().toISOString(),
       payload_summary: ESCALATION_PAYLOAD,
     });
     injectEvent({
-      agent_id: "sales-agent",
+      shroom_id: "sales-shroom",
       event: "message_sent",
-      to: "ceo-agent",
+      to: "ceo-shroom",
       topic: "lead_qualified",
       timestamp: new Date().toISOString(),
       payload_summary: ESCALATION_PAYLOAD,
@@ -250,8 +250,8 @@ export function ZenikOfficeCanvas() {
       ...prev,
       {
         id: `s-${++bubbleIdRef.current}`,
-        from: "sales-agent",
-        to: "ceo-agent",
+        from: "sales-shroom",
+        to: "ceo-shroom",
         message: ESCALATION_PAYLOAD,
         opacity: 0,
         createdAt: Date.now(),
@@ -260,9 +260,9 @@ export function ZenikOfficeCanvas() {
     const t1 = setTimeout(() => {
       setEscalationPhase("ceo_reviewing");
       injectEvent({
-        agent_id: "ceo-agent",
+        shroom_id: "ceo-shroom",
         event: "message_sent",
-        to: "sales-agent",
+        to: "sales-shroom",
         topic: "proposal_review",
         timestamp: new Date().toISOString(),
         payload_summary: CEO_THOUGHT,
@@ -271,7 +271,7 @@ export function ZenikOfficeCanvas() {
         ...prev,
         {
           id: `t-${++bubbleIdRef.current}`,
-          agentId: "ceo-agent",
+          shroomId: "ceo-shroom",
           message: CEO_THOUGHT,
           opacity: 0,
           createdAt: Date.now(),
@@ -295,7 +295,7 @@ export function ZenikOfficeCanvas() {
   const handleApprove = useCallback(() => {
     setInboxDismissing(true);
     injectEvent({
-      agent_id: "sales-agent",
+      shroom_id: "sales-shroom",
       event: "decision_received",
       topic: "proposal_approved",
       timestamp: new Date().toISOString(),
@@ -313,7 +313,7 @@ export function ZenikOfficeCanvas() {
   const handleReject = useCallback(() => {
     setInboxDismissing(true);
     injectEvent({
-      agent_id: "sales-agent",
+      shroom_id: "sales-shroom",
       event: "decision_received",
       topic: "proposal_rejected",
       timestamp: new Date().toISOString(),
@@ -355,7 +355,7 @@ export function ZenikOfficeCanvas() {
         className="absolute inset-0"
         onClick={(e) => {
           if (e.target === e.target.getStage()) {
-            setSelectedAgentId(null);
+            setSelectedShroomId(null);
           }
         }}
       >
@@ -375,8 +375,8 @@ export function ZenikOfficeCanvas() {
             />
           ))}
           {speechBubbles.map((b) => {
-            const fromPos = getAgentPos(b.from);
-            const toPos = getAgentPos(b.to);
+            const fromPos = getShroomPos(b.from);
+            const toPos = getShroomPos(b.to);
             return (
               <SpeechBubble
                 key={b.id}
@@ -390,7 +390,7 @@ export function ZenikOfficeCanvas() {
             );
           })}
           {thoughtBubbles.map((b) => {
-            const pos = getAgentPos(b.agentId);
+            const pos = getShroomPos(b.shroomId);
             return (
               <ThoughtBubble
                 key={b.id}
@@ -401,11 +401,11 @@ export function ZenikOfficeCanvas() {
               />
             );
           })}
-          {ZENIK_AGENTS.map((agent) => {
-            const pos = getAgentPos(agent.id);
-            const basePos = AGENT_POSITIONS[agent.id];
+          {ZENIK_SHROOMS.map((shroom) => {
+            const pos = getShroomPos(shroom.id);
+            const basePos = SHROOM_POSITIONS[shroom.id];
             const base = basePos ? toPx(basePos.x, basePos.y) : { x: 0, y: 0 };
-            const d = drift[agent.id] ?? { x: 0, y: 0 };
+            const d = drift[shroom.id] ?? { x: 0, y: 0 };
             const clamped = clampInBounds(
               base.x,
               base.y,
@@ -415,34 +415,34 @@ export function ZenikOfficeCanvas() {
               dimensions.height
             );
             return (
-              <AgentNode
-                key={agent.id}
-                agent={agent}
+              <ShroomNode
+                key={shroom.id}
+                shroom={shroom}
                 x={clamped.x}
                 y={clamped.y}
                 driftX={0}
                 driftY={0}
                 t={t}
-                onClick={() => setSelectedAgentId(agent.id)}
+                onClick={() => setSelectedShroomId(shroom.id)}
               />
             );
           })}
         </Layer>
       </Stage>
-      {selectedAgentId && (
-        <AgentSidePanel
-          agentId={selectedAgentId}
-          agentName={
-            ZENIK_AGENTS.find((a) => a.id === selectedAgentId)?.displayName ?? ""
+      {selectedShroomId && (
+        <ShroomSidePanel
+          shroomId={selectedShroomId}
+          shroomName={
+            ZENIK_SHROOMS.find((a) => a.id === selectedShroomId)?.displayName ?? ""
           }
-          agentRole={
-            ZENIK_AGENTS.find((a) => a.id === selectedAgentId)?.role ?? ""
+          shroomRole={
+            ZENIK_SHROOMS.find((a) => a.id === selectedShroomId)?.role ?? ""
           }
-          status={getCurrentStatus(selectedAgentId)}
-          currentTask={getCurrentTask(selectedAgentId)}
-          recentEvents={getEventsForAgent(selectedAgentId)}
-          onClose={() => setSelectedAgentId(null)}
-          isOpen={!!selectedAgentId}
+          status={getCurrentStatus(selectedShroomId)}
+          currentTask={getCurrentTask(selectedShroomId)}
+          recentEvents={getEventsForShroom(selectedShroomId)}
+          onClose={() => setSelectedShroomId(null)}
+          isOpen={!!selectedShroomId}
         />
       )}
       <button

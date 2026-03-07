@@ -1,22 +1,22 @@
 # Mycelium OS — Developer Context
 
-> A constitutional framework for AI-native organisations. Agents are the employees.
+> A constitutional framework for AI-native organisations. Shrooms are the employees.
 > The platform governs how they communicate, escalate, evolve — and makes it visible.
 
 ---
 
 ## What this project is
 
-Mycelium OS is an open source platform that lets you define a company of AI agents via code,
+Mycelium OS is an open source platform that lets you define a company of AI shrooms via code,
 config, or chat — and then runs, visualises, and governs it as a living ecosystem.
 
 It is NOT a runtime (that's pluggable underneath). It IS:
 - A constitutional layer (who can do what, who reports to whom)
 - A living graph (the org visualised in real-time, like a city map)
-- An escalation protocol (agents propose, humans decide)
+- An escalation protocol (shrooms propose, humans decide)
 - A governance engine (audit log, version control, sandboxed execution)
 
-**The north star UI**: a real-time visual "office" where agents move, communicate, and escalate
+**The north star UI**: a real-time visual "office" where shrooms move, communicate, and escalate
 — like a living city map of your company.
 
 ---
@@ -28,7 +28,7 @@ It is NOT a runtime (that's pluggable underneath). It IS:
 ```
 CONTROL PLANE                        DATA PLANE
 ─────────────────────────────        ──────────────────────────────
-Constitution (mycelium.yaml)         Agent sandboxes (K8s namespaces)
+Constitution (mycelium.yaml)         Shroom sandboxes (K8s namespaces)
 Graph DB (Neo4j)                     Tool execution
 Escalation engine                    MCP connectors
 Human decision inbox                 Object storage (MinIO)
@@ -42,11 +42,11 @@ Data plane = ephemeral, isolated, observable. Never put governance logic here.
 ### Event flow
 
 ```
-Agent activity → NATS event bus → WebSocket server → Frontend (Next.js + canvas)
+Shroom activity → NATS event bus → WebSocket server → Frontend (Next.js + canvas)
 ```
 
-Every agent emits structured events. The visual office consumes the event stream.
-Mock agents emit the same events as real ones — the frontend never knows the difference.
+Every shroom emits structured events. The visual office consumes the event stream.
+Mock shrooms emit the same events as real ones — the frontend never knows the difference.
 
 ### Repo structure
 
@@ -55,7 +55,7 @@ mycelium-os/
 ├── apps/
 │   ├── frontend/          # Next.js — the visual office (canvas-based)
 │   └── control-plane/     # Constitution engine, graph API, escalation
-├── agents/                # Agent sandbox definitions + mock agents
+├── shrooms/               # Shroom sandbox definitions + mock shrooms
 ├── chart/                 # Helm chart — bundled stack (Postgres, Neo4j, NATS, MinIO)
 ├── docs/                  # Zenicastle source — auto-published on merge
 ├── .github/
@@ -72,13 +72,13 @@ mycelium-os/
 |---|---|---|
 | Frontend | Next.js + canvas (Konva or D3) | Real-time via WebSocket |
 | Control plane | Node.js or Python FastAPI | TBD per ticket |
-| Graph | Neo4j | Agent topology |
+| Graph | Neo4j | Shroom topology |
 | Event bus | NATS | Lightweight, K8s-native |
 | Database | Postgres | Constitution, audit, inbox |
 | Object storage | MinIO | S3-compatible |
 | Mail | Mailhog (dev) / Postfix (prod) | |
 | Models | Mistral / Ollama | EU-native, open source |
-| Orchestration | Kubernetes | Namespace per agent sandbox |
+| Orchestration | Kubernetes | Namespace per shroom sandbox |
 | IaC | Helm + Pulumi | |
 | Docs | Zenicastle | Auto-sync on merge to main |
 | Cloud target | Scaleway or OVH | EU, eco-friendly |
@@ -93,8 +93,8 @@ company:
   name: "Acme AI Co"
   instance: production  # dev | staging | production
 
-agents:
-  - id: sales-agent
+shrooms:
+  - id: sales-shroom
     role: "Sales Development"
     model: mistral-7b
     can:
@@ -103,25 +103,25 @@ agents:
       - propose: [send_email, book_meeting]
     cannot:
       - execute: [send_email, payments]
-    escalates_to: ceo-agent
+    escalates_to: ceo-shroom
     sla_response_minutes: 60
 
 graph:
   edges:
-    - from: sales-agent
-      to: ceo-agent
+    - from: sales-shroom
+      to: ceo-shroom
       type: reports-to       # reports-to | requests-from | monitors | triggers | collaborates-with
 ```
 
 ---
 
-## Agent event schema — never deviate from this
+## Shroom event schema — never deviate from this
 
 ```json
 {
-  "agent_id": "sales-001",
+  "shroom_id": "sales-001",
   "event": "message_sent",        // message_sent | task_started | task_completed | escalation_raised | decision_received | idle | error
-  "to": "ceo-agent",              // optional
+  "to": "ceo-shroom",             // optional
   "topic": "lead_qualified",
   "timestamp": "ISO-8601",
   "payload_summary": "Human-readable one-liner",
@@ -133,11 +133,11 @@ graph:
 
 ## Security rules — never violate these
 
-- No agent executes financial or external actions directly. They **propose**. A human or authorised executor acts.
-- Inter-agent messages must be signed (agent ID + timestamp + hash).
-- Each agent sandbox has NO access to other sandboxes or the control plane DB directly.
-- All agent actions are written to the append-only audit log before execution.
-- Prompt injection defence: external data is always tagged as untrusted in agent context.
+- No shroom executes financial or external actions directly. They **propose**. A human or authorised executor acts.
+- Inter-shroom messages must be signed (shroom ID + timestamp + hash).
+- Each shroom sandbox has NO access to other sandboxes or the control plane DB directly.
+- All shroom actions are written to the append-only audit log before execution.
+- Prompt injection defence: external data is always tagged as untrusted in shroom context.
 
 ---
 
@@ -176,16 +176,16 @@ Every PR must include:
 
 ## Current MVP scope
 
-Five mock agents simulating a digital agency:
-- `sales-agent` — finds lead, drafts proposal, escalates for approval
-- `delivery-agent` — tracks project, flags delay, escalates
-- `billing-agent` — detects overdue invoice, proposes chase email
-- `compliance-agent` — flags contract renewal
-- `ceo-agent` — receives escalations, routes decisions, escalates to human
+Five mock shrooms simulating a digital agency:
+- `sales-shroom` — finds lead, drafts proposal, escalates for approval
+- `delivery-shroom` — tracks project, flags delay, escalates
+- `billing-shroom` — detects overdue invoice, proposes chase email
+- `compliance-shroom` — flags contract renewal
+- `ceo-shroom` — receives escalations, routes decisions, escalates to human
 
 The human owner receives one real proposal to approve. That interaction is the MVP demo.
 
-Mock agents emit real events to the real NATS bus. The visual office does not know they are mocks.
+Mock shrooms emit real events to the real NATS bus. The visual office does not know they are mocks.
 
 ---
 
