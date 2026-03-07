@@ -12,6 +12,7 @@ function getInitials(displayName: string): string {
 }
 
 const EVENT_ICONS: Record<ShroomEventType, string> = {
+  message_received: "✉",
   message_sent: "✉",
   task_started: "▶",
   task_completed: "✓",

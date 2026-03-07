@@ -1,4 +1,5 @@
 export type ShroomEventType =
+  | "message_received"
   | "message_sent"
   | "task_started"
   | "task_completed"
