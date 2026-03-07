@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import time
+import uuid
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 
@@ -14,7 +16,37 @@ router = APIRouter()
 
 MAX_WS_CONNECTIONS = 100
 RELAY_QUEUE_MAX = 4096
-WS_AUTH_TOKEN = os.getenv("WS_AUTH_TOKEN")
+TICKET_TTL_SECONDS = 30
+ALLOW_INSECURE_WS = os.getenv("ALLOW_INSECURE_WS", "false").lower() == "true"
+
+
+class TicketStore:
+    def __init__(self, ttl: int = TICKET_TTL_SECONDS) -> None:
+        self._tickets: dict[str, float] = {}
+        self._ttl = ttl
+
+    def issue(self) -> tuple[str, float]:
+        self._prune()
+        ticket = uuid.uuid4().hex
+        expires_at = time.time() + self._ttl
+        self._tickets[ticket] = expires_at
+        return ticket, expires_at
+
+    def consume(self, ticket: str) -> bool:
+        self._prune()
+        expires_at = self._tickets.pop(ticket, None)
+        if expires_at is None:
+            return False
+        return time.time() < expires_at
+
+    def _prune(self) -> None:
+        now = time.time()
+        expired = [k for k, v in self._tickets.items() if v < now]
+        for k in expired:
+            del self._tickets[k]
+
+
+ticket_store = TicketStore()
 
 
 class ConnectionManager:
@@ -104,16 +136,24 @@ async def stop_relay() -> None:
         _relay_task = None
 
 
-def _check_ws_token(ws: WebSocket) -> bool:
-    if not WS_AUTH_TOKEN:
+@router.post("/ws/ticket")
+async def issue_ticket():
+    ticket, expires_at = ticket_store.issue()
+    return {"ticket": ticket, "expires_at": expires_at}
+
+
+def _authorize_ws(ws: WebSocket) -> bool:
+    if ALLOW_INSECURE_WS:
         return True
-    token = ws.query_params.get("token")
-    return token == WS_AUTH_TOKEN
+    ticket = ws.query_params.get("ticket")
+    if not ticket:
+        return False
+    return ticket_store.consume(ticket)
 
 
 @router.websocket("/ws/events")
 async def ws_events(ws: WebSocket) -> None:
-    if not _check_ws_token(ws):
+    if not _authorize_ws(ws):
         await ws.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     accepted = await manager.accept(ws)
