@@ -49,6 +49,40 @@ Why this exists. 1-2 sentences.
 - Any security considerations
 ```
 
+## Creating the Ticket in Linear
+
+After refinement, create the ticket using the Linear MCP:
+
+```
+server: plugin-linear-linear
+tool: save_issue
+args: {
+  title: "<ticket title>",
+  team: "Mycellium-os",
+  project: "Mycelium OS — MVP",
+  priority: <1=Urgent, 2=High, 3=Medium, 4=Low>,
+  labels: ["Feature" | "Bug" | "Chore"],
+  description: "<full ticket description in markdown>",
+  blockedBy: ["MYC-XX"]  // if dependencies exist
+}
+```
+
+## Auto-Delegation
+
+After creating the ticket, check if it should start immediately:
+
+1. Read `docs/project-state/BACKLOG.md` — is there a ticket currently In Progress?
+2. If NO ticket is In Progress AND this ticket has no unresolved blockers:
+   - Set it as active immediately:
+     ```
+     save_issue args: { id: "<ticket id>", state: "In Progress", delegate: "Cursor", assignee: "me" }
+     ```
+   - Tell the user: "Ticket created and assigned to Cursor. Implementation will start automatically."
+3. If another ticket IS In Progress:
+   - Leave it in Backlog
+   - Tell the user: "Ticket created in Backlog. It will be picked up after the current ticket completes."
+4. Always update `docs/project-state/BACKLOG.md` to include the new ticket in the correct position.
+
 ## Rules
 
 - Never assume answers to open questions — flag them explicitly
