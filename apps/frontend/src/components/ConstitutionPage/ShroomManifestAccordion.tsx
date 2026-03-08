@@ -23,7 +23,9 @@ function PermissionList({
       </span>
       <ul className="mt-1 space-y-1">
         {items.map((entry, i) => {
-          const [action, resources] = Object.entries(entry)[0];
+          const [first] = Object.entries(entry);
+          if (!first) return null;
+          const [action, resources] = first;
           return (
             <li key={`${action}-${i}`} className="text-sm text-neutral-300">
               <span className="font-medium text-white">{action}</span>:{" "}

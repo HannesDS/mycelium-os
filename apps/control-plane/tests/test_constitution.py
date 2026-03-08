@@ -129,3 +129,16 @@ def test_constitution_no_config_returns_503(controller, _db_session_factory):
     c = TestClient(app, raise_server_exceptions=False)
     resp = c.get("/constitution")
     assert resp.status_code == 503
+
+
+def test_constitution_missing_controller_returns_503(mycelium_config, _db_session_factory):
+    from main import app
+    if hasattr(app.state, "controller"):
+        del app.state.controller
+    app.state.mycelium_config = mycelium_config
+    app.state.db_session_factory = _db_session_factory
+    app.state.nats_bus = NatsEventBus()
+    c = TestClient(app, raise_server_exceptions=False)
+    resp = c.get("/constitution")
+    assert resp.status_code == 503
+    assert resp.json()["detail"] == "Control plane not initialized"

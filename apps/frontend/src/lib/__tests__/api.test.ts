@@ -140,7 +140,7 @@ describe("fetchConstitution", () => {
     });
 
     await expect(fetchConstitution()).rejects.toThrow(
-      "Failed to fetch constitution: 503"
+      "Failed to fetch constitution: 503 Service Unavailable"
     );
   });
 });

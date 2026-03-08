@@ -70,7 +70,7 @@ def get_constitution(request: Request):
     controller = _get_controller(request)
 
     shrooms = []
-    for shroom_id, manifest in controller.manifests.items():
+    for shroom_id, manifest in sorted(controller.manifests.items()):
         shrooms.append(
             ShroomConstitutionEntry(
                 id=shroom_id,
