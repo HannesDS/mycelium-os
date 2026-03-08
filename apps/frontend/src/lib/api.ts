@@ -69,3 +69,41 @@ export async function fetchConstitution(): Promise<ConstitutionData> {
   }
   return res.json();
 }
+
+export interface ShroomMessageResponse {
+  shroom_id: string;
+  response: string;
+}
+
+export async function sendMessage(
+  shroomId: string,
+  message: string,
+): Promise<ShroomMessageResponse> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/shrooms/${encodeURIComponent(shroomId)}/message`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+        signal: controller.signal,
+      },
+    );
+    if (!res.ok) {
+      throw new Error(
+        `Failed to send message to ${shroomId}: ${res.status} ${res.statusText}`,
+      );
+    }
+    return res.json();
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("Shroom is taking too long to respond. Try again.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
