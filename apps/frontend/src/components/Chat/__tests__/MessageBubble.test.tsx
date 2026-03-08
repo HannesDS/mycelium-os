@@ -27,7 +27,7 @@ describe("MessageBubble", () => {
 
   it("renders timestamp", () => {
     render(<MessageBubble message={humanMsg} />);
-    expect(screen.getByRole("time")).toBeInTheDocument();
+    expect(screen.getByTestId("message-timestamp")).toBeInTheDocument();
   });
 
   it("aligns human messages to the right", () => {

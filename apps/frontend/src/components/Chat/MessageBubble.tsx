@@ -21,6 +21,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       >
         <p className="whitespace-pre-wrap break-words">{message.text}</p>
         <time
+          data-testid="message-timestamp"
           className={`block mt-1 text-[10px] ${
             isHuman ? "text-indigo-200/60" : "text-neutral-500"
           }`}

@@ -9,9 +9,8 @@ import { ShroomSelector, ChatThread } from "@/components/Chat";
 
 type ConversationMap = Record<string, ChatMessage[]>;
 
-let nextMsgId = 0;
 function msgId() {
-  return `msg-${++nextMsgId}`;
+  return `msg-${crypto.randomUUID()}`;
 }
 
 export default function ChatPage() {

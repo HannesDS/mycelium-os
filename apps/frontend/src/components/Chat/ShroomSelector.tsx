@@ -2,7 +2,7 @@
 
 import type { ShroomSummary } from "@/lib/api";
 
-const STATUS_DOT: Record<string, string> = {
+const STATUS_DOT: Partial<Record<ShroomSummary["status"], string>> = {
   running: "bg-emerald-400",
   stopped: "bg-neutral-500",
   error: "bg-red-400",
