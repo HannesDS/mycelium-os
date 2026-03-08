@@ -39,6 +39,37 @@ export async function fetchShroom(id: string): Promise<ShroomDetail> {
   return res.json();
 }
 
+export interface ShroomManifestDetail {
+  name: string;
+  model: string;
+  skills: string[];
+  escalates_to: string | null;
+  sla_response_minutes: number | null;
+  can: Record<string, string[]>[];
+  cannot: Record<string, string[]>[];
+  mcps: string[];
+}
+
+export interface GraphEdge {
+  from: string;
+  to: string;
+  type: string;
+}
+
+export interface ConstitutionData {
+  company: { name: string; instance: string };
+  shrooms: { id: string; manifest: ShroomManifestDetail }[];
+  graph: { edges: GraphEdge[] };
+}
+
+export async function fetchConstitution(): Promise<ConstitutionData> {
+  const res = await fetch(`${API_BASE}/constitution`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch constitution: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
 export interface ShroomMessageResponse {
   shroom_id: string;
   response: string;
