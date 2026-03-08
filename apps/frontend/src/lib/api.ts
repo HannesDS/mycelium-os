@@ -98,3 +98,72 @@ export class ConflictError extends Error {
     this.name = "ConflictError";
   }
 }
+
+export interface ShroomManifestDetail {
+  name: string;
+  model: string;
+  skills: string[];
+  escalates_to: string | null;
+  sla_response_minutes: number | null;
+  can: Record<string, string[]>[];
+  cannot: Record<string, string[]>[];
+  mcps: string[];
+}
+
+export interface GraphEdge {
+  from: string;
+  to: string;
+  type: string;
+}
+
+export interface ConstitutionData {
+  company: { name: string; instance: string };
+  shrooms: { id: string; manifest: ShroomManifestDetail }[];
+  graph: { edges: GraphEdge[] };
+}
+
+export async function fetchConstitution(): Promise<ConstitutionData> {
+  const res = await fetch(`${API_BASE}/constitution`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch constitution: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export interface ShroomMessageResponse {
+  shroom_id: string;
+  response: string;
+}
+
+export async function sendMessage(
+  shroomId: string,
+  message: string,
+): Promise<ShroomMessageResponse> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/shrooms/${encodeURIComponent(shroomId)}/message`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+        signal: controller.signal,
+      },
+    );
+    if (!res.ok) {
+      throw new Error(
+        `Failed to send message to ${shroomId}: ${res.status} ${res.statusText}`,
+      );
+    }
+    return res.json();
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("Shroom is taking too long to respond. Try again.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+}

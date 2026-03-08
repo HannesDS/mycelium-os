@@ -14,6 +14,7 @@ from core.manifest import load_all_shroom_manifests
 from core.models import Approval
 from core.nats_client import NatsEventBus
 from routers.approvals import router as approvals_router
+from routers.constitution import router as constitution_router
 from routers.events import router as events_router, start_relay, stop_relay
 from routers.shrooms import router as shrooms_router
 
@@ -99,6 +100,9 @@ async def lifespan(app: FastAPI):
     config_path = _resolve_config_path()
     manifests = load_all_shroom_manifests(config_path)
 
+    from core.manifest import load_mycelium_config
+    app.state.mycelium_config = load_mycelium_config(config_path)
+
     controller = ShroomController()
     for manifest in manifests.values():
         controller.register(manifest)
@@ -137,6 +141,7 @@ app.add_middleware(
 )
 
 app.include_router(shrooms_router)
+app.include_router(constitution_router)
 app.include_router(events_router)
 app.include_router(approvals_router)
 
