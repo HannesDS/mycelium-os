@@ -57,7 +57,20 @@ All commands must pass with exit code 0. Do not proceed if any fail.
 
 After the PR is created, execute these steps to keep the pipeline moving:
 
-### Step 1: Request Copilot code review
+### Step 1: Link the PR to the Linear ticket
+
+Use the Linear MCP `save_issue` tool to attach the PR URL:
+
+```
+server: plugin-linear-linear
+tool: save_issue
+args: {
+  id: "<ticket identifier, e.g. MYC-33>",
+  links: [{ url: "<PR URL>", title: "PR #<number>" }]
+}
+```
+
+### Step 2: Request Copilot code review
 
 Use the GitHub MCP `request_copilot_review` tool:
 
@@ -67,17 +80,10 @@ tool: request_copilot_review
 args: { owner: "HannesDS", repo: "mycelium-os", pullNumber: <PR number> }
 ```
 
-### Step 2: Mark the Linear ticket as Done
-
-Use the Linear MCP `save_issue` tool:
-
-```
-server: plugin-linear-linear
-tool: save_issue
-args: { id: "<ticket UUID>", state: "Done" }
-```
-
 ### Step 3: Chain to the next ticket
+
+Do NOT mark the current ticket as Done — the `next-ticket.yml` GitHub Action handles that
+automatically when the PR is merged. But DO set up the next ticket so the pipeline keeps moving:
 
 1. Read `docs/project-state/BACKLOG.md` — find the **V1 Sprint** table
 2. Identify the current ticket's position in the implementation order
