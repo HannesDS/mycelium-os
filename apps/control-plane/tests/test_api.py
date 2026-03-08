@@ -135,3 +135,130 @@ def test_message_agent_error_returns_502(client, controller):
 def test_message_unknown_shroom_returns_404(client):
     resp = client.post("/shrooms/nonexistent/message", json={"message": "hi"})
     assert resp.status_code == 404
+
+
+def test_message_model_not_found_returns_actionable_error(client, controller):
+    fake_agent = MagicMock()
+    fake_agent.run.side_effect = RuntimeError("model 'mistral:latest' not found")
+    controller.agents["alpha-shroom"] = fake_agent
+
+    with patch("routers.shrooms.find_first_available", return_value=None), \
+         patch("routers.shrooms.list_available_models", return_value=[]):
+        resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
+
+    assert resp.status_code == 502
+    detail = resp.json()["detail"]
+    assert "mistral:latest" in detail
+    assert "ollama pull" in detail
+    assert "Agent processing failed" not in detail
+
+
+def test_message_model_not_found_does_not_expose_model_inventory(client, controller):
+    fake_agent = MagicMock()
+    fake_agent.run.side_effect = RuntimeError("model 'mistral:latest' not found")
+    controller.agents["alpha-shroom"] = fake_agent
+
+    with patch("routers.shrooms.find_first_available", return_value=None), \
+         patch("routers.shrooms.list_available_models", return_value=["llama3.2:latest", "phi3:latest"]):
+        resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
+
+    assert resp.status_code == 502
+    detail = resp.json()["detail"]
+    assert "ollama pull" in detail
+    assert "llama3.2:latest" not in detail
+    assert "phi3:latest" not in detail
+
+
+def test_message_model_not_found_fallback_succeeds(client, controller):
+    fake_agent = MagicMock()
+    fake_agent.run.side_effect = RuntimeError("model 'mistral:latest' not found")
+    controller.agents["alpha-shroom"] = fake_agent
+
+    fallback_agent = MagicMock()
+    fallback_agent.run.return_value = SimpleNamespace(content="hello from fallback")
+
+    mock_temp = MagicMock(return_value=fallback_agent)
+    with patch("routers.shrooms.find_first_available", return_value="llama3.2:latest"), \
+         patch.object(controller, "create_temp_agent", mock_temp):
+        resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["response"] == "hello from fallback"
+    mock_temp.assert_called_once_with("alpha-shroom", "llama3.2:latest")
+
+
+def test_message_model_not_found_fallback_also_fails(client, controller):
+    fake_agent = MagicMock()
+    fake_agent.run.side_effect = RuntimeError("model 'mistral:latest' not found")
+    controller.agents["alpha-shroom"] = fake_agent
+
+    fallback_agent = MagicMock()
+    fallback_agent.run.side_effect = RuntimeError("fallback also broken")
+
+    with patch("routers.shrooms.find_first_available", return_value="llama3.2:latest"), \
+         patch.object(controller, "create_temp_agent", return_value=fallback_agent), \
+         patch("routers.shrooms.list_available_models", return_value=["llama3.2:latest"]):
+        resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
+
+    assert resp.status_code == 502
+    detail = resp.json()["detail"]
+    assert "mistral:latest" in detail
+    assert "ollama pull" in detail
+
+
+def test_message_generic_error_not_treated_as_model_error(client, controller):
+    fake_agent = MagicMock()
+    fake_agent.run.side_effect = RuntimeError("connection refused")
+    controller.agents["alpha-shroom"] = fake_agent
+
+    resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
+    assert resp.status_code == 502
+    assert resp.json()["detail"] == "Agent processing failed"
+
+
+def test_message_ollama_error_in_content_triggers_fallback(client, controller):
+    raw_error = "Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible."
+    fake_agent = MagicMock()
+    fake_agent.run.return_value = SimpleNamespace(content=raw_error)
+    controller.agents["alpha-shroom"] = fake_agent
+
+    with patch("routers.shrooms.find_first_available", return_value=None), \
+         patch("routers.shrooms.list_available_models", return_value=[]):
+        resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
+
+    assert resp.status_code == 502
+    detail = resp.json()["detail"]
+    assert "ollama pull" in detail
+    assert raw_error not in detail
+
+
+def test_message_ollama_content_error_fallback_succeeds(client, controller):
+    fake_agent = MagicMock()
+    fake_agent.run.return_value = SimpleNamespace(
+        content="Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible."
+    )
+    controller.agents["alpha-shroom"] = fake_agent
+
+    fallback_agent = MagicMock()
+    fallback_agent.run.return_value = SimpleNamespace(content="fallback reply")
+
+    mock_temp = MagicMock(return_value=fallback_agent)
+    with patch("routers.shrooms.find_first_available", return_value="llama3.2:latest"), \
+         patch.object(controller, "create_temp_agent", mock_temp):
+        resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
+
+    assert resp.status_code == 200
+    assert resp.json()["response"] == "fallback reply"
+
+
+def test_generic_not_found_in_content_not_treated_as_ollama_error(client, controller):
+    fake_agent = MagicMock()
+    fake_agent.run.return_value = SimpleNamespace(
+        content="The file was not found in the repository."
+    )
+    controller.agents["alpha-shroom"] = fake_agent
+
+    resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
+    assert resp.status_code == 200
+    assert resp.json()["response"] == "The file was not found in the repository."

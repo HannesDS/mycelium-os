@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 
 from agno.agent import Agent
@@ -7,12 +8,23 @@ from agno.models.ollama import Ollama
 
 from core.manifest import ShroomManifest
 
+logger = logging.getLogger(__name__)
+
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 
 MODEL_MAP = {
     "mistral-7b": "mistral:latest",
     "mistral:latest": "mistral:latest",
 }
+
+FALLBACK_MODELS = [
+    "llama3.2:latest",
+    "llama3.1:latest",
+    "llama3:latest",
+    "phi3:latest",
+    "gemma:latest",
+    "mistral:latest",
+]
 
 
 def _build_system_prompt(manifest: ShroomManifest) -> str:
@@ -26,14 +38,18 @@ def _build_system_prompt(manifest: ShroomManifest) -> str:
     )
 
 
-def create_agent(manifest: ShroomManifest) -> Agent:
-    model_id = MODEL_MAP.get(manifest.spec.model, manifest.spec.model)
+def _create_agent_with_model(manifest: ShroomManifest, model_id: str) -> Agent:
     return Agent(
         name=manifest.metadata.id,
         model=Ollama(id=model_id, host=OLLAMA_HOST),
         instructions=[_build_system_prompt(manifest)],
         markdown=True,
     )
+
+
+def create_agent(manifest: ShroomManifest) -> Agent:
+    model_id = MODEL_MAP.get(manifest.spec.model, manifest.spec.model)
+    return _create_agent_with_model(manifest, model_id)
 
 
 class ShroomController:
@@ -47,6 +63,18 @@ class ShroomController:
 
     def get_agent(self, shroom_id: str) -> Agent | None:
         return self.agents.get(shroom_id)
+
+    def get_resolved_model(self, shroom_id: str) -> str | None:
+        m = self.manifests.get(shroom_id)
+        if not m:
+            return None
+        return MODEL_MAP.get(m.spec.model, m.spec.model)
+
+    def create_temp_agent(self, shroom_id: str, model_id: str) -> Agent | None:
+        manifest = self.manifests.get(shroom_id)
+        if not manifest:
+            return None
+        return _create_agent_with_model(manifest, model_id)
 
     def list_shrooms(self) -> list[dict]:
         return [
