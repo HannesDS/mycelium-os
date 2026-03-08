@@ -176,15 +176,33 @@ describe("sendMessage", () => {
     );
   });
 
-  it("throws on non-ok response", async () => {
+  it("throws with backend detail on non-ok response", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      status: 502,
+      statusText: "Bad Gateway",
+      json: () =>
+        Promise.resolve({
+          detail:
+            "Model 'mistral:latest' is not available in Ollama. Run `ollama pull mistral` to enable this shroom.",
+        }),
+    });
+
+    await expect(sendMessage("ceo-shroom", "hi")).rejects.toThrow(
+      "Model 'mistral:latest' is not available in Ollama",
+    );
+  });
+
+  it("falls back to status text when body has no detail", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
+      json: () => Promise.reject(new Error("not json")),
     });
 
     await expect(sendMessage("ceo-shroom", "hi")).rejects.toThrow(
-      "Failed to send message to ceo-shroom: 500",
+      "500 Internal Server Error",
     );
   });
 

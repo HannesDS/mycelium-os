@@ -153,9 +153,14 @@ export async function sendMessage(
       },
     );
     if (!res.ok) {
-      throw new Error(
-        `Failed to send message to ${shroomId}: ${res.status} ${res.statusText}`,
-      );
+      let detail: string;
+      try {
+        const body = await res.json();
+        detail = body.detail || `${res.status} ${res.statusText}`;
+      } catch {
+        detail = `${res.status} ${res.statusText}`;
+      }
+      throw new Error(detail);
     }
     return res.json();
   } catch (err) {
