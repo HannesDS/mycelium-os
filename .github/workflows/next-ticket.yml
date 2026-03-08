@@ -1,0 +1,107 @@
+name: Next ticket
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  chain-next-ticket:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    env:
+      LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+      LINEAR_TEAM_ID: "46ebc4d0-dff6-4c78-bf80-34e31606428f"
+    steps:
+      - name: Extract ticket ID from PR title
+        id: extract
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          TICKET_ID=$(echo "$TITLE" | grep -oP 'MYC-\d+' | head -1)
+          if [ -z "$TICKET_ID" ]; then
+            echo "No MYC-XX found in PR title, skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ticket=$TICKET_ID" >> "$GITHUB_OUTPUT"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Mark ticket as Done
+        if: steps.extract.outputs.skip == 'false'
+        run: |
+          TICKET="${{ steps.extract.outputs.ticket }}"
+          echo "Marking $TICKET as Done..."
+
+          # Find the issue by identifier
+          ISSUE_ID=$(curl -s -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -d "{\"query\": \"{ issues(filter: { team: { id: { eq: \\\"$LINEAR_TEAM_ID\\\" } }, number: { eq: ${TICKET#MYC-} } }) { nodes { id identifier } } }\"}" \
+            | jq -r '.data.issues.nodes[0].id')
+
+          if [ "$ISSUE_ID" = "null" ] || [ -z "$ISSUE_ID" ]; then
+            echo "Could not find issue $TICKET"
+            exit 0
+          fi
+
+          # Get the Done state ID
+          DONE_STATE_ID=$(curl -s -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -d "{\"query\": \"{ workflowStates(filter: { team: { id: { eq: \\\"$LINEAR_TEAM_ID\\\" } }, type: { eq: \\\"completed\\\" } }) { nodes { id name } } }\"}" \
+            | jq -r '.data.workflowStates.nodes[0].id')
+
+          # Update issue to Done
+          curl -s -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -d "{\"query\": \"mutation { issueUpdate(id: \\\"$ISSUE_ID\\\", input: { stateId: \\\"$DONE_STATE_ID\\\" }) { success } }\"}"
+
+          echo "Marked $TICKET as Done"
+
+      - name: Find and assign next ticket
+        if: steps.extract.outputs.skip == 'false'
+        run: |
+          echo "Finding next Backlog ticket..."
+
+          # Get the In Progress state ID
+          IN_PROGRESS_STATE_ID=$(curl -s -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -d "{\"query\": \"{ workflowStates(filter: { team: { id: { eq: \\\"$LINEAR_TEAM_ID\\\" } }, type: { eq: \\\"started\\\" } }) { nodes { id name } } }\"}" \
+            | jq -r '.data.workflowStates.nodes[0].id')
+
+          # Find highest-priority Backlog ticket
+          NEXT_ISSUE=$(curl -s -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -d "{\"query\": \"{ issues(filter: { team: { id: { eq: \\\"$LINEAR_TEAM_ID\\\" } }, state: { type: { eq: \\\"backlog\\\" } } }, orderBy: updatedAt, first: 10) { nodes { id identifier title priority } } }\"}" \
+            | jq -r '[.data.issues.nodes[] | select(.priority >= 1)] | sort_by(.priority) | .[0]')
+
+          NEXT_ID=$(echo "$NEXT_ISSUE" | jq -r '.id')
+          NEXT_IDENTIFIER=$(echo "$NEXT_ISSUE" | jq -r '.identifier')
+
+          if [ "$NEXT_ID" = "null" ] || [ -z "$NEXT_ID" ]; then
+            echo "No more Backlog tickets to assign"
+            exit 0
+          fi
+
+          echo "Assigning $NEXT_IDENTIFIER to Cursor..."
+
+          # Get the Cursor bot user ID
+          CURSOR_ID=$(curl -s -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -d '{"query": "{ users(filter: { name: { eq: \"Cursor\" } }) { nodes { id name } } }"}' \
+            | jq -r '.data.users.nodes[0].id // empty')
+
+          # Set ticket to In Progress + delegate to Cursor
+          MUTATION="mutation { issueUpdate(id: \"$NEXT_ID\", input: { stateId: \"$IN_PROGRESS_STATE_ID\" }) { success } }"
+          curl -s -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -d "{\"query\": \"$MUTATION\"}"
+
+          echo "Assigned $NEXT_IDENTIFIER as next ticket (In Progress)"
