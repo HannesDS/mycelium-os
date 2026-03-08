@@ -72,14 +72,13 @@ def get_shroom(shroom_id: str, controller: ShroomController = Depends(get_contro
 def _build_model_error_detail(controller: ShroomController, shroom_id: str) -> str:
     configured = controller.get_resolved_model(shroom_id) or "unknown"
     model_base = configured.split(":")[0]
-    detail = (
+    available = list_available_models(OLLAMA_HOST)
+    if available:
+        logger.info("Available Ollama models: %s", ", ".join(available))
+    return (
         f"Model '{configured}' is not available in Ollama. "
         f"Run `ollama pull {model_base}` to enable this shroom."
     )
-    available = list_available_models(OLLAMA_HOST)
-    if available:
-        detail += f" Available models: {', '.join(available)}"
-    return detail
 
 
 def _try_fallback(
@@ -91,7 +90,7 @@ def _try_fallback(
     configured = controller.get_resolved_model(shroom_id)
     if fallback == configured:
         return None
-    agent = controller.rebuild_agent(shroom_id, fallback)
+    agent = controller.create_temp_agent(shroom_id, fallback)
     if not agent:
         return None
     try:
@@ -99,7 +98,9 @@ def _try_fallback(
         logger.info("Fallback model '%s' succeeded for shroom '%s'", fallback, shroom_id)
         return run_response.content or "No response generated."
     except Exception:
-        logger.warning("Fallback model '%s' also failed for shroom '%s'", fallback, shroom_id)
+        logger.warning(
+            "Fallback model '%s' also failed for shroom '%s'", fallback, shroom_id, exc_info=True,
+        )
         return None
 
 

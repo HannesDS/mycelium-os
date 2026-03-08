@@ -70,14 +70,11 @@ class ShroomController:
             return None
         return MODEL_MAP.get(m.spec.model, m.spec.model)
 
-    def rebuild_agent(self, shroom_id: str, model_id: str) -> Agent | None:
+    def create_temp_agent(self, shroom_id: str, model_id: str) -> Agent | None:
         manifest = self.manifests.get(shroom_id)
         if not manifest:
             return None
-        agent = _create_agent_with_model(manifest, model_id)
-        self.agents[shroom_id] = agent
-        logger.info("Rebuilt agent for '%s' with model '%s'", shroom_id, model_id)
-        return agent
+        return _create_agent_with_model(manifest, model_id)
 
     def list_shrooms(self) -> list[dict]:
         return [

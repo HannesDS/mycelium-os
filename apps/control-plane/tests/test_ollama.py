@@ -5,7 +5,12 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from core.ollama import list_available_models, find_first_available, looks_like_ollama_error
+from core.ollama import (
+    find_first_available,
+    is_model_not_found_error,
+    list_available_models,
+    looks_like_ollama_error,
+)
 
 
 class TestListAvailableModels:
@@ -81,17 +86,31 @@ class TestFindFirstAvailable:
         assert result is None
 
 
-class TestLooksLikeOllamaError:
-    def test_detects_model_not_found(self):
-        assert looks_like_ollama_error("model 'mistral:latest' not found") is True
+class TestIsModelNotFoundError:
+    def test_matches_ollama_model_not_found(self):
+        assert is_model_not_found_error(RuntimeError("model 'mistral:latest' not found")) is True
 
+    def test_does_not_match_generic_not_found(self):
+        assert is_model_not_found_error(RuntimeError("resource not found")) is False
+
+    def test_does_not_match_generic_error(self):
+        assert is_model_not_found_error(RuntimeError("connection refused")) is False
+
+
+class TestLooksLikeOllamaError:
     def test_detects_connection_failure(self):
         assert looks_like_ollama_error(
-            "Failed to connect to Ollama. Please check that Ollama is downloaded."
+            "Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible."
         ) is True
 
     def test_detects_not_running(self):
         assert looks_like_ollama_error("Ollama is not running") is True
+
+    def test_does_not_flag_generic_not_found_in_content(self):
+        assert looks_like_ollama_error("The file was not found in the repo.") is False
+
+    def test_does_not_flag_model_not_found_in_content(self):
+        assert looks_like_ollama_error("model 'mistral:latest' not found") is False
 
     def test_normal_response_not_flagged(self):
         assert looks_like_ollama_error("I am the CEO shroom. How can I help?") is False

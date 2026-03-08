@@ -160,7 +160,7 @@ export async function sendMessage(
       } catch {
         detail = `${res.status} ${res.statusText}`;
       }
-      throw new Error(detail);
+      throw new Error(`Failed to send message to ${shroomId}: ${detail}`);
     }
     return res.json();
   } catch (err) {

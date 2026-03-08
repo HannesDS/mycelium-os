@@ -176,7 +176,7 @@ describe("sendMessage", () => {
     );
   });
 
-  it("throws with backend detail on non-ok response", async () => {
+  it("throws with backend detail and shroom context on non-ok response", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: false,
       status: 502,
@@ -189,11 +189,11 @@ describe("sendMessage", () => {
     });
 
     await expect(sendMessage("ceo-shroom", "hi")).rejects.toThrow(
-      "Model 'mistral:latest' is not available in Ollama",
+      "Failed to send message to ceo-shroom: Model 'mistral:latest' is not available",
     );
   });
 
-  it("falls back to status text when body has no detail", async () => {
+  it("falls back to status text when body is not json", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: false,
       status: 500,
@@ -202,7 +202,20 @@ describe("sendMessage", () => {
     });
 
     await expect(sendMessage("ceo-shroom", "hi")).rejects.toThrow(
-      "500 Internal Server Error",
+      "Failed to send message to ceo-shroom: 500 Internal Server Error",
+    );
+  });
+
+  it("falls back to status text when body JSON has no detail field", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      json: () => Promise.resolve({}),
+    });
+
+    await expect(sendMessage("ceo-shroom", "hi")).rejects.toThrow(
+      "Failed to send message to ceo-shroom: 500 Internal Server Error",
     );
   });
 

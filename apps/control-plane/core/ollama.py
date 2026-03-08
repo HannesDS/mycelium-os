@@ -32,14 +32,20 @@ def find_first_available(host: str, candidates: list[str]) -> str | None:
     return available[0]
 
 
-_ERROR_PATTERNS = ["not found", "failed to connect to ollama", "ollama is not running"]
+_EXCEPTION_PATTERNS = ["model", "not found"]
+
+_CONTENT_PATTERNS = [
+    "failed to connect to ollama",
+    "ollama is not running",
+    "ollama is downloaded, running and accessible",
+]
 
 
 def is_model_not_found_error(exc: Exception) -> bool:
     msg = str(exc).lower()
-    return "not found" in msg
+    return all(p in msg for p in _EXCEPTION_PATTERNS)
 
 
 def looks_like_ollama_error(text: str) -> bool:
     lower = text.lower()
-    return any(p in lower for p in _ERROR_PATTERNS)
+    return any(p in lower for p in _CONTENT_PATTERNS)
