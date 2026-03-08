@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timezone
+from enum import Enum
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict
@@ -15,6 +16,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/approvals", tags=["approvals"])
 
 
+class ApprovalStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
 class ApprovalResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -23,7 +30,7 @@ class ApprovalResponse(BaseModel):
     event_type: str
     summary: str
     payload: dict | None
-    status: str
+    status: ApprovalStatus
     created_at: datetime
     resolved_at: datetime | None
     resolved_by: str | None
@@ -42,12 +49,12 @@ def get_db(request: Request):
 
 @router.get("", response_model=list[ApprovalResponse], summary="List proposals")
 def list_approvals(
-    status: str | None = Query(None, description="Filter by status: pending, approved, rejected"),
+    status: ApprovalStatus | None = Query(None, description="Filter by status: pending, approved, rejected"),
     db: Session = Depends(get_db),
 ):
     query = db.query(Approval)
-    if status:
-        query = query.filter(Approval.status == status)
+    if status is not None:
+        query = query.filter(Approval.status == status.value)
     query = query.order_by(Approval.created_at.desc())
     return query.all()
 

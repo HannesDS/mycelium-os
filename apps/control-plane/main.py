@@ -72,9 +72,10 @@ def _seed_approvals(session_factory) -> None:
             logger.info("Seeded %d demo approvals", len(SEED_APPROVALS))
         else:
             logger.info("Approvals table already has %d rows, skipping seed", count)
-    except Exception:
+    except Exception as e:
         session.rollback()
-        logger.warning("Could not seed approvals (table may not exist yet)")
+        logger.error("Failed to seed approvals: %s", e)
+        raise
     finally:
         session.close()
 
@@ -130,7 +131,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

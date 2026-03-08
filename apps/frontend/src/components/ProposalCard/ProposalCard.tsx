@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Check, X, ChevronDown, ChevronUp, Clock, AlertCircle } from "lucide-react";
 import type { ApprovalItem } from "@/lib/api";
 
-const STATUS_STYLES: Record<string, string> = {
+const STATUS_STYLES: Record<ApprovalItem["status"], string> = {
   pending: "bg-amber-500/20 text-amber-400",
   approved: "bg-emerald-500/20 text-emerald-400",
   rejected: "bg-red-500/20 text-red-400",
@@ -70,7 +70,7 @@ export function ProposalCard({ approval, onApprove, onReject }: ProposalCardProp
               </span>
               <span
                 className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-                  STATUS_STYLES[approval.status] ?? STATUS_STYLES.pending
+                  STATUS_STYLES[approval.status]
                 }`}
               >
                 {approval.status}
