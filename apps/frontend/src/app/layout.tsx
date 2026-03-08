@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Sidebar } from "@/components/Sidebar";
 
 export const metadata: Metadata = {
   title: "Mycelium OS — Zenik",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased flex h-screen overflow-hidden">
+        <Sidebar />
+        <main className="flex-1 overflow-auto">{children}</main>
+      </body>
     </html>
   );
 }
