@@ -23,6 +23,18 @@ export interface ShroomDetail {
   status: string;
 }
 
+export interface ApprovalItem {
+  id: string;
+  shroom_id: string;
+  event_type: string;
+  summary: string;
+  payload: Record<string, unknown> | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  resolved_at: string | null;
+  resolved_by: string | null;
+}
+
 export async function fetchShrooms(): Promise<ShroomSummary[]> {
   const res = await fetch(`${API_BASE}/shrooms`);
   if (!res.ok) {
@@ -37,4 +49,52 @@ export async function fetchShroom(id: string): Promise<ShroomDetail> {
     throw new Error(`Failed to fetch shroom ${id}: ${res.status} ${res.statusText}`);
   }
   return res.json();
+}
+
+export async function fetchApprovals(
+  status?: string,
+): Promise<ApprovalItem[]> {
+  const params = status ? `?status=${encodeURIComponent(status)}` : "";
+  const res = await fetch(`${API_BASE}/approvals${params}`);
+  if (!res.ok) {
+    throw new Error(
+      `Failed to fetch approvals: ${res.status} ${res.statusText}`,
+    );
+  }
+  return res.json();
+}
+
+export async function approveProposal(id: string): Promise<ApprovalItem> {
+  const res = await fetch(`${API_BASE}/approvals/${id}/approve`, {
+    method: "POST",
+  });
+  if (res.status === 409) {
+    const body = await res.json();
+    throw new ConflictError(body.detail);
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to approve: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function rejectProposal(id: string): Promise<ApprovalItem> {
+  const res = await fetch(`${API_BASE}/approvals/${id}/reject`, {
+    method: "POST",
+  });
+  if (res.status === 409) {
+    const body = await res.json();
+    throw new ConflictError(body.detail);
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to reject: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export class ConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConflictError";
+  }
 }

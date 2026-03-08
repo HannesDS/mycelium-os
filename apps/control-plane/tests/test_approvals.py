@@ -1,0 +1,211 @@
+from __future__ import annotations
+
+import uuid
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from core.database import Base
+from core.models import Approval, AuditLog
+import core.models  # noqa: F401
+
+
+@pytest.fixture()
+def db_session_factory():
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+
+    @event.listens_for(engine, "connect")
+    def _set_sqlite_pragma(dbapi_conn, _):
+        dbapi_conn.execute("PRAGMA foreign_keys=OFF")
+
+    Base.metadata.create_all(engine)
+    return sessionmaker(bind=engine)
+
+
+@pytest.fixture()
+def seeded_factory(db_session_factory):
+    session = db_session_factory()
+    session.add(Approval(
+        shroom_id="sales-shroom",
+        event_type="escalation_raised",
+        summary="Send proposal email to Acme Corp lead",
+        payload={"lead": "Acme Corp"},
+    ))
+    session.add(Approval(
+        shroom_id="billing-shroom",
+        event_type="escalation_raised",
+        summary="Send overdue invoice reminder to client X",
+        payload={"client": "Client X"},
+    ))
+    session.commit()
+    session.close()
+    return db_session_factory
+
+
+@pytest.fixture()
+def client(seeded_factory):
+    from main import app
+    from unittest.mock import MagicMock
+    from core.controller import ShroomController
+
+    app.state.controller = ShroomController()
+    app.state.db_session_factory = seeded_factory
+    app.state.nats_bus = MagicMock()
+    return TestClient(app, raise_server_exceptions=False)
+
+
+def test_list_approvals_returns_all(client):
+    resp = client.get("/approvals")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 2
+
+
+def test_list_approvals_filter_pending(client):
+    resp = client.get("/approvals?status=pending")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 2
+    for item in data:
+        assert item["status"] == "pending"
+
+
+def test_list_approvals_filter_approved_empty(client):
+    resp = client.get("/approvals?status=approved")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+def test_approve_proposal(client):
+    approvals = client.get("/approvals").json()
+    approval_id = approvals[0]["id"]
+
+    resp = client.post(f"/approvals/{approval_id}/approve")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "approved"
+    assert data["resolved_by"] == "human"
+    assert data["resolved_at"] is not None
+
+
+def test_reject_proposal(client):
+    approvals = client.get("/approvals").json()
+    approval_id = approvals[0]["id"]
+
+    resp = client.post(f"/approvals/{approval_id}/reject")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "rejected"
+    assert data["resolved_by"] == "human"
+    assert data["resolved_at"] is not None
+
+
+def test_duplicate_approve_returns_409(client):
+    approvals = client.get("/approvals").json()
+    approval_id = approvals[0]["id"]
+
+    resp1 = client.post(f"/approvals/{approval_id}/approve")
+    assert resp1.status_code == 200
+
+    resp2 = client.post(f"/approvals/{approval_id}/approve")
+    assert resp2.status_code == 409
+    assert "already approved" in resp2.json()["detail"]
+
+
+def test_reject_after_approve_returns_409(client):
+    approvals = client.get("/approvals").json()
+    approval_id = approvals[0]["id"]
+
+    client.post(f"/approvals/{approval_id}/approve")
+    resp = client.post(f"/approvals/{approval_id}/reject")
+    assert resp.status_code == 409
+
+
+def test_approve_after_reject_returns_409(client):
+    approvals = client.get("/approvals").json()
+    approval_id = approvals[0]["id"]
+
+    client.post(f"/approvals/{approval_id}/reject")
+    resp = client.post(f"/approvals/{approval_id}/approve")
+    assert resp.status_code == 409
+
+
+def test_approve_nonexistent_returns_404(client):
+    fake_id = str(uuid.uuid4())
+    resp = client.post(f"/approvals/{fake_id}/approve")
+    assert resp.status_code == 404
+
+
+def test_reject_nonexistent_returns_404(client):
+    fake_id = str(uuid.uuid4())
+    resp = client.post(f"/approvals/{fake_id}/reject")
+    assert resp.status_code == 404
+
+
+def test_approve_creates_audit_log(client, seeded_factory):
+    approvals = client.get("/approvals").json()
+    approval_id = approvals[0]["id"]
+
+    client.post(f"/approvals/{approval_id}/approve")
+
+    session = seeded_factory()
+    logs = session.query(AuditLog).filter(
+        AuditLog.entity_id == uuid.UUID(approval_id)
+    ).all()
+    session.close()
+
+    assert len(logs) == 1
+    assert logs[0].action == "approved"
+    assert logs[0].entity_type == "approval"
+    assert logs[0].actor == "human"
+
+
+def test_reject_creates_audit_log(client, seeded_factory):
+    approvals = client.get("/approvals").json()
+    approval_id = approvals[1]["id"]
+
+    client.post(f"/approvals/{approval_id}/reject")
+
+    session = seeded_factory()
+    logs = session.query(AuditLog).filter(
+        AuditLog.entity_id == uuid.UUID(approval_id)
+    ).all()
+    session.close()
+
+    assert len(logs) == 1
+    assert logs[0].action == "rejected"
+
+
+def test_approval_response_shape(client):
+    approvals = client.get("/approvals").json()
+    item = approvals[0]
+    assert "id" in item
+    assert "shroom_id" in item
+    assert "event_type" in item
+    assert "summary" in item
+    assert "payload" in item
+    assert "status" in item
+    assert "created_at" in item
+    assert "resolved_at" in item
+    assert "resolved_by" in item
+
+
+def test_filter_shows_resolved_after_action(client):
+    approvals = client.get("/approvals").json()
+    approval_id = approvals[0]["id"]
+
+    client.post(f"/approvals/{approval_id}/approve")
+
+    pending = client.get("/approvals?status=pending").json()
+    approved = client.get("/approvals?status=approved").json()
+
+    assert len(pending) == 1
+    assert len(approved) == 1
+    assert approved[0]["id"] == approval_id
