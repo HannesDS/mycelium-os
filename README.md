@@ -53,7 +53,9 @@ pnpm dev                        # Next.js dev server at :3000
 | NATS | localhost:4222 | Event bus (JetStream) |
 | MinIO | http://localhost:9001 | S3-compatible object storage |
 | Mailhog | http://localhost:8025 | Dev email inbox |
-| Ollama | localhost:11434 | Local LLM runtime |
+| Ollama | localhost:11435 (default host port) | Local LLM runtime |
+
+If `make up` fails with `bind: address already in use` on Ollama, set `OLLAMA_HOST_PORT` in `.env` to a free port and run `make up` again.
 
 ## Project structure
 
