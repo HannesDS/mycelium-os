@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Circle, Ellipse, Group, Line, Rect, Text } from "react-konva";
 import type { ZenikShroom } from "@/types/shroom-events";
-import { SHROOM_COLORS } from "@/types/shroom-colors";
+import { SHROOM_COLORS, type ShroomId } from "@/types/shroom-colors";
 
 interface ShroomNodeProps {
   shroom: ZenikShroom;
@@ -24,7 +24,7 @@ interface MushroomDesign {
   hasCrown: boolean;
 }
 
-const DESIGNS: Record<string, MushroomDesign> = {
+const DESIGNS: Record<ShroomId, MushroomDesign> = {
   "sales-shroom": {
     capRx: 14,
     capRy: 9,
@@ -82,6 +82,10 @@ const DESIGNS: Record<string, MushroomDesign> = {
   },
 };
 
+const LABEL_FONT_SIZE = 9;
+const LABEL_GAP = 4;
+const LABEL_ZONE = LABEL_GAP + LABEL_FONT_SIZE + 2;
+
 const DEFAULT_DESIGN: MushroomDesign = {
   capRx: 13,
   capRy: 9,
@@ -91,24 +95,32 @@ const DEFAULT_DESIGN: MushroomDesign = {
   hasCrown: false,
 };
 
-function lighten(hex: string, amount: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+function parseHex(hex: string): [number, number, number] | null {
+  if (!HEX_RE.test(hex)) return null;
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
+}
+
+function toHex(r: number, g: number, b: number): string {
   const c = (v: number) => Math.round(Math.max(0, Math.min(255, v)));
-  return `#${[c(r + (255 - r) * amount), c(g + (255 - g) * amount), c(b + (255 - b) * amount)]
-    .map((v) => v.toString(16).padStart(2, "0"))
-    .join("")}`;
+  return `#${[c(r), c(g), c(b)].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function lighten(hex: string, amount: number): string {
+  const rgb = parseHex(hex);
+  if (!rgb) return hex;
+  return toHex(rgb[0] + (255 - rgb[0]) * amount, rgb[1] + (255 - rgb[1]) * amount, rgb[2] + (255 - rgb[2]) * amount);
 }
 
 function darken(hex: string, amount: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const c = (v: number) => Math.round(Math.max(0, Math.min(255, v)));
-  return `#${[c(r * (1 - amount)), c(g * (1 - amount)), c(b * (1 - amount))]
-    .map((v) => v.toString(16).padStart(2, "0"))
-    .join("")}`;
+  const rgb = parseHex(hex);
+  if (!rgb) return hex;
+  return toHex(rgb[0] * (1 - amount), rgb[1] * (1 - amount), rgb[2] * (1 - amount));
 }
 
 function getCrownPoints(capRx: number, topY: number): number[] {
@@ -132,15 +144,16 @@ export function ShroomNode({ shroom, x, y, driftX, driftY, t, onClick }: ShroomN
   const cx = x + driftX;
   const cy = y + driftY;
   const seed = shroom.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const color = SHROOM_COLORS[shroom.id] ?? "#888888";
-  const design = DESIGNS[shroom.id] ?? DEFAULT_DESIGN;
+  const shroomId = shroom.id as ShroomId;
+  const color = SHROOM_COLORS[shroomId] ?? "#888888";
+  const design = DESIGNS[shroomId] ?? DEFAULT_DESIGN;
 
   const wobble = Math.sin(t * 0.002 + seed) * 1.5;
   const breathe = 1 + 0.025 * Math.sin(t * 0.003 + seed * 0.5);
 
   const totalH = design.capRy + design.stemH;
   const capCenterY = -(totalH / 2) + design.capRy;
-  const labelY = totalH / 2 + 4;
+  const labelY = totalH / 2 + LABEL_GAP;
 
   const stemColor = lighten(color, 0.75);
   const capStroke = darken(color, 0.3);
@@ -168,7 +181,7 @@ export function ShroomNode({ shroom, x, y, driftX, driftY, t, onClick }: ShroomN
         x={-design.capRx}
         y={-totalH / 2}
         width={design.capRx * 2}
-        height={totalH + 18}
+        height={totalH + LABEL_ZONE}
         fill="#000"
         opacity={0}
       />
@@ -220,7 +233,7 @@ export function ShroomNode({ shroom, x, y, driftX, driftY, t, onClick }: ShroomN
       )}
       <Text
         text={shroom.role}
-        fontSize={9}
+        fontSize={LABEL_FONT_SIZE}
         fontFamily="system-ui"
         fill="#999999"
         align="center"
