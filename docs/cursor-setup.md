@@ -28,14 +28,18 @@ Used automatically by the Orchestrator (Cursor) when implementing code.
 | `shroom-event-work` | Custom | ShroomEvent schema, NATS, audit log rules |
 | `pr-checklist` | Custom | Pre-PR verification (`/pr-checklist` to invoke manually) |
 
-### Management skills (story refinement)
+### Management skills (story refinement + OpenSpec)
 
-Used when refining ideas into Linear tickets.
+Used when refining ideas and implementing via OpenSpec.
 
 | Skill | Source | Purpose |
 |---|---|---|
-| `implement-ticket` | Custom | Step-by-step workflow for implementing a MYC-XX ticket |
-| `refine-story` | Custom | Turn rough ideas into well-specified Linear tickets |
+| `implement-ticket` | Custom | Implement MYC-XX via OpenSpec (create change from ticket, then apply) |
+| `refine-story` | Custom | Turn rough ideas into OpenSpec changes (+ optional Linear ticket) |
+| `openspec-propose` | OpenSpec | Create change with proposal, specs, design, tasks (`/opsx:propose`) |
+| `openspec-apply-change` | OpenSpec | Implement tasks from an OpenSpec change (`/opsx:apply`) |
+| `openspec-archive-change` | OpenSpec | Archive completed change (`/opsx:archive`) |
+| `openspec-explore` | OpenSpec | Think through ideas before proposing (`/opsx:explore`) |
 
 ### Adding more community skills
 

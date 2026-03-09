@@ -66,6 +66,10 @@ mycelium-os/
 │   └── control-plane/     # Python FastAPI — constitution engine, graph API, escalation
 ├── shrooms/               # Shroom sandbox definitions + mock shrooms (Python)
 ├── chart/                 # Helm chart — bundled stack (Postgres, Neo4j, NATS, MinIO)
+├── openspec/              # OpenSpec — spec-driven development
+│   ├── specs/             # Source of truth (system behaviour)
+│   ├── changes/           # Active changes (proposal, specs, design, tasks)
+│   └── config.yaml        # Project context for artifacts
 ├── docs/
 │   ├── adrs/              # Architecture Decision Records (ADR-001 through ADR-008+)
 │   ├── dev-flow/          # Development workflow docs
@@ -244,14 +248,18 @@ Next tickets to unblock product: MYC-20 (rename), MYC-17 (spike), MYC-21 → MYC
 
 The **Orchestrator** = Cursor (this IDE). It reads this file every session for project context.
 
-**Before implementing any ticket:**
+**Before implementing any change:**
 1. Read this file (CLAUDE.md)
-2. Read the Linear ticket (MYC-XX) — @ mention or paste AC
-3. If schema/API work: read `docs/design/SHROOM-EVENT-SCHEMA.md` and relevant ADRs
-4. If blocked by open questions: read `docs/project-state/OPEN-QUESTIONS.md` — do NOT assume
+2. Read the OpenSpec change (`openspec/changes/<name>/`) — proposal, specs, design, tasks
+3. If from Linear: read ticket (MYC-XX) for context; create OpenSpec change if none exists
+4. If schema/API work: read `docs/design/SHROOM-EVENT-SCHEMA.md` and relevant ADRs
+5. If blocked by open questions: read `docs/project-state/OPEN-QUESTIONS.md` — do NOT assume
+
+**Spec-driven workflow:** Use OpenSpec. `/opsx:propose` → `/opsx:apply` → `/opsx:archive`. See `docs/dev-flow/WORKFLOW.md`.
 
 **@ mention these for context:**
 - `@CLAUDE.md` — always
+- `@openspec/changes/<name>/` — the change being implemented
 - `@docs/project-state/BACKLOG.md` — for dependency order
 - `@docs/project-state/OPEN-QUESTIONS.md` — before MYC-22+
 - `@docs/design/SHROOM-EVENT-SCHEMA.md` — for event work
@@ -263,7 +271,7 @@ The **Orchestrator** = Cursor (this IDE). It reads this file every session for p
 
 ## Development workflow
 
-See `docs/dev-flow/WORKFLOW.md` for the full human + Orchestrator dev loop.
+See `docs/dev-flow/WORKFLOW.md` for the full human + Orchestrator dev loop. We use **OpenSpec** for spec-driven development: `/opsx:propose` → `/opsx:apply` → `/opsx:archive`.
 
 ## Open architecture questions
 
