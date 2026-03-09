@@ -1,0 +1,19 @@
+schema: spec-driven
+
+context: |
+  Mycelium OS: constitutional framework for AI-native organisations. Shrooms are the employees.
+  Tech: Next.js (frontend), Python FastAPI (control plane), Agno runtime, Neo4j, NATS, Postgres, MinIO.
+  Terminology: always "shroom" never "agent". See CLAUDE.md for full context.
+  Stack: TypeScript strict mode, Python + type hints + Pydantic, Storybook for components.
+  Security: shrooms propose, humans decide. Audit log before NATS emit. No direct DB from frontend.
+
+rules:
+  proposal:
+    - Reference Linear ticket (MYC-XX) if one exists
+    - Check docs/project-state/OPEN-QUESTIONS.md for TBDs that block this change
+  specs:
+    - Use Given/When/Then for scenarios
+    - Reference docs/design/SHROOM-EVENT-SCHEMA.md if touching events
+  design:
+    - Respect control plane vs data plane separation (CLAUDE.md)
+    - Reference relevant ADRs in docs/adrs/
