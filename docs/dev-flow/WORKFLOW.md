@@ -1,6 +1,6 @@
 # Mycelium OS — Development Workflow
 
-> How we build: the human + Orchestrator dev loop.
+> How we build: spec-driven with OpenSpec, human + Orchestrator dev loop.
 
 ---
 
@@ -17,21 +17,48 @@ The **Orchestrator** = Cursor. One tool for story refinement and implementation.
 ┌─────────────────────────────────────────────────────────────────┐
 │                    ORCHESTRATOR (Cursor)                         │
 │                                                                  │
-│  • Refines ideas into Linear tickets (chat)                      │
-│  • Implements to AC (code)                                       │
+│  • Refines ideas (chat)                                          │
+│  • Creates OpenSpec changes (/opsx:propose)                      │
+│  • Implements via OpenSpec (/opsx:apply)                         │
 │  • Opens PR with demo                                            │
 └───────┬─────────────────────────────────────────────────────────┘
         │ creates / reads
         ▼
-┌───────────────────┐
-│      LINEAR       │
-│   (MYC-XX)        │
+┌───────────────────┐     ┌───────────────────┐
+│   OPENSPEC        │     │      LINEAR       │
+│   changes/        │     │   (MYC-XX)        │
+│   proposal,       │     │   backlog only    │
+│   specs, design,  │     └───────────────────┘
+│   tasks           │
 └───────────────────┘
 ```
 
 **Orchestrator does NOT make product decisions.** If the ticket is ambiguous on something product-level, it opens a PR comment with a question, not a guess.
 
 **Orchestrator does NOT assume answers to open questions.** See `docs/project-state/OPEN-QUESTIONS.md` — flag TBD items explicitly.
+
+---
+
+## OpenSpec — Spec-Driven Development
+
+We use [OpenSpec](https://github.com/Fission-AI/OpenSpec) for spec-driven development. Every change gets:
+
+- `proposal.md` — why, what, scope
+- `specs/` — requirements (ADDED/MODIFIED/REMOVED)
+- `design.md` — technical approach
+- `tasks.md` — implementation checklist
+
+**Core workflow:**
+
+```
+/opsx:propose "add-shrooms-list-page"   →  creates change + all artifacts
+/opsx:apply                            →  implements tasks
+/opsx:archive                          →  merges specs, moves to archive
+```
+
+**Other commands:** `/opsx:explore` (think through ideas), `/opsx:list` (active changes)
+
+Requires: `npm install -g @fission-ai/openspec` then `openspec init` (already done). Refresh: `openspec update`.
 
 ---
 
@@ -50,25 +77,44 @@ The Orchestrator will challenge you on:
 - **Size** — S/M/L; if L, suggests splitting
 - **Open questions** — things it must NOT assume
 
-### Step 3 — Ticket confirmed and created in Linear
+### Step 3 — Create OpenSpec change
 
-Once the ticket is solid, create it in Linear (manually or via MCP).
+Run `/opsx:propose "kebab-case-change-name"` (or describe the idea; the Orchestrator derives the name).
 
-### Step 4 — Orchestrator implements the ticket
+This creates `openspec/changes/<name>/` with proposal, specs, design, tasks. **Agree before you build.**
 
-Reference the Linear ticket: `Implement MYC-XX`
+Optionally create a Linear ticket (MYC-XX) for backlog tracking. Link it in `proposal.md`.
 
-The Orchestrator reads the ticket, reads `CLAUDE.md`, and implements to the acceptance criteria.
+### Step 4 — Implement
 
-### Step 5 — PR review
+Run `/opsx:apply` (or specify the change name). The Orchestrator works through `tasks.md`, checking off as it goes.
 
-The Orchestrator opens a PR. The PR must include:
+If implementation reveals design issues: update the artifact, then continue. OpenSpec is fluid — no phase gates.
+
+### Step 5 — Archive and PR
+
+When all tasks are done: `/opsx:archive`. Specs merge into `openspec/specs/`, change moves to `archive/`.
+
+Open a PR. PR must include:
 1. Working demo (video, screenshot, or Cursor native demo)
 2. Updated docs if API/schema changed
 3. Tests for acceptance criteria
 4. No TODOs (use feature flags instead)
 
 Human reviews and merges.
+
+---
+
+## Linear + OpenSpec
+
+| Use case | Linear | OpenSpec |
+|---|---|---|
+| Backlog order, sprint planning | ✓ | — |
+| Implementation spec | — | ✓ |
+| Acceptance criteria | Optional (can mirror) | In specs + tasks |
+| Tracking "what's next" | ✓ | `openspec list` |
+
+**When picking up MYC-XX from backlog:** Create OpenSpec change from ticket content (or use existing `openspec/changes/<ticket-slug>/`), then `/opsx:apply`. The implement-ticket skill handles this.
 
 ---
 
@@ -79,8 +125,8 @@ Human reviews and merges.
 | Product direction, scope | Orchestrator chat | Human |
 | Architecture locked decisions | `docs/adrs/` | Human (ADR session) |
 | Open architecture questions | `docs/project-state/OPEN-QUESTIONS.md` | Human (before Orchestrator implements) |
-| Implementation details | Linear ticket, then PR | Orchestrator |
-| "How should I build this?" (not in ticket) | Orchestrator asks human via PR comment | Human |
+| Implementation spec | `openspec/changes/<name>/` | Orchestrator |
+| "How should I build this?" (not in spec) | Orchestrator asks human via PR comment | Human |
 
 ---
 
@@ -88,12 +134,12 @@ Human reviews and merges.
 
 `CLAUDE.md` is the single source of truth for the Orchestrator's project context. **If something is true about this project and it's not in CLAUDE.md, it doesn't exist.**
 
-Keep `CLAUDE.md` updated as architecture evolves.
+`openspec/config.yaml` injects Mycelium context into all OpenSpec artifacts.
 
 Before each implementation session, the Orchestrator should:
 1. Read `CLAUDE.md`
-2. Read the ticket (MYC-XX)
-3. @ mention `docs/project-state/OPEN-QUESTIONS.md` if implementing MYC-22+
+2. Read the OpenSpec change (proposal, specs, design, tasks)
+3. @ mention `docs/project-state/OPEN-QUESTIONS.md` if blocked by TBDs
 
 ---
 
@@ -106,7 +152,7 @@ chore/MYC-XX-short-description
 spike/MYC-XX-short-description
 ```
 
-PR title: `[MYC-XX] Short description`
+PR title: `[MYC-XX] Short description` (or `[openspec] change-name` if no ticket)
 
 ---
 

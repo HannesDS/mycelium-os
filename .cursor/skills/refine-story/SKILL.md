@@ -1,57 +1,48 @@
 ---
 name: refine-story
-description: Refine a rough idea into a fully specified Linear ticket for Mycelium OS. Use when the user brings a feature idea, bug report, or improvement and wants it turned into a ticket.
+description: Refine a rough idea into a fully specified OpenSpec change and create a a Linear ticket for it for Mycelium OS. Use when the user brings a feature idea, bug report, or improvement and wants it turned into a spec.
 ---
 
 # Refine Story
 
-Turn a rough idea into a well-specified Linear ticket (MYC-XX).
+Turn a rough idea into a well-specified OpenSpec change. Also create a Linear ticket for backlog tracking.
 
 ## When to Use
 
 - User describes a feature idea, bug, or improvement
 - User says "I want to add X" or "We need Y"
-- User asks to create a ticket
+- User asks to create a ticket or spec
 
-## Refinement Process
+## Refinement Process (2–5 turns)
 
-Challenge the idea across these dimensions (2-5 turns max):
+Challenge the idea across these dimensions:
 
 1. **Why does this exist?** — Who benefits? What breaks without it?
 2. **Scope** — What's in? What's explicitly out?
 3. **Acceptance criteria** — Must be verifiable/testable. No vague "it should work well."
-4. **Size** — S (< 1 day), M (1-3 days), L (3-5 days). If L, suggest splitting.
+4. **Size** — S (< 1 day), M (1–3 days), L (3–5 days). If L, suggest splitting.
 5. **Dependencies** — Check `docs/project-state/BACKLOG.md` for blockers
-6. **Open questions** — Things that must NOT be assumed. Check `docs/project-state/OPEN-QUESTIONS.md` for existing TBDs.
+6. **Open questions** — Things that must NOT be assumed. Check `docs/project-state/OPEN-QUESTIONS.md`.
 
-## Ticket Format
+## Primary Output: OpenSpec Change
+
+After refinement, create an OpenSpec change:
 
 ```
-Title: [concise, imperative]
-Type: feature | bug | chore | spike | design
-Size: S | M | L
-Blocked by: MYC-XX (if any)
-
-## Context
-Why this exists. 1-2 sentences.
-
-## Acceptance Criteria
-- [ ] Testable criterion 1
-- [ ] Testable criterion 2
-
-## Out of Scope
-- Explicit exclusion 1
-
-## Open Questions (if any)
-- Question that must be answered before implementation
-
-## Security Notes (if applicable)
-- Any security considerations
+/opsx:propose "kebab-case-change-name"
 ```
 
-## Creating the Ticket in Linear
+Or invoke the `openspec-propose` skill with the refined idea. Derive the name from the description (e.g. "add shrooms list page" → `add-shrooms-list-page`).
 
-After refinement, create the ticket using the Linear MCP:
+The proposal should capture:
+- Intent (why)
+- Scope (in/out)
+- Approach (high-level how)
+- Reference Linear ticket (MYC-XX) if one exists
+
+## Optional: Linear Ticket
+
+For backlog tracking, create a Linear ticket via MCP:
 
 ```
 server: plugin-linear-linear
@@ -60,40 +51,34 @@ args: {
   title: "<ticket title>",
   team: "Mycellium-os",
   project: "Mycelium OS — MVP",
-  priority: <1=Urgent, 2=High, 3=Medium, 4=Low>,
+  priority: <1–4>,
   labels: ["Feature" | "Bug" | "Chore"],
-  description: "<full ticket description in markdown>",
-  blockedBy: ["MYC-XX"]  // if dependencies exist
+  description: "<full description in markdown>",
+  blockedBy: ["MYC-XX"]
 }
 ```
 
-## Auto-Delegation
+Link the ticket in `openspec/changes/<name>/proposal.md`.
 
-After creating the ticket, check if it should start immediately:
+## Auto-Delegation (Linear)
 
-1. Read `docs/project-state/BACKLOG.md` — is there a ticket currently In Progress?
-2. If NO ticket is In Progress AND this ticket has no unresolved blockers:
-   - Set it as active immediately:
-     ```
-     save_issue args: { id: "<ticket id>", state: "In Progress", delegate: "Cursor", assignee: "me" }
-     ```
-   - Tell the user: "Ticket created and assigned to Cursor. Implementation will start automatically."
-3. If another ticket IS In Progress:
-   - Leave it in Backlog
-   - Tell the user: "Ticket created in Backlog. It will be picked up after the current ticket completes."
-4. Always update `docs/project-state/BACKLOG.md` to include the new ticket in the correct position.
+1. Read `docs/project-state/BACKLOG.md` — is any ticket In Progress?
+2. If NO ticket In Progress AND no blockers: set this ticket In Progress, delegate to Cursor
+3. If another ticket is In Progress: leave in Backlog
+4. Update BACKLOG.md with the new ticket
 
 ## Rules
 
-- Never assume answers to open questions — flag them explicitly
-- If it touches the ShroomEvent schema: note that in security/migration notes
-- If it touches the Approvals inbox (MYC-26): flag security sensitivity
-- Size L tickets should be split unless there's a good reason not to
-- Reference ADRs when the ticket touches a locked architecture decision
+- Never assume answers to open questions — flag them
+- If touching ShroomEvent schema: note in security/migration notes
+- If touching Approvals inbox: flag security sensitivity
+- Size L tickets: suggest splitting
+- Reference ADRs when touching locked architecture
 
 ## References
 
-- `docs/project-state/BACKLOG.md` — existing tickets and dependency graph
-- `docs/project-state/OPEN-QUESTIONS.md` — unresolved decisions (TBD-1 through TBD-5)
-- `docs/adrs/` — locked architecture decisions
+- `docs/project-state/BACKLOG.md` — existing tickets
+- `docs/project-state/OPEN-QUESTIONS.md` — TBDs
+- `docs/adrs/` — locked decisions
 - `CLAUDE.md` — project context
+- `openspec-propose` skill — create change

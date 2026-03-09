@@ -1,6 +1,6 @@
 # Mycelium OS — Project State & Backlog
 
-> Last updated: 2026-03-07 (evening)
+> Last updated: 2026-03-09
 
 ---
 
@@ -20,6 +20,12 @@
 | MYC-21 | Shroom manifest schema v1 (Pydantic + JSON Schema) |
 | MYC-22 | Control plane scaffold + Agno runtime |
 | MYC-23 | Beads episodic memory |
+| MYC-24 | NATS event bus + WebSocket bridge |
+| MYC-25 | Shrooms list page + API client layer |
+| MYC-26 | Approvals inbox |
+| MYC-30 | Constitution viewer |
+| MYC-33 | Dashboard shell — sidebar nav + route structure |
+| MYC-18 | Chat with shroom |
 
 ### Cancelled
 MYC-9, MYC-10, MYC-11, MYC-12, MYC-14 — superseded
@@ -75,6 +81,8 @@ After all 6 tickets:
 | MYC-27 | Traces viewer | M | Needs MYC-24 (event data) |
 | MYC-28 | Sessions view | M | Needs control plane (done) |
 | MYC-29 | Knowledge base (shared RAG) | L | Needs TBD-3 (vector store) resolved |
+| MYC-36 | CEO-guided constitution evolution — dual persistence (DB + git) | L | MYC-18, MYC-26, MYC-30 |
+| MYC-37 | Repository sanity audit — docs, tests, and safe fixes | M | None |
 
 ### Phase 2
 | Ticket | Title | Size |
@@ -99,6 +107,7 @@ After all 6 tickets:
 | TBD-2 | Beads retention policy (default 50, confirm) | Cosmetic — beads work with default |
 | TBD-3 | Vector store for RAG (pgvector vs Qdrant) | MYC-29 |
 | TBD-4 | Phoenix observability integration | MYC-27 design |
+| TBD-6 | Config repo migration path (same-repo vs separate per company) | MYC-36 design (not MVP) |
 
 ---
 
