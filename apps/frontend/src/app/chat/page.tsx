@@ -8,6 +8,7 @@ import type { ChatMessage } from "@/types/chat";
 import { ShroomSelector, ChatThread } from "@/components/Chat";
 
 type ConversationMap = Record<string, ChatMessage[]>;
+type SessionMap = Record<string, string>;
 
 function msgId() {
   return `msg-${crypto.randomUUID()}`;
@@ -17,6 +18,7 @@ export default function ChatPage() {
   const [shrooms, setShrooms] = useState<ShroomSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ConversationMap>({});
+  const [sessionIds, setSessionIds] = useState<SessionMap>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -61,7 +63,14 @@ export default function ChatPage() {
       setError(null);
 
       try {
-        const res = await sendMessage(selectedId, text);
+        const sessionId = sessionIds[selectedId];
+        const res = await sendMessage(selectedId, text, sessionId);
+        if (res.session_id) {
+          setSessionIds((prev) => ({
+            ...prev,
+            [selectedId]: res.session_id!,
+          }));
+        }
         const shroomMsg: ChatMessage = {
           id: msgId(),
           sender: "shroom",
@@ -80,7 +89,7 @@ export default function ChatPage() {
         setLoading(false);
       }
     },
-    [selectedId],
+    [selectedId, sessionIds],
   );
 
   return (

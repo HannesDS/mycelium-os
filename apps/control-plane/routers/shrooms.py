@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -49,11 +50,13 @@ def get_nats_bus(request: Request) -> NatsEventBus:
 
 class MessageRequest(BaseModel):
     message: str
+    session_id: str | None = None
 
 
 class MessageResponse(BaseModel):
     shroom_id: str
     response: str
+    session_id: str | None = None
 
 
 @router.get("")
@@ -82,7 +85,7 @@ def _build_model_error_detail(controller: ShroomController, shroom_id: str) -> s
 
 
 def _try_fallback(
-    controller: ShroomController, shroom_id: str, message: str,
+    controller: ShroomController, shroom_id: str, message: str, session_id: str,
 ) -> str | None:
     fallback = find_first_available(OLLAMA_HOST, FALLBACK_MODELS)
     if not fallback:
@@ -94,7 +97,7 @@ def _try_fallback(
     if not agent:
         return None
     try:
-        run_response = agent.run(message)
+        run_response = agent.run(message, session_id=session_id)
         logger.info("Fallback model '%s' succeeded for shroom '%s'", fallback, shroom_id)
         return run_response.content or "No response generated."
     except Exception:
@@ -131,20 +134,21 @@ async def send_message(
 
     content: str | None = None
     model_not_found = False
+    session_id = req.session_id or str(uuid.uuid4())
 
     try:
-        run_response = agent.run(augmented)
+        run_response = agent.run(augmented, session_id=session_id)
         content = run_response.content if run_response.content else "No response generated."
     except Exception as exc:
         logger.exception("Agent error for shroom '%s'", shroom_id)
         if is_model_not_found_error(exc):
             model_not_found = True
-            content = _try_fallback(controller, shroom_id, augmented)
+            content = _try_fallback(controller, shroom_id, augmented, session_id)
 
     if content and looks_like_ollama_error(content):
         logger.warning("Ollama error in response content for '%s': %s", shroom_id, content[:200])
         model_not_found = True
-        content = _try_fallback(controller, shroom_id, augmented)
+        content = _try_fallback(controller, shroom_id, augmented, session_id)
 
     if content is None:
         db.commit()
@@ -171,4 +175,4 @@ async def send_message(
         payload_summary=f"Responded: {content[:120]}",
     ))
 
-    return MessageResponse(shroom_id=shroom_id, response=content)
+    return MessageResponse(shroom_id=shroom_id, response=content, session_id=session_id)

@@ -133,11 +133,53 @@ export async function fetchConstitution(): Promise<ConstitutionData> {
 export interface ShroomMessageResponse {
   shroom_id: string;
   response: string;
+  session_id?: string;
+}
+
+export interface SessionListItem {
+  session_id: string;
+  shroom_id: string;
+  status: string;
+  started: string;
+  duration: string;
+  message_count: number;
+}
+
+export interface SessionDetail {
+  session_id: string;
+  shroom_id: string;
+  message_history: { role: string; content: string }[];
+  started: string;
+  ended: string | null;
+  model: string | null;
+  token_count: number | null;
+  related_events: { id: string; action: string; actor: string; created_at: string }[];
+}
+
+export async function fetchSessions(
+  status: "active" | "completed" = "active",
+): Promise<{ sessions: SessionListItem[] }> {
+  const res = await fetch(
+    `${API_BASE}/sessions?status=${encodeURIComponent(status)}`,
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to fetch sessions: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function fetchSession(id: string): Promise<SessionDetail> {
+  const res = await fetch(`${API_BASE}/sessions/${encodeURIComponent(id)}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch session ${id}: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
 }
 
 export async function sendMessage(
   shroomId: string,
   message: string,
+  sessionId?: string,
 ): Promise<ShroomMessageResponse> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
@@ -148,7 +190,7 @@ export async function sendMessage(
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, session_id: sessionId ?? undefined }),
         signal: controller.signal,
       },
     );

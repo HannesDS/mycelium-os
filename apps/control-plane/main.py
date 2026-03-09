@@ -16,6 +16,7 @@ from core.nats_client import NatsEventBus
 from routers.approvals import router as approvals_router
 from routers.constitution import router as constitution_router
 from routers.events import router as events_router, start_relay, stop_relay
+from routers.sessions import router as sessions_router
 from routers.shrooms import router as shrooms_router
 
 logger = logging.getLogger(__name__)
@@ -141,6 +142,7 @@ app.add_middleware(
 )
 
 app.include_router(shrooms_router)
+app.include_router(sessions_router)
 app.include_router(constitution_router)
 app.include_router(events_router)
 app.include_router(approvals_router)

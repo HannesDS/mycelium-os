@@ -29,5 +29,5 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/memory", label: "Memory", icon: Brain, enabled: false },
   { href: "/knowledge", label: "Knowledge", icon: BookOpen, enabled: false },
   { href: "/traces", label: "Traces", icon: List, enabled: false },
-  { href: "/sessions", label: "Sessions", icon: Play, enabled: false },
+  { href: "/sessions", label: "Sessions", icon: Play, enabled: true },
 ];
