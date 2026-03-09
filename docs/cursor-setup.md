@@ -36,10 +36,10 @@ Used when refining ideas and implementing via OpenSpec.
 |---|---|---|
 | `implement-ticket` | Custom | Implement MYC-XX via OpenSpec (create change from ticket, then apply) |
 | `refine-story` | Custom | Turn rough ideas into OpenSpec changes (+ optional Linear ticket) |
-| `openspec-propose` | OpenSpec | Create change with proposal, specs, design, tasks (`/opsx:propose`) |
-| `openspec-apply-change` | OpenSpec | Implement tasks from an OpenSpec change (`/opsx:apply`) |
-| `openspec-archive-change` | OpenSpec | Archive completed change (`/opsx:archive`) |
-| `openspec-explore` | OpenSpec | Think through ideas before proposing (`/opsx:explore`) |
+| `openspec-propose` | OpenSpec | Create change with proposal, specs, design, tasks (`/opsx-propose`) |
+| `openspec-apply-change` | OpenSpec | Implement tasks from an OpenSpec change (`/opsx-apply`) |
+| `openspec-archive-change` | OpenSpec | Archive completed change (`/opsx-archive`) |
+| `openspec-explore` | OpenSpec | Think through ideas before proposing (`/opsx-explore`) |
 
 ### Adding more community skills
 

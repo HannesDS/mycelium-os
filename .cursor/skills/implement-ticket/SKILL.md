@@ -46,7 +46,7 @@ Workflow for picking up and implementing a Mycelium OS Linear ticket via OpenSpe
    - Work through tasks, check off as done
    - Update artifacts if implementation reveals design issues
 
-5. **On completion:** `/opsx:archive`, then open PR.
+5. **On completion:** `/opsx-archive`, then open PR.
 
 ## Implementation Rules
 

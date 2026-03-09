@@ -1,6 +1,6 @@
 ---
 name: refine-story
-description: Refine a rough idea into a fully specified OpenSpec change and create a a Linear ticket for it for Mycelium OS. Use when the user brings a feature idea, bug report, or improvement and wants it turned into a spec.
+description: Refine a rough idea into a fully specified OpenSpec change and optionally create a Linear ticket for Mycelium OS. Use when the user brings a feature idea, bug report, or improvement and wants it turned into a spec.
 ---
 
 # Refine Story
@@ -29,7 +29,7 @@ Challenge the idea across these dimensions:
 After refinement, create an OpenSpec change:
 
 ```
-/opsx:propose "kebab-case-change-name"
+/opsx-propose "kebab-case-change-name"
 ```
 
 Or invoke the `openspec-propose` skill with the refined idea. Derive the name from the description (e.g. "add shrooms list page" → `add-shrooms-list-page`).
@@ -49,7 +49,7 @@ server: plugin-linear-linear
 tool: save_issue
 args: {
   title: "<ticket title>",
-  team: "Mycellium-os",
+  team: "Mycelium-os",
   project: "Mycelium OS — MVP",
   priority: <1–4>,
   labels: ["Feature" | "Bug" | "Chore"],

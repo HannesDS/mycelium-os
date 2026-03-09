@@ -255,7 +255,7 @@ The **Orchestrator** = Cursor (this IDE). It reads this file every session for p
 4. If schema/API work: read `docs/design/SHROOM-EVENT-SCHEMA.md` and relevant ADRs
 5. If blocked by open questions: read `docs/project-state/OPEN-QUESTIONS.md` — do NOT assume
 
-**Spec-driven workflow:** Use OpenSpec. `/opsx:propose` → `/opsx:apply` → `/opsx:archive`. See `docs/dev-flow/WORKFLOW.md`.
+**Spec-driven workflow:** Use OpenSpec. `/opsx-propose` → `/opsx-apply` → `/opsx-archive`. See `docs/dev-flow/WORKFLOW.md`.
 
 **@ mention these for context:**
 - `@CLAUDE.md` — always
@@ -271,7 +271,7 @@ The **Orchestrator** = Cursor (this IDE). It reads this file every session for p
 
 ## Development workflow
 
-See `docs/dev-flow/WORKFLOW.md` for the full human + Orchestrator dev loop. We use **OpenSpec** for spec-driven development: `/opsx:propose` → `/opsx:apply` → `/opsx:archive`.
+See `docs/dev-flow/WORKFLOW.md` for the full human + Orchestrator dev loop. We use **OpenSpec** for spec-driven development: `/opsx-propose` → `/opsx-apply` → `/opsx-archive`.
 
 ## Open architecture questions
 

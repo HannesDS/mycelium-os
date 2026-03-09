@@ -18,8 +18,8 @@ The **Orchestrator** = Cursor. One tool for story refinement and implementation.
 │                    ORCHESTRATOR (Cursor)                         │
 │                                                                  │
 │  • Refines ideas (chat)                                          │
-│  • Creates OpenSpec changes (/opsx:propose)                      │
-│  • Implements via OpenSpec (/opsx:apply)                         │
+│  • Creates OpenSpec changes (/opsx-propose)                     │
+│  • Implements via OpenSpec (/opsx-apply)                         │
 │  • Opens PR with demo                                            │
 └───────┬─────────────────────────────────────────────────────────┘
         │ creates / reads
@@ -51,12 +51,12 @@ We use [OpenSpec](https://github.com/Fission-AI/OpenSpec) for spec-driven develo
 **Core workflow:**
 
 ```
-/opsx:propose "add-shrooms-list-page"   →  creates change + all artifacts
-/opsx:apply                            →  implements tasks
-/opsx:archive                          →  merges specs, moves to archive
+/opsx-propose "add-shrooms-list-page"   →  creates change + all artifacts
+/opsx-apply                            →  implements tasks
+/opsx-archive                          →  merges specs, moves to archive
 ```
 
-**Other commands:** `/opsx:explore` (think through ideas), `/opsx:list` (active changes)
+**Other commands:** `/opsx-explore` (think through ideas), `openspec list` (active changes)
 
 Requires: `npm install -g @fission-ai/openspec` then `openspec init` (already done). Refresh: `openspec update`.
 
@@ -79,7 +79,7 @@ The Orchestrator will challenge you on:
 
 ### Step 3 — Create OpenSpec change
 
-Run `/opsx:propose "kebab-case-change-name"` (or describe the idea; the Orchestrator derives the name).
+Run `/opsx-propose "kebab-case-change-name"` (or describe the idea; the Orchestrator derives the name).
 
 This creates `openspec/changes/<name>/` with proposal, specs, design, tasks. **Agree before you build.**
 
@@ -87,13 +87,13 @@ Optionally create a Linear ticket (MYC-XX) for backlog tracking. Link it in `pro
 
 ### Step 4 — Implement
 
-Run `/opsx:apply` (or specify the change name). The Orchestrator works through `tasks.md`, checking off as it goes.
+Run `/opsx-apply` (or specify the change name). The Orchestrator works through `tasks.md`, checking off as it goes.
 
 If implementation reveals design issues: update the artifact, then continue. OpenSpec is fluid — no phase gates.
 
 ### Step 5 — Archive and PR
 
-When all tasks are done: `/opsx:archive`. Specs merge into `openspec/specs/`, change moves to `archive/`.
+When all tasks are done: `/opsx-archive`. Specs merge into `openspec/specs/`, change moves to `archive/`.
 
 Open a PR. PR must include:
 1. Working demo (video, screenshot, or Cursor native demo)
@@ -114,7 +114,7 @@ Human reviews and merges.
 | Acceptance criteria | Optional (can mirror) | In specs + tasks |
 | Tracking "what's next" | ✓ | `openspec list` |
 
-**When picking up MYC-XX from backlog:** Create OpenSpec change from ticket content (or use existing `openspec/changes/<ticket-slug>/`), then `/opsx:apply`. The implement-ticket skill handles this.
+**When picking up MYC-XX from backlog:** Create OpenSpec change from ticket content (or use existing `openspec/changes/<ticket-slug>/`), then `/opsx-apply`. The implement-ticket skill handles this.
 
 ---
 
