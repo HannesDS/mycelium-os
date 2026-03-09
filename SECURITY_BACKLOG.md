@@ -43,3 +43,26 @@ User-controlled text is persisted as bead summaries and replayed into subsequent
 - Investigate whether Agno supports separate message roles for injected context
 - Evaluate output-side filtering for bead summaries derived from model responses
 - Stress-test with adversarial prompt payloads once the LLM runtime is connected
+
+---
+
+## SB-003 — Unauthenticated access to sessions and session hijacking (mitigated)
+
+**Severity:** High (if exposed to untrusted networks)
+**Flagged in:** MYC-28 (PR, Cursor security review)
+**Status:** Mitigated for MVP — deployment constraint
+
+`GET /sessions` and `GET /sessions/{session_id}` return full transcripts and metadata without auth. Client-supplied `session_id` on message endpoints enabled session hijacking.
+
+**Mitigations applied (MYC-28):**
+- Session IDs are now **server-generated only** — client cannot supply or reuse session IDs
+- `related_events` no longer returns raw `audit_log.details` (can leak tokens/metadata)
+- Code comments document deployment constraint
+
+**Current mitigation:** Control plane MUST NOT be exposed to untrusted networks (localhost/compose only per OPEN-QUESTIONS.md, MYC-26).
+
+**Required before multi-user or public deployment:**
+- Require authentication on `/sessions` and `/sessions/{session_id}`
+- Enforce authorization (session ownership or role-based access per shroom)
+- Return 403 for unauthorized session access
+- Bind session IDs to authenticated principal + shroom on creation

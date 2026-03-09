@@ -50,7 +50,6 @@ def get_nats_bus(request: Request) -> NatsEventBus:
 
 class MessageRequest(BaseModel):
     message: str
-    session_id: str | None = None
 
 
 class MessageResponse(BaseModel):
@@ -107,6 +106,9 @@ def _try_fallback(
         return None
 
 
+# SECURITY: session_id is server-generated only. Never accept from client (SB-003).
+
+
 @router.post("/{shroom_id}/message", response_model=MessageResponse)
 async def send_message(
     shroom_id: str,
@@ -134,7 +136,7 @@ async def send_message(
 
     content: str | None = None
     model_not_found = False
-    session_id = req.session_id or str(uuid.uuid4())
+    session_id = str(uuid.uuid4())
 
     try:
         run_response = agent.run(augmented, session_id=session_id)

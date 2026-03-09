@@ -1,21 +1,25 @@
 from __future__ import annotations
 
 import logging
+from contextlib import suppress
 from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from core.controller import ShroomController
+from core.models import AuditLog
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 ACTIVE_THRESHOLD_MINUTES = 5
+
+# SECURITY: No auth for MVP (OPEN-QUESTIONS.md, MYC-26). Control plane MUST NOT be exposed
+# to untrusted networks. Add authn/authz before multi-user or public deployment. See SB-003.
 
 
 def get_controller(request: Request) -> ShroomController:
@@ -60,7 +64,6 @@ class RelatedEvent(BaseModel):
     action: str
     actor: str
     created_at: str
-    details: dict | None
 
 
 class SessionDetailResponse(BaseModel):
@@ -85,11 +88,7 @@ def _format_duration(created_at: int | None, updated_at: int | None) -> str:
     if not created_at or not updated_at:
         return "-"
     diff = updated_at - created_at
-    if diff < 60:
-        return f"{diff}s"
-    if diff < 3600:
-        return f"{diff // 60}m"
-    return f"{diff // 3600}h"
+    return f"{diff}s" if diff < 60 else f"{diff // 60}m" if diff < 3600 else f"{diff // 3600}h"
 
 
 def _runs_to_message_count(runs: list[Any]) -> int:
@@ -99,9 +98,7 @@ def _runs_to_message_count(runs: list[Any]) -> int:
     for run in runs:
         if hasattr(run, "messages") and run.messages:
             count += len(run.messages)
-        elif hasattr(run, "messages") and run.messages is None:
-            pass
-        else:
+        elif not (hasattr(run, "messages") and run.messages is None):
             count += 1
     return count
 
@@ -185,10 +182,8 @@ def get_session(
 ):
     db = controller.db
     session_obj = None
-    try:
+    with suppress(Exception):
         session_obj = db.get_session(session_id=session_id, session_type="agent")
-    except Exception:
-        pass
     if not session_obj:
         raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
     owning_shroom = getattr(session_obj, "agent_id", None) or "unknown"
@@ -201,24 +196,22 @@ def get_session(
     token_count = metadata.get("token_count") if isinstance(metadata, dict) else None
     related: list[RelatedEvent] = []
     try:
-        rows = db_session.execute(
-            text(
-                "SELECT id, entity_type, action, actor, created_at, details FROM audit_log "
-                "WHERE details->>'session_id' = :sid ORDER BY created_at"
-            ),
-            {"sid": session_id},
-        ).fetchall()
-        for row in rows:
-            related.append(
-                RelatedEvent(
-                    id=str(row[0]),
-                    entity_type=row[1] or "",
-                    action=row[2],
-                    actor=row[3],
-                    created_at=row[4].isoformat() if hasattr(row[4], "isoformat") else str(row[4]),
-                    details=row[5],
-                )
+        rows = (
+            db_session.query(AuditLog)
+            .filter(AuditLog.details["session_id"].astext == session_id)
+            .order_by(AuditLog.created_at)
+            .all()
+        )
+        related.extend(
+            RelatedEvent(
+                id=str(row.id),
+                entity_type=row.entity_type or "",
+                action=row.action,
+                actor=row.actor,
+                created_at=row.created_at.isoformat(),
             )
+            for row in rows
+        )
     except Exception as e:
         logger.warning("Failed to get related events: %s", e)
     return SessionDetailResponse(

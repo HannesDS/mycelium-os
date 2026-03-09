@@ -153,7 +153,13 @@ export interface SessionDetail {
   ended: string | null;
   model: string | null;
   token_count: number | null;
-  related_events: { id: string; action: string; actor: string; created_at: string }[];
+  related_events: {
+    id: string;
+    entity_type?: string;
+    action: string;
+    actor: string;
+    created_at: string;
+  }[];
 }
 
 export async function fetchSessions(
@@ -179,7 +185,6 @@ export async function fetchSession(id: string): Promise<SessionDetail> {
 export async function sendMessage(
   shroomId: string,
   message: string,
-  sessionId?: string,
 ): Promise<ShroomMessageResponse> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
@@ -190,7 +195,7 @@ export async function sendMessage(
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, session_id: sessionId ?? undefined }),
+        body: JSON.stringify({ message }),
         signal: controller.signal,
       },
     );
