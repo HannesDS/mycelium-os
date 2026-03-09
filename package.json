@@ -1,6 +1,11 @@
 {
   "name": "mycelium-os",
   "private": true,
+  "pnpm": {
+    "overrides": {
+      "next": "14.2.35"
+    }
+  },
   "scripts": {
     "dev": "pnpm --filter frontend dev",
     "test": "pnpm --filter frontend test",

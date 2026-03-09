@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  next: 14.2.35
+
 importers:
 
   .:
@@ -1796,7 +1799,7 @@ packages:
     resolution: {integrity: sha512-e81LGqZKVHIAPJBfkk/35YjUPTqmH+q8EZ1+qxeSM9bh+qa1PtSMBvUbOlAwMaRR21bnf8uAAncJJIdAY4ffTg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      next: ^13.5.0 || ^14.0.0 || ^15.0.0
+      next: 14.2.35
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0-beta
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0-beta
       storybook: ^8.6.17
