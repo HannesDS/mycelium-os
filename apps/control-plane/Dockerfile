@@ -9,11 +9,9 @@ WORKDIR /app
 COPY apps/control-plane/pyproject.toml .
 RUN pip install --no-cache-dir .
 
-COPY apps/control-plane/ .
-COPY mycelium.yaml /app/mycelium.yaml
-COPY examples/ /app/examples/
-
-RUN chown -R appuser: /app
+COPY --chown=appuser:appuser apps/control-plane/ .
+COPY --chown=appuser:appuser mycelium.yaml /app/mycelium.yaml
+COPY --chown=appuser:appuser examples/ /app/examples/
 
 USER appuser
 
