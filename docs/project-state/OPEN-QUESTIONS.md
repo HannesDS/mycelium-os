@@ -54,6 +54,22 @@
 
 ---
 
+### TBD-6: Config Repo Migration Path
+
+**Question:** When and how do we switch from same-repo config (MVP) to separate config repos per company?
+
+**Current state:** MVP stores constitution and shroom manifests in the same repo (e.g. `config/<instance>/` or `companies/<company_id>/`). MYC-36 (CEO-guided constitution evolution) will dual-write to DB + this path.
+
+**Options:**
+- Stay in same repo indefinitely (simplest)
+- Migrate when multi-tenant: one config repo per tenant, control plane clones/pushes to it
+- Migrate when self-hosted: user provides config repo URL, control plane writes there
+
+**Blocks:** Design decision for MYC-36 implementation; does not block MVP.
+**Resolve before:** Scaling to multi-tenant or self-hosted deployments.
+
+---
+
 ## Resolved Product Questions
 
 ### MYC-18 (Chat with shroom) — RESOLVED
