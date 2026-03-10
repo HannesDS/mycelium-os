@@ -136,6 +136,61 @@ export interface ShroomMessageResponse {
   session_id?: string;
 }
 
+export interface OrgGraphNode {
+  id: string;
+  name: string;
+  role: string;
+  tags: string[];
+  model: string;
+  capabilities: Record<string, string[]>;
+  escalates_to: string | null;
+  sla_response_minutes: number | null;
+}
+
+export interface OrgGraphEdge {
+  from: string;
+  to: string;
+  type: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface OrgGraph {
+  nodes: OrgGraphNode[];
+  edges: OrgGraphEdge[];
+  layout_hints: Record<string, unknown>;
+}
+
+export interface OrgActivityMetrics {
+  window_seconds: number;
+  events_total: number;
+  tasks_started: number;
+  tasks_completed: number;
+  escalations_raised: number;
+  errors: number;
+}
+
+export interface OrgActivityState {
+  shroom_id: string;
+  status: string;
+  last_event: Record<string, unknown> | null;
+  metrics_window: OrgActivityMetrics;
+}
+
+export interface OrgGraphResponse {
+  graph: OrgGraph;
+  activity: OrgActivityState[];
+}
+
+export async function fetchOrgGraph(): Promise<OrgGraphResponse> {
+  const res = await fetch(`${API_BASE}/org/graph`);
+  if (!res.ok) {
+    throw new Error(
+      `Failed to fetch org graph: ${res.status} ${res.statusText}`,
+    );
+  }
+  return res.json();
+}
+
 export interface SessionListItem {
   session_id: string;
   shroom_id: string;
