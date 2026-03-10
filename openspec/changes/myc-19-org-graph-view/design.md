@@ -67,7 +67,7 @@
   - `collaborates-with`: double-headed line.
 - Activity:
   - Pulses and glows along edges/nodes for ShroomEvents.
-  - Error events colour nodes red and show a persistent badge until next healthy event.
+  - Error events color nodes red and show a persistent badge until next healthy event.
 
 ## Interaction
 

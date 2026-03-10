@@ -127,29 +127,34 @@ async def lifespan(app: FastAPI):
     await nats_bus.close()
 
 
-app = FastAPI(
-    title="Mycelium OS — Control Plane",
-    description="Constitution engine, shroom orchestration, and Agno runtime",
-    version="0.1.0",
-    lifespan=lifespan,
-)
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="Mycelium OS — Control Plane",
+        description="Constitution engine, shroom orchestration, and Agno runtime",
+        version="0.1.0",
+        lifespan=lifespan,
+    )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-app.include_router(shrooms_router)
-app.include_router(sessions_router)
-app.include_router(constitution_router)
-app.include_router(events_router)
-app.include_router(approvals_router)
-app.include_router(org_router)
+    app.include_router(shrooms_router)
+    app.include_router(sessions_router)
+    app.include_router(constitution_router)
+    app.include_router(events_router)
+    app.include_router(approvals_router)
+    app.include_router(org_router)
+
+    @app.get("/health")
+    def health() -> dict[str, str]:
+        return {"status": "ok"}
+
+    return app
 
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+app = create_app()

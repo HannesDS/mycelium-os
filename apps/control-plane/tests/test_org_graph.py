@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from core.controller import ShroomController
 from core.manifest import MyceliumConfig, ShroomManifest, ShroomMetadata, ShroomSpec
-from main import app
+from main import create_app
 
 
 def _make_manifest(shroom_id: str, name: str) -> ShroomManifest:
@@ -19,6 +19,8 @@ def _make_manifest(shroom_id: str, name: str) -> ShroomManifest:
 
 
 def _setup_app_for_org_graph() -> TestClient:
+  test_app = create_app()
+
   controller = ShroomController()
   controller.register(_make_manifest("sales-shroom", "Sales"))
   controller.register(_make_manifest("ceo-shroom", "CEO"))
@@ -29,12 +31,12 @@ def _setup_app_for_org_graph() -> TestClient:
     graph={"edges": [{"from": "sales-shroom", "to": "ceo-shroom", "type": "reports-to"}]},
   )
 
-  app.state.controller = controller
-  app.state.mycelium_config = config
-  app.state.db_session_factory = lambda: SimpleNamespace()
-  app.state.nats_bus = SimpleNamespace()
+  test_app.state.controller = controller
+  test_app.state.mycelium_config = config
+  test_app.state.db_session_factory = lambda: SimpleNamespace()
+  test_app.state.nats_bus = SimpleNamespace()
 
-  return TestClient(app, raise_server_exceptions=False)
+  return TestClient(test_app, raise_server_exceptions=False)
 
 
 def test_org_graph_returns_nodes_and_edges():
@@ -72,6 +74,17 @@ def test_org_graph_includes_activity_when_requested():
   assert state["metrics_window"]["window_seconds"] > 0
 
 
+def test_org_graph_excludes_activity_when_disabled():
+  client = _setup_app_for_org_graph()
+
+  resp = client.get("/org/graph?include_activity=false")
+  assert resp.status_code == 200
+
+  data = resp.json()
+  assert "activity" in data
+  assert data["activity"] == []
+
+
 def test_org_shroom_detail_returns_node_and_edges():
   client = _setup_app_for_org_graph()
 
@@ -84,6 +97,15 @@ def test_org_shroom_detail_returns_node_and_edges():
   assert data["outgoing_edges"] == [
     {"from": "sales-shroom", "to": "ceo-shroom", "type": "reports-to", "metadata": {}},
   ]
+
+
+def test_org_shroom_detail_returns_404_for_unknown_shroom():
+  client = _setup_app_for_org_graph()
+
+  resp = client.get("/org/shrooms/does-not-exist")
+  assert resp.status_code == 404
+  body = resp.json()
+  assert "detail" in body
 
 
 def test_org_graph_paths_returns_simple_path():
@@ -100,4 +122,58 @@ def test_org_graph_paths_returns_simple_path():
   assert path["edges"] == [
     {"from": "sales-shroom", "to": "ceo-shroom", "type": "reports-to", "metadata": {}},
   ]
+
+
+def test_org_graph_paths_returns_self_path_single_node():
+  client = _setup_app_for_org_graph()
+
+  resp = client.get("/org/graph/paths?from=sales-shroom&to=sales-shroom")
+  assert resp.status_code == 200
+
+  data = resp.json()
+  paths = data["paths"]
+  assert len(paths) == 1
+  path = paths[0]
+  assert path["nodes"] == ["sales-shroom"]
+  assert path["edges"] == []
+
+
+def test_org_graph_paths_returns_empty_when_no_path_between_distinct_nodes():
+  client = _setup_app_for_org_graph()
+
+  resp = client.get("/org/graph/paths?from=ceo-shroom&to=sales-shroom")
+  assert resp.status_code == 200
+
+  data = resp.json()
+  assert data["paths"] == []
+
+
+def test_org_graph_paths_respects_edge_types_filter():
+  client = _setup_app_for_org_graph()
+
+  resp = client.get("/org/graph/paths?from=sales-shroom&to=ceo-shroom")
+  assert resp.status_code == 200
+  data = resp.json()
+  assert len(data["paths"]) == 1
+
+  resp_filtered = client.get(
+    "/org/graph/paths?from=sales-shroom&to=ceo-shroom&edge_types=monitors",
+  )
+  assert resp_filtered.status_code == 200
+  data_filtered = resp_filtered.json()
+  assert data_filtered["paths"] == []
+
+
+def test_org_graph_paths_respects_max_length_limit():
+  client = _setup_app_for_org_graph()
+
+  resp = client.get("/org/graph/paths?from=sales-shroom&to=ceo-shroom&max_length=1")
+  assert resp.status_code == 200
+  data = resp.json()
+  assert len(data["paths"]) == 1
+
+  resp_invalid = client.get(
+    "/org/graph/paths?from=sales-shroom&to=ceo-shroom&max_length=0",
+  )
+  assert resp_invalid.status_code == 422
 

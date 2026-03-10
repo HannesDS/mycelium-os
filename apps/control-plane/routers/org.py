@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from collections import deque
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
@@ -21,6 +22,7 @@ class ShroomNode(BaseModel):
     capabilities: dict[str, list[str]] = Field(default_factory=dict)
     escalates_to: str | None = None
     sla_response_minutes: int | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class OrgEdge(BaseModel):
@@ -108,13 +110,21 @@ def _build_node(manifest: ShroomManifest) -> ShroomNode:
         capabilities=capabilities,
         escalates_to=manifest.spec.escalates_to,
         sla_response_minutes=manifest.spec.sla_response_minutes,
+        metadata={},
     )
 
 
 def _build_edges(config: MyceliumConfig) -> list[OrgEdge]:
     raw_edges = config.graph.get("edges", []) if config.graph else []
     return [
-        OrgEdge(**{"from": e["from"], "to": e["to"], "type": e["type"]})
+        OrgEdge(
+            **{
+                "from": e["from"],
+                "to": e["to"],
+                "type": e["type"],
+                "metadata": e.get("metadata", {}),
+            }
+        )
         for e in raw_edges
     ]
 
@@ -122,7 +132,7 @@ def _build_edges(config: MyceliumConfig) -> list[OrgEdge]:
 def _default_activity(
     shroom_ids: list[str], window_seconds: int
 ) -> list[ShroomActivityState]:
-    metrics = ShroomActivityMetrics(
+    metrics_template = ShroomActivityMetrics(
         window_seconds=window_seconds,
         events_total=0,
         tasks_started=0,
@@ -135,7 +145,7 @@ def _default_activity(
             shroom_id=sid,
             status="idle",
             last_event=None,
-            metrics_window=metrics,
+            metrics_window=metrics_template.model_copy(),
         )
         for sid in shroom_ids
     ]
@@ -206,7 +216,9 @@ def get_org_paths(
     request: Request,
     from_id: str = Query(..., alias="from"),
     to_id: str = Query(..., alias="to"),
-    max_length: int = 4,
+    max_length: int = Query(4, ge=1, le=8),
+    max_paths: int = Query(16, ge=1, le=64),
+    max_expansions: int = Query(256, ge=1, le=4096),
     edge_types: list[str] | None = Query(default=None),
 ) -> OrgPathsResponse:
     config = _get_config(request)
@@ -220,11 +232,14 @@ def get_org_paths(
         adjacency.setdefault(edge.from_, []).append(edge)
 
     paths: list[OrgPath] = []
-    queue: list[tuple[str, list[str], list[OrgEdge]]] = [(from_id, [from_id], [])]
+    queue: deque[tuple[str, list[str], list[OrgEdge]]] = deque(
+        [(from_id, [from_id], [])]
+    )
     visited: set[tuple[str, int]] = set()
+    expansions = 0
 
-    while queue:
-        current, nodes, used_edges = queue.pop(0)
+    while queue and len(paths) < max_paths and expansions < max_expansions:
+        current, nodes, used_edges = queue.popleft()
         if (current, len(nodes)) in visited:
             continue
         visited.add((current, len(nodes)))
@@ -239,6 +254,9 @@ def get_org_paths(
         for edge in adjacency.get(current, []):
             if edge.to in nodes:
                 continue
+            expansions += 1
+            if expansions >= max_expansions:
+                break
             queue.append(
                 (
                     edge.to,

@@ -13,11 +13,7 @@ Expose the shroom organisation as a typed graph and provide sufficient data for 
 - `role: string`
 - `tags: string[]`
 - `model: string`
-- `capabilities`:
-  - `can_read: string[]`
-  - `can_write: string[]`
-  - `can_propose: string[]`
-  - `cannot_execute: string[]`
+- `capabilities: Record<string, string[]>`
 - `escalates_to: string | null`
 - `sla_response_minutes: number | null`
 - `metadata: object`
@@ -72,11 +68,10 @@ Expose the shroom organisation as a typed graph and provide sufficient data for 
   - `include_activity?: boolean` (default: `true`).
   - `activity_window_seconds?: number` (default: 300).
 - **Response**:
-  - When `include_activity = false`: `OrgGraph`.
-  - Otherwise: `OrgGraphWithActivity`.
+  - Always: `OrgGraphWithActivity`.
 - **Semantics**:
   - Graph is derived from current constitution / Neo4j, not from ad-hoc events.
-  - Activity aggregates are computed over the requested window using ShroomEvents.
+  - When `include_activity = true`, activity aggregates are computed over the requested window using ShroomEvents (or placeholder values until aggregation is implemented); when `false`, `activity` is an empty list.
 
 #### GET `/org/shrooms/{id}`
 
@@ -93,9 +88,9 @@ Expose the shroom organisation as a typed graph and provide sufficient data for 
 
 - **Purpose**: constrained path queries for focus modes, including traces/sessions.
 - **Query**:
-  - `from?: string`
-  - `to?: string`
-  - `max_length?: number` (default: 4)
+  - `from: string`
+  - `to: string`
+  - `max_length?: number` (default: 4, bounded by implementation)
   - `edge_types?: string[]`
 - **Response**:
   - `paths: OrgPath[]`
@@ -114,3 +109,4 @@ Expose the shroom organisation as a typed graph and provide sufficient data for 
 - Endpoint latency should remain acceptable for org graphs up to at least 200 nodes.
 - API must be read-only; modifications to topology flow via constitution and existing governance workflow.
 - Implementation must be secure-by-default and compatible with future auth and multi-tenant decisions.
+
