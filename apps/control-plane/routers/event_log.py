@@ -63,12 +63,21 @@ def list_events(
     topic: str | None = Query(None),
     since: str | None = Query(None),
     limit: int = Query(100, ge=1, le=500),
+    include_global: bool = Query(False, description="Include org-level events (session_id is NULL)"),
 ):
     bound_ids = get_session_bindings_for_principal(db, principal_id)
     q = db.query(ShroomEventRecord)
-    q = q.filter(
-        (ShroomEventRecord.session_id.is_(None)) | (ShroomEventRecord.session_id.in_(bound_ids))
-    )
+    if include_global:
+        if bound_ids:
+            q = q.filter(
+                (ShroomEventRecord.session_id.is_(None)) | (ShroomEventRecord.session_id.in_(bound_ids))
+            )
+        else:
+            q = q.filter(ShroomEventRecord.session_id.is_(None))
+    else:
+        if not bound_ids:
+            return []
+        q = q.filter(ShroomEventRecord.session_id.in_(bound_ids))
     if shroom_id:
         q = q.filter(ShroomEventRecord.shroom_id == shroom_id)
     if session_id:

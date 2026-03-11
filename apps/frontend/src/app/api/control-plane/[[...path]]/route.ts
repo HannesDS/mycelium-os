@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const CONTROL_PLANE_URL =
   process.env.CONTROL_PLANE_URL || "http://localhost:8000";
-const DEV_API_KEY = process.env.DEV_API_KEY;
 
 const ALLOWED_PATHS: { method: string; pattern: RegExp }[] = [
   { method: "GET", pattern: /^shrooms$/ },
@@ -80,9 +79,6 @@ async function proxy(request: NextRequest, pathSegments: string[]) {
       headers[k] = v;
     }
   });
-  if (DEV_API_KEY) {
-    headers["X-API-Key"] = DEV_API_KEY;
-  }
 
   let body: string | undefined;
   try {

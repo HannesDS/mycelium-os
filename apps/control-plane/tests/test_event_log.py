@@ -84,7 +84,7 @@ def test_list_events_empty(client):
 
 def test_list_events_with_data(client, _db_session_factory):
     _seed_events(_db_session_factory)
-    resp = client.get("/events")
+    resp = client.get("/events?include_global=true")
     assert resp.status_code == 200
     data = resp.json()
     assert len(data) == 3
@@ -96,7 +96,7 @@ def test_list_events_with_data(client, _db_session_factory):
 
 def test_list_events_filter_by_shroom(client, _db_session_factory):
     _seed_events(_db_session_factory)
-    resp = client.get("/events?shroom_id=sales-shroom")
+    resp = client.get("/events?shroom_id=sales-shroom&include_global=true")
     assert resp.status_code == 200
     data = resp.json()
     assert len(data) == 2
@@ -105,14 +105,14 @@ def test_list_events_filter_by_shroom(client, _db_session_factory):
 
 def test_list_events_limit(client, _db_session_factory):
     _seed_events(_db_session_factory)
-    resp = client.get("/events?limit=2")
+    resp = client.get("/events?limit=2&include_global=true")
     assert resp.status_code == 200
     assert len(resp.json()) == 2
 
 
 def test_list_events_ordering(client, _db_session_factory):
     _seed_events(_db_session_factory)
-    resp = client.get("/events")
+    resp = client.get("/events?include_global=true")
     assert resp.status_code == 200
     data = resp.json()
     assert data[0]["metadata"]["i"] == 0

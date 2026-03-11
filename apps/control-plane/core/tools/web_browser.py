@@ -97,7 +97,22 @@ def _fetch_pinned(host: str, ip: str, port: int, path: str, is_https: bool) -> t
         conn.request("GET", path, headers={"Host": host, "User-Agent": "Mycelium-WebBrowser/1.0"})
         resp = conn.getresponse()
         headers = {k.lower(): v for k, v in resp.getheaders()}
-        body = resp.read().decode("utf-8", errors="replace")
+        chunks: list[bytes] = []
+        total = 0
+        while True:
+            data = resp.read(8192)
+            if not data:
+                break
+            if total >= _MAX_CONTENT_LENGTH:
+                break
+            if total + len(data) > _MAX_CONTENT_LENGTH:
+                keep = _MAX_CONTENT_LENGTH - total
+                if keep > 0:
+                    chunks.append(data[:keep])
+                break
+            chunks.append(data)
+            total += len(data)
+        body = b"".join(chunks).decode("utf-8", errors="replace")
         return (resp.status, headers, body)
     finally:
         conn.close()
