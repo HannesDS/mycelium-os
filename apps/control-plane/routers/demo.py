@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from core.auth import get_principal
 from core.events import ShroomEvent, ShroomEventType
 from core.event_service import emit_event
 from core.models import Approval
@@ -14,6 +16,7 @@ from core.prompt_safety import validate_proposal_payload
 
 router = APIRouter(prefix="/demo", tags=["demo"])
 
+DEMO_ENABLED = os.getenv("DEMO_ENABLED", "false").lower() in ("true", "1")
 DEFAULT_SUMMARY = "New enterprise lead — Triodos Bank. Proposal ready for approval."
 
 
@@ -42,9 +45,12 @@ class TriggerEscalationResponse(BaseModel):
 
 @router.post("/trigger-escalation", response_model=TriggerEscalationResponse)
 async def trigger_escalation(
+    principal_id: str = Depends(get_principal),
     db: Session = Depends(get_db),
     nats_bus: NatsEventBus = Depends(get_nats_bus),
 ):
+    if not DEMO_ENABLED:
+        raise HTTPException(status_code=403, detail="Demo endpoints disabled")
     summary = DEFAULT_SUMMARY
     payload = {"lead": "Triodos Bank", "action": "send_proposal"}
     if not validate_proposal_payload(payload):

@@ -170,9 +170,12 @@ export function ZenikOfficeCanvas() {
     return () => ro.disconnect();
   }, []);
 
+  const apiKey = process.env.NEXT_PUBLIC_DEV_API_KEY;
+
   useEffect(() => {
-    const unsub = startEventSource((event: ShroomEvent) => {
-      setShroomEventHistory((prev) => {
+    const unsub = startEventSource(
+      (event: ShroomEvent) => {
+        setShroomEventHistory((prev) => {
         const history = prev[event.shroom_id] ?? [];
         const next = [event, ...history].slice(0, 20);
         return { ...prev, [event.shroom_id]: next };
@@ -209,9 +212,11 @@ export function ZenikOfficeCanvas() {
           return next.slice(-THOUGHT_MAX);
         });
       }
-    });
+    },
+      apiKey
+    );
     return unsub;
-  }, []);
+  }, [apiKey]);
 
   useAnimationFrame((time) => {
     setT(time);
@@ -274,7 +279,7 @@ export function ZenikOfficeCanvas() {
     if (escalationPhase !== "idle") return;
     setEscalationPhase("escalating");
     try {
-      const { approval_id, summary } = await triggerEscalation();
+      const { approval_id, summary } = await triggerEscalation(apiKey);
       setPendingApproval({ approvalId: approval_id, summary });
       setInboxVisible(true);
       setEscalationPhase("inbox_visible");
@@ -282,7 +287,7 @@ export function ZenikOfficeCanvas() {
     } catch {
       setEscalationPhase("idle");
     }
-  }, [escalationPhase, notifyBadgeRefresh]);
+  }, [escalationPhase, notifyBadgeRefresh, apiKey]);
 
   const handleApprove = useCallback(async () => {
     if (!pendingApproval) return;

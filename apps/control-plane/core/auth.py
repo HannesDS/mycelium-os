@@ -8,9 +8,9 @@ DEV_API_KEY = os.getenv("DEV_API_KEY")
 DEV_PRINCIPAL_ID = os.getenv("DEV_PRINCIPAL_ID", "dev-user")
 
 
-def get_principal(x_api_key: str | None = Header(None)) -> str:
+def get_principal(x_api_key: str | None = Header(None, alias="X-API-Key")) -> str:
     if not DEV_API_KEY:
-        return DEV_PRINCIPAL_ID
+        raise HTTPException(status_code=401, detail="Authentication not configured")
     if not x_api_key or x_api_key != DEV_API_KEY:
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
     return DEV_PRINCIPAL_ID

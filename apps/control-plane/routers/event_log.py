@@ -6,7 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from core.auth import get_principal
 from core.models import ShroomEventRecord
+from core.session_bindings import get_session_bindings_for_principal
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -33,7 +35,6 @@ class EventResponse(BaseModel):
     token_count: int | None = None
     cost_usd: float | None = None
     model: str | None = None
-    trace_id: str | None = None
 
     @classmethod
     def from_record(cls, r: ShroomEventRecord) -> "EventResponse":
@@ -50,12 +51,12 @@ class EventResponse(BaseModel):
             token_count=r.token_count,
             cost_usd=cost,
             model=r.model,
-            trace_id=r.trace_id,
         )
 
 
 @router.get("", response_model=list[EventResponse])
 def list_events(
+    principal_id: str = Depends(get_principal),
     db: Session = Depends(get_db),
     shroom_id: str | None = Query(None),
     session_id: str | None = Query(None),
@@ -63,10 +64,16 @@ def list_events(
     since: str | None = Query(None),
     limit: int = Query(100, ge=1, le=500),
 ):
+    bound_ids = get_session_bindings_for_principal(db, principal_id)
     q = db.query(ShroomEventRecord)
+    q = q.filter(
+        (ShroomEventRecord.session_id.is_(None)) | (ShroomEventRecord.session_id.in_(bound_ids))
+    )
     if shroom_id:
         q = q.filter(ShroomEventRecord.shroom_id == shroom_id)
     if session_id:
+        if session_id not in bound_ids:
+            return []
         q = q.filter(ShroomEventRecord.session_id == session_id)
     if topic:
         q = q.filter(ShroomEventRecord.topic == topic)

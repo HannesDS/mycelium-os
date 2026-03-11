@@ -51,7 +51,7 @@ def client(controller, _db_session_factory):
     nats_bus = MagicMock()
     nats_bus.publish_event = AsyncMock()
     app.state.nats_bus = nats_bus
-    return TestClient(app, raise_server_exceptions=False)
+    return TestClient(app, raise_server_exceptions=False, headers={"X-API-Key": "test-key"})
 
 
 def test_trigger_escalation_creates_approval(client, _db_session_factory):

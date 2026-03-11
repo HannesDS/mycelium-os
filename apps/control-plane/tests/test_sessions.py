@@ -91,7 +91,7 @@ def client(controller, db_session_factory):
     app.state.controller = controller
     app.state.db_session_factory = db_session_factory
     app.state.nats_bus = NatsEventBus()
-    return TestClient(app, raise_server_exceptions=False)
+    return TestClient(app, raise_server_exceptions=False, headers={"X-API-Key": "test-key"})
 
 
 def test_list_sessions_active(client):

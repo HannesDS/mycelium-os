@@ -70,7 +70,8 @@ export default function ChatPage() {
           apiKey: DEV_API_KEY,
         });
         if (res.session_id) {
-          setSessions((prev) => ({ ...prev, [selectedId]: res.session_id }));
+          const sid = res.session_id;
+          setSessions((prev) => ({ ...prev, [selectedId]: sid }));
         }
         const shroomMsg: ChatMessage = {
           id: msgId(),
@@ -85,9 +86,8 @@ export default function ChatPage() {
       } catch (err) {
         if (err instanceof AuthError && err.message.includes("Start a new")) {
           setSessions((prev) => {
-            const next = { ...prev };
-            delete next[selectedId];
-            return next;
+            const { [selectedId]: _, ...rest } = prev;
+            return rest;
           });
         }
         const message =

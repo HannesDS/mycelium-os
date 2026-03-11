@@ -51,7 +51,7 @@ def client(controller, _db_session_factory):
     app.state.controller = controller
     app.state.db_session_factory = _db_session_factory
     app.state.nats_bus = NatsEventBus()
-    return TestClient(app, raise_server_exceptions=False)
+    return TestClient(app, raise_server_exceptions=False, headers={"X-API-Key": "test-key"})
 
 
 def _seed_events(session_factory):

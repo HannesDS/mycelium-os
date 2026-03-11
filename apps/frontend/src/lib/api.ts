@@ -122,9 +122,12 @@ export interface TriggerEscalationResponse {
   summary: string;
 }
 
-export async function triggerEscalation(): Promise<TriggerEscalationResponse> {
+export async function triggerEscalation(apiKey?: string): Promise<TriggerEscalationResponse> {
+  const headers: Record<string, string> = {};
+  if (apiKey) headers["X-API-Key"] = apiKey;
   const res = await fetch(`${API_BASE}/demo/trigger-escalation`, {
     method: "POST",
+    headers,
   });
   if (!res.ok) {
     throw new Error(
@@ -144,6 +147,7 @@ export interface EventsQueryOptions {
 
 export async function getEvents(
   options?: EventsQueryOptions,
+  apiKey?: string,
 ): Promise<ShroomEventItem[]> {
   const params = new URLSearchParams();
   if (options?.shroom_id) params.set("shroom_id", options.shroom_id);
@@ -152,7 +156,9 @@ export async function getEvents(
   if (options?.since) params.set("since", options.since);
   if (options?.limit) params.set("limit", String(options.limit));
   const qs = params.toString();
-  const res = await fetch(`${API_BASE}/events${qs ? `?${qs}` : ""}`);
+  const headers: Record<string, string> = {};
+  if (apiKey) headers["X-API-Key"] = apiKey;
+  const res = await fetch(`${API_BASE}/events${qs ? `?${qs}` : ""}`, { headers });
   if (!res.ok) {
     throw new Error(`Failed to fetch events: ${res.status} ${res.statusText}`);
   }

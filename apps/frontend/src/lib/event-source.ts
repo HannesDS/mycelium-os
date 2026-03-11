@@ -21,19 +21,20 @@ function eventKey(e: ShroomEvent): string {
 
 export type EventCallback = (event: ShroomEvent) => void;
 
-export function startEventSource(callback: EventCallback): () => void {
+export function startEventSource(callback: EventCallback, apiKey?: string): () => void {
   const wsUrl = getWsUrl();
 
   if (!wsUrl) {
     return startMockEventLoop(callback);
   }
 
-  return startWebSocketEventLoop(wsUrl, callback);
+  return startWebSocketEventLoop(wsUrl, callback, apiKey);
 }
 
 function startWebSocketEventLoop(
   url: string,
-  callback: EventCallback
+  callback: EventCallback,
+  apiKey?: string
 ): () => void {
   let ws: WebSocket | null = null;
   let attempts = 0;
@@ -51,7 +52,7 @@ function startWebSocketEventLoop(
 
   async function runBackfill() {
     try {
-      const events = await getEvents({ limit: BACKFILL_LIMIT });
+      const events = await getEvents({ limit: BACKFILL_LIMIT }, apiKey);
       for (const e of events) {
         if (stopped) return;
         const ev: ShroomEvent = {

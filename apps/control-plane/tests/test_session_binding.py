@@ -56,7 +56,7 @@ def client(_db_session_factory):
 
 
 def test_message_creates_binding_and_returns_session_id(client, _db_session_factory):
-    resp = client.post("/shrooms/sales-shroom/message", json={"message": "hi"})
+    resp = client.post("/shrooms/sales-shroom/message", json={"message": "hi"}, headers={"X-API-Key": "test-key"})
     assert resp.status_code == 200
     data = resp.json()
     assert "session_id" in data
@@ -77,7 +77,7 @@ def test_message_with_session_id_reuses_session(client, _db_session_factory):
     sess.commit()
     sess.close()
 
-    resp = client.post("/shrooms/sales-shroom/message", json={"message": "hi", "session_id": "sess-abc"})
+    resp = client.post("/shrooms/sales-shroom/message", json={"message": "hi", "session_id": "sess-abc"}, headers={"X-API-Key": "test-key"})
     assert resp.status_code == 200
     assert resp.json()["session_id"] == "sess-abc"
 
@@ -88,7 +88,7 @@ def test_message_with_foreign_session_id_returns_403(client, _db_session_factory
     sess.commit()
     sess.close()
 
-    resp = client.post("/shrooms/sales-shroom/message", json={"message": "hi", "session_id": "sess-other"})
+    resp = client.post("/shrooms/sales-shroom/message", json={"message": "hi", "session_id": "sess-other"}, headers={"X-API-Key": "test-key"})
     assert resp.status_code == 403
 
 
@@ -98,7 +98,7 @@ def test_message_with_session_id_for_wrong_shroom_returns_403(client, _db_sessio
     sess.commit()
     sess.close()
 
-    resp = client.post("/shrooms/billing-shroom/message", json={"message": "hi", "session_id": "sess-abc"})
+    resp = client.post("/shrooms/billing-shroom/message", json={"message": "hi", "session_id": "sess-abc"}, headers={"X-API-Key": "test-key"})
     assert resp.status_code == 403
 
 
