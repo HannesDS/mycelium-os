@@ -16,22 +16,17 @@ export default function TracesPage() {
   const [limit, setLimit] = useState(100);
   const [shrooms, setShrooms] = useState<{ id: string; name: string }[]>([]);
 
-  const apiKey = process.env.NEXT_PUBLIC_DEV_API_KEY;
-
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getEvents(
-        {
-          shroom_id: shroomId || undefined,
-          session_id: sessionId || undefined,
-          topic: topic || undefined,
-          since: since || undefined,
-          limit,
-        },
-        apiKey
-      );
+      const data = await getEvents({
+        shroom_id: shroomId || undefined,
+        session_id: sessionId || undefined,
+        topic: topic || undefined,
+        since: since || undefined,
+        limit,
+      });
       setEvents(data);
     } catch (e) {
       setEvents([]);
@@ -39,7 +34,7 @@ export default function TracesPage() {
     } finally {
       setLoading(false);
     }
-  }, [shroomId, sessionId, topic, since, limit, apiKey]);
+  }, [shroomId, sessionId, topic, since, limit]);
 
   useEffect(() => {
     fetchShrooms()

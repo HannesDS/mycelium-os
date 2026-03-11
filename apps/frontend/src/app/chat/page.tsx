@@ -14,8 +14,6 @@ function msgId() {
   return `msg-${crypto.randomUUID()}`;
 }
 
-const DEV_API_KEY = process.env.NEXT_PUBLIC_DEV_API_KEY;
-
 export default function ChatPage() {
   const [shrooms, setShrooms] = useState<ShroomSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -67,7 +65,6 @@ export default function ChatPage() {
       try {
         const res = await sendMessage(selectedId, text, {
           sessionId: sessions[selectedId],
-          apiKey: DEV_API_KEY,
         });
         if (res.session_id) {
           const sid = res.session_id;

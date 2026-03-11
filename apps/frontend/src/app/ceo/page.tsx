@@ -12,7 +12,6 @@ function msgId() {
   return `msg-${crypto.randomUUID()}`;
 }
 
-const DEV_API_KEY = process.env.NEXT_PUBLIC_DEV_API_KEY;
 const CEO_SHROOM_ID = "ceo-shroom";
 
 export default function CEOPage() {
@@ -57,7 +56,6 @@ export default function CEOPage() {
       try {
         const res = await sendMessage(CEO_SHROOM_ID, text, {
           sessionId: sessionId ?? undefined,
-          apiKey: DEV_API_KEY,
         });
         if (res.session_id) {
           setSessionId(res.session_id);

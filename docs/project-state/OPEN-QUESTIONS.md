@@ -82,3 +82,7 @@
 
 ### MYC-28 (Sessions) — Still open
 - Agno session storage: Postgres (already in compose) recommended. Confirm before implementing.
+
+### Security: Event log session_id IS NULL
+- `GET /events` returns org-level events (session_id IS NULL) to any authenticated principal.
+- Acceptable for single-tenant dev. For multi-tenant: add tenant/org scoping before exposing.

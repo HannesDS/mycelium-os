@@ -47,7 +47,7 @@ describe("fetchShrooms", () => {
 
     const result = await fetchShrooms();
     expect(result).toEqual([mockSummary]);
-    expect(fetch).toHaveBeenCalledWith("http://localhost:8000/shrooms");
+    expect(fetch).toHaveBeenCalledWith("/api/control-plane/shrooms");
   });
 
   it("throws on non-ok response", async () => {
@@ -78,9 +78,7 @@ describe("fetchShroom", () => {
 
     const result = await fetchShroom("sales-shroom");
     expect(result).toEqual(mockDetail);
-    expect(fetch).toHaveBeenCalledWith(
-      "http://localhost:8000/shrooms/sales-shroom"
-    );
+    expect(fetch).toHaveBeenCalledWith("/api/control-plane/shrooms/sales-shroom");
   });
 
   it("throws on 404", async () => {
@@ -135,7 +133,7 @@ describe("fetchConstitution", () => {
 
     const result = await fetchConstitution();
     expect(result).toEqual(mockConstitution);
-    expect(fetch).toHaveBeenCalledWith("http://localhost:8000/constitution");
+    expect(fetch).toHaveBeenCalledWith("/api/control-plane/constitution");
   });
 
   it("throws on non-ok response", async () => {
@@ -168,7 +166,7 @@ describe("fetchPendingApprovalCount", () => {
 
     const result = await fetchPendingApprovalCount();
     expect(result).toBe(3);
-    expect(fetch).toHaveBeenCalledWith("http://localhost:8000/approvals/pending-count");
+    expect(fetch).toHaveBeenCalledWith("/api/control-plane/approvals/pending-count");
   });
 
   it("throws on non-ok response", async () => {
@@ -206,7 +204,7 @@ describe("sendMessage", () => {
     const result = await sendMessage("ceo-shroom", "What is your role?");
     expect(result).toEqual(mockResponse);
     expect(fetch).toHaveBeenCalledWith(
-      "http://localhost:8000/shrooms/ceo-shroom/message",
+      "/api/control-plane/shrooms/ceo-shroom/message",
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json" },

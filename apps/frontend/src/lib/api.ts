@@ -1,5 +1,4 @@
-const API_BASE =
-  process.env.NEXT_PUBLIC_CONTROL_PLANE_URL || "http://localhost:8000";
+const API_BASE = "/api/control-plane";
 
 export interface ShroomSummary {
   id: string;
@@ -122,12 +121,9 @@ export interface TriggerEscalationResponse {
   summary: string;
 }
 
-export async function triggerEscalation(apiKey?: string): Promise<TriggerEscalationResponse> {
-  const headers: Record<string, string> = {};
-  if (apiKey) headers["X-API-Key"] = apiKey;
+export async function triggerEscalation(): Promise<TriggerEscalationResponse> {
   const res = await fetch(`${API_BASE}/demo/trigger-escalation`, {
     method: "POST",
-    headers,
   });
   if (!res.ok) {
     throw new Error(
@@ -146,8 +142,7 @@ export interface EventsQueryOptions {
 }
 
 export async function getEvents(
-  options?: EventsQueryOptions,
-  apiKey?: string,
+  options?: EventsQueryOptions
 ): Promise<ShroomEventItem[]> {
   const params = new URLSearchParams();
   if (options?.shroom_id) params.set("shroom_id", options.shroom_id);
@@ -156,9 +151,7 @@ export async function getEvents(
   if (options?.since) params.set("since", options.since);
   if (options?.limit) params.set("limit", String(options.limit));
   const qs = params.toString();
-  const headers: Record<string, string> = {};
-  if (apiKey) headers["X-API-Key"] = apiKey;
-  const res = await fetch(`${API_BASE}/events${qs ? `?${qs}` : ""}`, { headers });
+  const res = await fetch(`${API_BASE}/events${qs ? `?${qs}` : ""}`);
   if (!res.ok) {
     throw new Error(`Failed to fetch events: ${res.status} ${res.statusText}`);
   }
@@ -313,14 +306,10 @@ export interface SessionDetail {
 }
 
 export async function fetchSessions(
-  status: "active" | "completed" = "active",
-  apiKey?: string,
+  status: "active" | "completed" = "active"
 ): Promise<{ sessions: SessionListItem[] }> {
-  const headers: Record<string, string> = {};
-  if (apiKey) headers["X-API-Key"] = apiKey;
   const res = await fetch(
-    `${API_BASE}/sessions?status=${encodeURIComponent(status)}`,
-    { headers },
+    `${API_BASE}/sessions?status=${encodeURIComponent(status)}`
   );
   if (res.status === 401) throw new AuthError("Unauthorized. Provide a valid API key.");
   if (!res.ok) {
@@ -329,12 +318,8 @@ export async function fetchSessions(
   return res.json();
 }
 
-export async function fetchSession(id: string, apiKey?: string): Promise<SessionDetail> {
-  const headers: Record<string, string> = {};
-  if (apiKey) headers["X-API-Key"] = apiKey;
-  const res = await fetch(`${API_BASE}/sessions/${encodeURIComponent(id)}`, {
-    headers,
-  });
+export async function fetchSession(id: string): Promise<SessionDetail> {
+  const res = await fetch(`${API_BASE}/sessions/${encodeURIComponent(id)}`);
   if (res.status === 401) throw new AuthError("Unauthorized. Provide a valid API key.");
   if (res.status === 403) throw new AuthError("Session not found or not owned.");
   if (!res.ok) {
@@ -346,12 +331,10 @@ export async function fetchSession(id: string, apiKey?: string): Promise<Session
 export async function sendMessage(
   shroomId: string,
   message: string,
-  options?: { sessionId?: string; apiKey?: string },
+  options?: { sessionId?: string }
 ): Promise<ShroomMessageResponse> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (options?.apiKey) headers["X-API-Key"] = options.apiKey;
   const body: { message: string; session_id?: string } = { message };
   if (options?.sessionId) body.session_id = options.sessionId;
 
@@ -360,10 +343,10 @@ export async function sendMessage(
       `${API_BASE}/shrooms/${encodeURIComponent(shroomId)}/message`,
       {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
         signal: controller.signal,
-      },
+      }
     );
     if (res.status === 401) {
       throw new AuthError("Unauthorized. Provide a valid API key.");
