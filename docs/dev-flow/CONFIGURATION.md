@@ -35,7 +35,11 @@
 
 ## API proxy
 
-Authenticated control-plane calls go through the Next.js API proxy at `/api/control-plane/*`:
+Authenticated control-plane calls go through the Next.js API proxy at `/api/control-plane/*`. The proxy is gated by a session cookie:
+
+1. On first page load, middleware sets an httpOnly, SameSite=Strict cookie (signed with `DEV_API_KEY`)
+2. Proxy requests require this cookie; otherwise 401
+3. Only allowlisted paths/methods are forwarded (see `ALLOWED_PATHS` in the route handler)
 
 1. Browser calls `fetch('/api/control-plane/events')` (no API key in client code)
 2. Next.js route handler reads `DEV_API_KEY` from server env

@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
+from core.auth import get_principal
 from core.events import ShroomEvent, ShroomEventType
 from core.event_service import emit_event
 from core.models import Approval, AuditLog
@@ -82,6 +83,7 @@ def list_approvals(
 @router.post("/{approval_id}/approve", response_model=ApprovalResponse, summary="Approve a proposal")
 async def approve_proposal(
     approval_id: uuid.UUID,
+    principal_id: str = Depends(get_principal),
     db: Session = Depends(get_db),
     nats_bus: NatsEventBus = Depends(get_nats_bus),
 ):
@@ -95,7 +97,7 @@ async def approve_proposal(
         entity_type="approval",
         entity_id=approval.id,
         action="approved",
-        actor="human",
+        actor=principal_id,
         details={"shroom_id": approval.shroom_id, "summary": approval.summary},
     )
     db.add(audit_entry)
@@ -103,7 +105,7 @@ async def approve_proposal(
 
     approval.status = "approved"
     approval.resolved_at = datetime.now(timezone.utc)
-    approval.resolved_by = "human"
+    approval.resolved_by = principal_id
     db.commit()
     db.refresh(approval)
 
@@ -122,6 +124,7 @@ async def approve_proposal(
 @router.post("/{approval_id}/reject", response_model=ApprovalResponse, summary="Reject a proposal")
 async def reject_proposal(
     approval_id: uuid.UUID,
+    principal_id: str = Depends(get_principal),
     db: Session = Depends(get_db),
     nats_bus: NatsEventBus = Depends(get_nats_bus),
 ):
@@ -135,7 +138,7 @@ async def reject_proposal(
         entity_type="approval",
         entity_id=approval.id,
         action="rejected",
-        actor="human",
+        actor=principal_id,
         details={"shroom_id": approval.shroom_id, "summary": approval.summary},
     )
     db.add(audit_entry)
@@ -143,7 +146,7 @@ async def reject_proposal(
 
     approval.status = "rejected"
     approval.resolved_at = datetime.now(timezone.utc)
-    approval.resolved_by = "human"
+    approval.resolved_by = principal_id
     db.commit()
     db.refresh(approval)
 

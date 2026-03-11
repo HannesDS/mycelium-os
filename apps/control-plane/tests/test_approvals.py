@@ -60,7 +60,7 @@ def client(seeded_factory):
     nats_bus = MagicMock()
     nats_bus.publish_event = AsyncMock()
     app.state.nats_bus = nats_bus
-    return TestClient(app, raise_server_exceptions=False)
+    return TestClient(app, raise_server_exceptions=False, headers={"X-API-Key": "test-key"})
 
 
 def test_pending_count(client):
@@ -107,7 +107,7 @@ def test_approve_proposal(client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "approved"
-    assert data["resolved_by"] == "human"
+    assert data["resolved_by"] == "dev-user"
     assert data["resolved_at"] is not None
 
 
@@ -119,7 +119,7 @@ def test_reject_proposal(client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "rejected"
-    assert data["resolved_by"] == "human"
+    assert data["resolved_by"] == "dev-user"
     assert data["resolved_at"] is not None
 
 
@@ -180,7 +180,7 @@ def test_approve_creates_audit_log(client, seeded_factory):
     assert len(logs) == 1
     assert logs[0].action == "approved"
     assert logs[0].entity_type == "approval"
-    assert logs[0].actor == "human"
+    assert logs[0].actor == "dev-user"
 
 
 def test_reject_creates_audit_log(client, seeded_factory):
