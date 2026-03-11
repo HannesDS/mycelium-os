@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchShrooms, fetchShroom, fetchConstitution, sendMessage } from "../api";
+import {
+  fetchShrooms,
+  fetchShroom,
+  fetchConstitution,
+  fetchPendingApprovalCount,
+  sendMessage,
+} from "../api";
 import type { ShroomSummary, ShroomDetail, ConstitutionData } from "../api";
 
 const mockSummary: ShroomSummary = {
@@ -141,6 +147,39 @@ describe("fetchConstitution", () => {
 
     await expect(fetchConstitution()).rejects.toThrow(
       "Failed to fetch constitution: 503 Service Unavailable"
+    );
+  });
+});
+
+describe("fetchPendingApprovalCount", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("returns count on success", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ count: 3 }),
+    });
+
+    const result = await fetchPendingApprovalCount();
+    expect(result).toBe(3);
+    expect(fetch).toHaveBeenCalledWith("http://localhost:8000/approvals/pending-count");
+  });
+
+  it("throws on non-ok response", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      status: 503,
+      statusText: "Service Unavailable",
+    });
+
+    await expect(fetchPendingApprovalCount()).rejects.toThrow(
+      "Failed to fetch pending count: 503 Service Unavailable"
     );
   });
 });

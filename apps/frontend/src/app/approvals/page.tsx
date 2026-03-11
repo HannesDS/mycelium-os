@@ -39,6 +39,12 @@ export default function ApprovalsPage() {
     };
   }, [load]);
 
+  const notifyBadgeRefresh = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("approvals-updated"));
+    }
+  }, []);
+
   const handleApprove = useCallback(
     async (id: string) => {
       try {
@@ -50,8 +56,9 @@ export default function ApprovalsPage() {
         throw e;
       }
       await load();
+      notifyBadgeRefresh();
     },
-    [load],
+    [load, notifyBadgeRefresh],
   );
 
   const handleReject = useCallback(
@@ -65,8 +72,9 @@ export default function ApprovalsPage() {
         throw e;
       }
       await load();
+      notifyBadgeRefresh();
     },
-    [load],
+    [load, notifyBadgeRefresh],
   );
 
   const pending = approvals.filter((a) => a.status === "pending");

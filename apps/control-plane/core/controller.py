@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Any
 
 from agno.agent import Agent
 from agno.db.postgres import PostgresDb
 from agno.models.ollama import Ollama
+from agno.models.openrouter import OpenRouter
 
 from core.database import DATABASE_URL
 from core.manifest import ShroomManifest
@@ -18,6 +20,23 @@ MODEL_MAP = {
     "mistral-7b": "mistral:latest",
     "mistral:latest": "mistral:latest",
 }
+
+OPENROUTER_PREFIX = "openrouter/"
+
+
+def _resolve_model(model_id: str) -> Any:
+    if model_id.startswith(OPENROUTER_PREFIX):
+        openrouter_id = model_id[len(OPENROUTER_PREFIX) :]
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            raise ValueError(
+                "OPENROUTER_API_KEY must be set when using OpenRouter models. "
+                "Get a key at https://openrouter.ai/settings/keys"
+            )
+        return OpenRouter(id=openrouter_id, api_key=api_key)
+    ollama_id = MODEL_MAP.get(model_id, model_id)
+    return Ollama(id=ollama_id, host=OLLAMA_HOST)
+
 
 FALLBACK_MODELS = [
     "llama3.2:latest",
@@ -52,7 +71,7 @@ def _create_agent_with_model(
 ) -> Agent:
     kwargs: dict = {
         "name": manifest.metadata.id,
-        "model": Ollama(id=model_id, host=OLLAMA_HOST),
+        "model": _resolve_model(model_id),
         "instructions": [_build_system_prompt(manifest)],
         "markdown": True,
     }
@@ -62,7 +81,8 @@ def _create_agent_with_model(
 
 
 def create_agent(manifest: ShroomManifest, db: PostgresDb | None = None) -> Agent:
-    model_id = MODEL_MAP.get(manifest.spec.model, manifest.spec.model)
+    raw = manifest.spec.model
+    model_id = raw if raw.startswith(OPENROUTER_PREFIX) else MODEL_MAP.get(raw, raw)
     return _create_agent_with_model(manifest, model_id, db)
 
 

@@ -57,6 +57,10 @@ pnpm dev                        # Next.js dev server at :3000
 
 If `make up` fails with `bind: address already in use` on Ollama, set `OLLAMA_HOST_PORT` in `.env` to a free port and run `make up` again.
 
+### OpenRouter (optional)
+
+To use cloud models instead of local Ollama, set `OPENROUTER_API_KEY` in `.env` (get a key at [openrouter.ai/settings/keys](https://openrouter.ai/settings/keys)). In `mycelium.yaml`, set shroom models to `openrouter/<model-id>` (e.g. `openrouter/anthropic/claude-3.5-sonnet`). If the key is missing when an OpenRouter model is used, the API returns a clear error.
+
 ## Project structure
 
 ```

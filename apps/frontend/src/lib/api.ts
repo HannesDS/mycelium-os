@@ -51,6 +51,17 @@ export async function fetchShroom(id: string): Promise<ShroomDetail> {
   return res.json();
 }
 
+export async function fetchPendingApprovalCount(): Promise<number> {
+  const res = await fetch(`${API_BASE}/approvals/pending-count`);
+  if (!res.ok) {
+    throw new Error(
+      `Failed to fetch pending count: ${res.status} ${res.statusText}`,
+    );
+  }
+  const data = await res.json();
+  return data.count as number;
+}
+
 export async function fetchApprovals(
   status?: string,
 ): Promise<ApprovalItem[]> {
@@ -88,6 +99,47 @@ export async function rejectProposal(id: string): Promise<ApprovalItem> {
   }
   if (!res.ok) {
     throw new Error(`Failed to reject: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export interface ShroomEventItem {
+  shroom_id: string;
+  event: string;
+  to: string | null;
+  topic: string | null;
+  timestamp: string;
+  payload_summary: string;
+  metadata: Record<string, unknown> | null;
+}
+
+export interface TriggerEscalationResponse {
+  approval_id: string;
+  summary: string;
+}
+
+export async function triggerEscalation(): Promise<TriggerEscalationResponse> {
+  const res = await fetch(`${API_BASE}/demo/trigger-escalation`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    throw new Error(
+      `Failed to trigger escalation: ${res.status} ${res.statusText}`,
+    );
+  }
+  return res.json();
+}
+
+export async function getEvents(
+  options?: { limit?: number; since?: string }
+): Promise<ShroomEventItem[]> {
+  const params = new URLSearchParams();
+  if (options?.limit) params.set("limit", String(options.limit));
+  if (options?.since) params.set("since", options.since);
+  const qs = params.toString();
+  const res = await fetch(`${API_BASE}/events${qs ? `?${qs}` : ""}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch events: ${res.status} ${res.statusText}`);
   }
   return res.json();
 }

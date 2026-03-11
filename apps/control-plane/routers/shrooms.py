@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from core.controller import FALLBACK_MODELS, OLLAMA_HOST, ShroomController
 from core.events import ShroomEvent, ShroomEventType
+from core.event_service import emit_event
 from core.memory.beads import append_bead, format_beads_for_context, get_recent_beads
 from core.nats_client import NatsEventBus
 from core.ollama import (
@@ -123,12 +124,12 @@ async def send_message(
 
     append_bead(db, shroom_id, "message_received", f"Received: {req.message[:120]}")
 
-    await nats_bus.publish_event(ShroomEvent(
+    await emit_event(db, nats_bus, ShroomEvent(
         shroom_id=shroom_id,
         event=ShroomEventType.MESSAGE_RECEIVED,
         topic="message",
         payload_summary=f"Received: {req.message[:120]}",
-    ))
+    ), session_id=None)
 
     recent = get_recent_beads(db, shroom_id, n=10)
     context = format_beads_for_context(recent)
@@ -154,7 +155,7 @@ async def send_message(
 
     if content is None:
         db.commit()
-        await nats_bus.publish_event(ShroomEvent(
+        await emit_event(db, nats_bus, ShroomEvent(
             shroom_id=shroom_id,
             event=ShroomEventType.ERROR,
             topic="agent_error",
@@ -170,11 +171,11 @@ async def send_message(
     append_bead(db, shroom_id, "task_completed", f"Responded: {content[:120]}")
     db.commit()
 
-    await nats_bus.publish_event(ShroomEvent(
+    await emit_event(db, nats_bus, ShroomEvent(
         shroom_id=shroom_id,
         event=ShroomEventType.MESSAGE_SENT,
         topic="response",
         payload_summary=f"Responded: {content[:120]}",
-    ))
+    ), session_id=session_id)
 
     return MessageResponse(shroom_id=shroom_id, response=content, session_id=session_id)

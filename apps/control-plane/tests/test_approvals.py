@@ -52,13 +52,29 @@ def seeded_factory(db_session_factory):
 @pytest.fixture()
 def client(seeded_factory):
     from main import app
-    from unittest.mock import MagicMock
+    from unittest.mock import AsyncMock, MagicMock
     from core.controller import ShroomController
 
     app.state.controller = ShroomController()
     app.state.db_session_factory = seeded_factory
-    app.state.nats_bus = MagicMock()
+    nats_bus = MagicMock()
+    nats_bus.publish_event = AsyncMock()
+    app.state.nats_bus = nats_bus
     return TestClient(app, raise_server_exceptions=False)
+
+
+def test_pending_count(client):
+    resp = client.get("/approvals/pending-count")
+    assert resp.status_code == 200
+    assert resp.json() == {"count": 2}
+
+
+def test_pending_count_after_approve(client):
+    approvals = client.get("/approvals").json()
+    client.post(f"/approvals/{approvals[0]['id']}/approve")
+    resp = client.get("/approvals/pending-count")
+    assert resp.status_code == 200
+    assert resp.json() == {"count": 1}
 
 
 def test_list_approvals_returns_all(client):
@@ -209,3 +225,32 @@ def test_filter_shows_resolved_after_action(client):
     assert len(pending) == 1
     assert len(approved) == 1
     assert approved[0]["id"] == approval_id
+
+
+def test_approve_emits_decision_received_to_nats(client):
+    approvals = client.get("/approvals").json()
+    approval_id = approvals[0]["id"]
+
+    client.post(f"/approvals/{approval_id}/approve")
+
+    nats_bus = client.app.state.nats_bus
+    nats_bus.publish_event.assert_called_once()
+    call_args = nats_bus.publish_event.call_args[0][0]
+    assert call_args.event.value == "decision_received"
+    assert call_args.shroom_id == "sales-shroom"
+    assert call_args.metadata["approved"] is True
+    assert call_args.metadata["approval_id"] == approval_id
+
+
+def test_reject_emits_decision_received_to_nats(client):
+    approvals = client.get("/approvals").json()
+    approval_id = approvals[0]["id"]
+
+    client.post(f"/approvals/{approval_id}/reject")
+
+    nats_bus = client.app.state.nats_bus
+    nats_bus.publish_event.assert_called_once()
+    call_args = nats_bus.publish_event.call_args[0][0]
+    assert call_args.event.value == "decision_received"
+    assert call_args.shroom_id == "sales-shroom"
+    assert call_args.metadata["approved"] is False

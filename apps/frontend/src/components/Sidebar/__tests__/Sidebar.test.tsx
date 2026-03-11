@@ -10,6 +10,10 @@ vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname,
 }));
 
+vi.mock("@/lib/api", () => ({
+  fetchPendingApprovalCount: vi.fn().mockResolvedValue(0),
+}));
+
 beforeEach(() => {
   mockPathname = "/";
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
