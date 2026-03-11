@@ -10,6 +10,7 @@ from core.events import ShroomEvent, ShroomEventType
 from core.event_service import emit_event
 from core.models import Approval
 from core.nats_client import NatsEventBus
+from core.prompt_safety import validate_proposal_payload
 
 router = APIRouter(prefix="/demo", tags=["demo"])
 
@@ -45,11 +46,14 @@ async def trigger_escalation(
     nats_bus: NatsEventBus = Depends(get_nats_bus),
 ):
     summary = DEFAULT_SUMMARY
+    payload = {"lead": "Triodos Bank", "action": "send_proposal"}
+    if not validate_proposal_payload(payload):
+        raise HTTPException(status_code=400, detail="Invalid proposal payload")
     approval = Approval(
         shroom_id="sales-shroom",
         event_type="escalation_raised",
         summary=summary,
-        payload={"lead": "Triodos Bank", "action": "send_proposal"},
+        payload=payload,
     )
     db.add(approval)
     db.commit()

@@ -34,6 +34,10 @@ async def emit_event(
         payload_summary=event.payload_summary,
         metadata_=event.metadata,
         session_id=session_id,
+        token_count=event.token_count,
+        cost_usd=event.cost_usd,
+        model=event.model,
+        trace_id=event.trace_id,
     )
     session.add(record)
     session.commit()

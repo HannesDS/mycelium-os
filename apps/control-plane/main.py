@@ -21,6 +21,7 @@ from routers.events import router as events_router, start_relay, stop_relay
 from routers.sessions import router as sessions_router
 from routers.org import router as org_router
 from routers.shrooms import router as shrooms_router
+from routers.skills_catalog import router as skills_catalog_router
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +154,7 @@ def create_app() -> FastAPI:
     app.include_router(approvals_router)
     app.include_router(demo_router)
     app.include_router(org_router)
+    app.include_router(skills_catalog_router)
 
     @app.get("/")
     def root() -> dict[str, str]:

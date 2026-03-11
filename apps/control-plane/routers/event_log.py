@@ -30,10 +30,15 @@ class EventResponse(BaseModel):
     timestamp: str
     payload_summary: str
     metadata: dict | None
+    token_count: int | None = None
+    cost_usd: float | None = None
+    model: str | None = None
+    trace_id: str | None = None
 
     @classmethod
     def from_record(cls, r: ShroomEventRecord) -> "EventResponse":
         ts = r.timestamp.isoformat().replace("+00:00", "Z") if r.timestamp.tzinfo else r.timestamp.isoformat() + "Z"
+        cost = float(r.cost_usd) if r.cost_usd is not None else None
         return cls(
             shroom_id=r.shroom_id,
             event=r.event,
@@ -42,6 +47,10 @@ class EventResponse(BaseModel):
             timestamp=ts,
             payload_summary=r.payload_summary,
             metadata=r.metadata_,
+            token_count=r.token_count,
+            cost_usd=cost,
+            model=r.model,
+            trace_id=r.trace_id,
         )
 
 

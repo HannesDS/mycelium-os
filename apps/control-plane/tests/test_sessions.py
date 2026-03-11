@@ -13,6 +13,7 @@ from sqlalchemy.pool import StaticPool
 from core.controller import ShroomController
 from core.database import Base
 from core.manifest import ShroomManifest, ShroomMetadata, ShroomSpec
+from core.models import SessionBinding
 from core.nats_client import NatsEventBus
 
 
@@ -75,7 +76,12 @@ def db_session_factory():
         poolclass=StaticPool,
     )
     Base.metadata.create_all(engine)
-    return sessionmaker(bind=engine)
+    sm = sessionmaker(bind=engine)
+    session = sm()
+    session.add(SessionBinding(principal_id="dev-user", shroom_id="sales-shroom", session_id="sess-123"))
+    session.commit()
+    session.close()
+    return sm
 
 
 @pytest.fixture()

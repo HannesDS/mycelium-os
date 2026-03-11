@@ -11,8 +11,12 @@ from agno.models.openrouter import OpenRouter
 
 from core.database import DATABASE_URL
 from core.manifest import ShroomManifest
+from core.skills import tool_skill_allowed
+from core.tools.web_browser import fetch_page
 
 logger = logging.getLogger(__name__)
+
+ALL_TOOLS: list[Any] = [fetch_page]
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 
@@ -50,13 +54,20 @@ FALLBACK_MODELS = [
 
 def _build_system_prompt(manifest: ShroomManifest) -> str:
     skills = ", ".join(manifest.spec.skills) if manifest.spec.skills else "general"
-    return (
+    base = (
         f"You are {manifest.metadata.name} ({manifest.metadata.id}), "
         f"a shroom in the Mycelium OS organisation.\n"
         f"Your skills: {skills}.\n"
         f"You escalate unresolved issues to: {manifest.spec.escalates_to or 'human'}.\n"
         f"Always respond concisely and stay in character."
     )
+    if manifest.metadata.id == "ceo-shroom":
+        base += (
+            "\n\nWhen helping with setup, you can guide users to add shrooms by editing mycelium.yaml. "
+            "Available skills: web_browser, email, github, crm, lead_qualification, proposal_drafting, decision_routing, escalation_triage. "
+            "Shroom manifests follow the Shroom API format with metadata.id, metadata.name, spec.model, spec.skills, spec.escalates_to."
+        )
+    return base
 
 
 def _create_agno_db() -> PostgresDb:
@@ -66,14 +77,26 @@ def _create_agno_db() -> PostgresDb:
     )
 
 
+def _filter_tools_by_skills(tools: list[Any], manifest_skills: list[str]) -> list[Any]:
+    allowed = []
+    for t in tools:
+        skill = getattr(t, "skill", None) or getattr(t, "skill_id", None)
+        if skill and not tool_skill_allowed(str(skill), manifest_skills):
+            continue
+        allowed.append(t)
+    return allowed
+
+
 def _create_agent_with_model(
     manifest: ShroomManifest, model_id: str, db: PostgresDb | None
 ) -> Agent:
+    tools = _filter_tools_by_skills(ALL_TOOLS, manifest.spec.skills)
     kwargs: dict = {
         "name": manifest.metadata.id,
         "model": _resolve_model(model_id),
         "instructions": [_build_system_prompt(manifest)],
         "markdown": True,
+        "tools": tools,
     }
     if db:
         kwargs["db"] = db

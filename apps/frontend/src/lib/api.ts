@@ -111,6 +111,10 @@ export interface ShroomEventItem {
   timestamp: string;
   payload_summary: string;
   metadata: Record<string, unknown> | null;
+  token_count?: number | null;
+  cost_usd?: number | null;
+  model?: string | null;
+  trace_id?: string | null;
 }
 
 export interface TriggerEscalationResponse {
@@ -130,18 +134,36 @@ export async function triggerEscalation(): Promise<TriggerEscalationResponse> {
   return res.json();
 }
 
+export interface EventsQueryOptions {
+  shroom_id?: string;
+  session_id?: string;
+  topic?: string;
+  since?: string;
+  limit?: number;
+}
+
 export async function getEvents(
-  options?: { limit?: number; since?: string }
+  options?: EventsQueryOptions,
 ): Promise<ShroomEventItem[]> {
   const params = new URLSearchParams();
-  if (options?.limit) params.set("limit", String(options.limit));
+  if (options?.shroom_id) params.set("shroom_id", options.shroom_id);
+  if (options?.session_id) params.set("session_id", options.session_id);
+  if (options?.topic) params.set("topic", options.topic);
   if (options?.since) params.set("since", options.since);
+  if (options?.limit) params.set("limit", String(options.limit));
   const qs = params.toString();
   const res = await fetch(`${API_BASE}/events${qs ? `?${qs}` : ""}`);
   if (!res.ok) {
     throw new Error(`Failed to fetch events: ${res.status} ${res.statusText}`);
   }
   return res.json();
+}
+
+export class AuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AuthError";
+  }
 }
 
 export class ConflictError extends Error {
@@ -233,6 +255,21 @@ export interface OrgGraphResponse {
   activity: OrgActivityState[];
 }
 
+export interface SkillItem {
+  id: string;
+  name: string;
+  description: string;
+  shrooms: string[];
+}
+
+export async function fetchSkills(): Promise<{ skills: SkillItem[] }> {
+  const res = await fetch(`${API_BASE}/skills`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch skills: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
 export async function fetchOrgGraph(): Promise<OrgGraphResponse> {
   const res = await fetch(`${API_BASE}/org/graph`);
   if (!res.ok) {
@@ -271,18 +308,29 @@ export interface SessionDetail {
 
 export async function fetchSessions(
   status: "active" | "completed" = "active",
+  apiKey?: string,
 ): Promise<{ sessions: SessionListItem[] }> {
+  const headers: Record<string, string> = {};
+  if (apiKey) headers["X-API-Key"] = apiKey;
   const res = await fetch(
     `${API_BASE}/sessions?status=${encodeURIComponent(status)}`,
+    { headers },
   );
+  if (res.status === 401) throw new AuthError("Unauthorized. Provide a valid API key.");
   if (!res.ok) {
     throw new Error(`Failed to fetch sessions: ${res.status} ${res.statusText}`);
   }
   return res.json();
 }
 
-export async function fetchSession(id: string): Promise<SessionDetail> {
-  const res = await fetch(`${API_BASE}/sessions/${encodeURIComponent(id)}`);
+export async function fetchSession(id: string, apiKey?: string): Promise<SessionDetail> {
+  const headers: Record<string, string> = {};
+  if (apiKey) headers["X-API-Key"] = apiKey;
+  const res = await fetch(`${API_BASE}/sessions/${encodeURIComponent(id)}`, {
+    headers,
+  });
+  if (res.status === 401) throw new AuthError("Unauthorized. Provide a valid API key.");
+  if (res.status === 403) throw new AuthError("Session not found or not owned.");
   if (!res.ok) {
     throw new Error(`Failed to fetch session ${id}: ${res.status} ${res.statusText}`);
   }
@@ -292,25 +340,36 @@ export async function fetchSession(id: string): Promise<SessionDetail> {
 export async function sendMessage(
   shroomId: string,
   message: string,
+  options?: { sessionId?: string; apiKey?: string },
 ): Promise<ShroomMessageResponse> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (options?.apiKey) headers["X-API-Key"] = options.apiKey;
+  const body: { message: string; session_id?: string } = { message };
+  if (options?.sessionId) body.session_id = options.sessionId;
 
   try {
     const res = await fetch(
       `${API_BASE}/shrooms/${encodeURIComponent(shroomId)}/message`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        headers,
+        body: JSON.stringify(body),
         signal: controller.signal,
       },
     );
+    if (res.status === 401) {
+      throw new AuthError("Unauthorized. Provide a valid API key.");
+    }
+    if (res.status === 403) {
+      throw new AuthError("Session not found or not owned. Start a new conversation.");
+    }
     if (!res.ok) {
       let detail: string;
       try {
-        const body = await res.json();
-        detail = body.detail || `${res.status} ${res.statusText}`;
+        const resBody = await res.json();
+        detail = resBody.detail || `${res.status} ${res.statusText}`;
       } catch {
         detail = `${res.status} ${res.statusText}`;
       }

@@ -9,6 +9,8 @@ import { SessionDetail as SessionDetailComponent } from "@/components/SessionDet
 
 type Tab = "active" | "completed";
 
+const DEV_API_KEY = process.env.NEXT_PUBLIC_DEV_API_KEY;
+
 export default function SessionsPage() {
   const [tab, setTab] = useState<Tab>("active");
   const [sessions, setSessions] = useState<SessionListItem[]>([]);
@@ -22,7 +24,7 @@ export default function SessionsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchSessions(tab);
+      const data = await fetchSessions(tab, DEV_API_KEY);
       setSessions(data.sessions);
     } catch (e) {
       setSessions([]);
@@ -41,7 +43,7 @@ export default function SessionsPage() {
     setDetailLoading(true);
     setSelectedSession(null);
     try {
-      const detail = await fetchSession(sessionId);
+      const detail = await fetchSession(sessionId, DEV_API_KEY);
       setSelectedSession(detail);
     } catch {
       setSelectedSession(null);

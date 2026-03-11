@@ -9,6 +9,8 @@ import {
   BookOpen,
   List,
   Play,
+  Wrench,
+  UserCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -25,9 +27,11 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/chat", label: "Chat", icon: MessageSquare, enabled: true },
   { href: "/approvals", label: "Approvals", icon: CheckCircle, enabled: true },
   { href: "/constitution", label: "Constitution", icon: Scale, enabled: true },
+  { href: "/ceo", label: "CEO", icon: UserCircle, enabled: true },
   { href: "/organisation", label: "Organisation", icon: Network, enabled: true },
+  { href: "/skills", label: "Skills", icon: Wrench, enabled: true },
   { href: "/memory", label: "Memory", icon: Brain, enabled: false },
   { href: "/knowledge", label: "Knowledge", icon: BookOpen, enabled: false },
-  { href: "/traces", label: "Traces", icon: List, enabled: false },
+  { href: "/traces", label: "Traces", icon: List, enabled: true },
   { href: "/sessions", label: "Sessions", icon: Play, enabled: true },
 ];
