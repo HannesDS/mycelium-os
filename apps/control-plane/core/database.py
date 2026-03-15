@@ -7,7 +7,7 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://mycelium:mycelium@localhost:5432/mycelium",
+    "mysql+pymysql://root@localhost:3306/mycelium",
 )
 
 

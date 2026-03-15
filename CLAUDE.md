@@ -69,7 +69,7 @@ mycelium-os/
 │   ├── frontend/          # Next.js — the visual office (canvas-based)
 │   └── control-plane/     # Python FastAPI — constitution engine, graph API, escalation
 ├── shrooms/               # Shroom sandbox definitions + mock shrooms (Python)
-├── chart/                 # Helm chart — bundled stack (Postgres, Neo4j, NATS, MinIO)
+├── chart/                 # Helm chart — bundled stack (Dolt, Neo4j, NATS, MinIO)
 ├── openspec/              # OpenSpec — spec-driven development
 │   ├── specs/             # Source of truth (system behaviour)
 │   ├── changes/           # Active changes (proposal, specs, design, tasks)
@@ -96,7 +96,7 @@ mycelium-os/
 | Runtime | Agno (Python) | Wraps LLM calls, tools, session memory |
 | Graph | Neo4j | Shroom topology |
 | Event bus | NATS | Lightweight, K8s-native |
-| Database | Postgres | Constitution, audit, inbox, beads memory |
+| Database | Dolt (MySQL wire protocol) | Constitution, audit, inbox, beads memory — use `dolt sql` for ad-hoc queries, `dolt log` / `dolt diff` for data history |
 | Object storage | MinIO | S3-compatible |
 | Mail | Mailhog (dev) / Postfix (prod) | |
 | Models | Mistral / Ollama | EU-native, open source |
@@ -236,7 +236,7 @@ Mock shrooms emit real events to the real NATS bus. The visual office does not k
 ## Current codebase state (as of 2026-03-07)
 
 After `docker compose up`:
-- ✅ Full infra stack running (NATS, Postgres, Neo4j, MinIO)
+- ✅ Full infra stack running (NATS, Dolt, Neo4j, MinIO)
 - ✅ Next.js frontend running at http://localhost:3000
 - ❌ No visual office — blank canvas only
 - ❌ No control plane / FastAPI service

@@ -20,7 +20,8 @@ __pycache__/
 .dolt/
 *.db
 
-# Gas Town (added by gt)
+# Gas Town runtime (local only, not project files)
+.beads/
 .runtime/
 .claude/
 .logs/

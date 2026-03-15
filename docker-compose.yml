@@ -1,19 +1,18 @@
 services:
-  postgres:
-    image: postgres:16-alpine
+  dolt:
+    image: dolthub/dolt-sql-server:latest
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:3306:3306"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-mycelium}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mycelium}
-      POSTGRES_DB: ${POSTGRES_DB:-mycelium}
+      DOLT_ROOT_PATH: /var/lib/dolt
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mycelium}"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root --silent"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 15s
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - doltdata:/var/lib/dolt
 
   neo4j:
     image: neo4j:5.26
@@ -90,11 +89,11 @@ services:
     environment:
       OLLAMA_HOST: http://ollama:11434
       MYCELIUM_CONFIG: /app/mycelium.yaml
-      DATABASE_URL: postgresql://mycelium:mycelium@postgres:5432/mycelium
+      DATABASE_URL: mysql+pymysql://root@dolt:3306/mycelium
       NATS_URL: nats://nats:4222
       ALLOW_INSECURE_WS: "true"
     depends_on:
-      postgres:
+      dolt:
         condition: service_healthy
       nats:
         condition: service_healthy
@@ -107,6 +106,6 @@ services:
       retries: 5
 
 volumes:
-  pgdata:
+  doltdata:
   miniodata:
   ollama_data:

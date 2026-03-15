@@ -49,7 +49,7 @@ pnpm dev                        # Next.js dev server at :3000
 | Frontend | http://localhost:3000 | Next.js visual office |
 | Control Plane API | http://localhost:8000 | FastAPI — constitution, shrooms, events |
 | API docs | http://localhost:8000/docs | Interactive OpenAPI explorer |
-| PostgreSQL | localhost:5432 | Constitution, audit log, beads memory |
+| Dolt | localhost:3306 | Constitution, audit log, beads memory (MySQL wire protocol) |
 | Neo4j | http://localhost:7474 | Shroom topology graph |
 | NATS | localhost:4222 | Event bus (JetStream) |
 | MinIO | http://localhost:9001 | S3-compatible object storage |
@@ -99,7 +99,7 @@ make lint        # Lint frontend
 make logs        # Tail docker compose logs
 make migrate     # Run Alembic migrations
 make clean       # Remove volumes and rebuild
-make psql        # Open psql shell to local Postgres
+make dolt        # Open dolt sql shell to local Dolt (use `dolt log` and `dolt diff` for data history)
 ```
 
 ## Architecture
