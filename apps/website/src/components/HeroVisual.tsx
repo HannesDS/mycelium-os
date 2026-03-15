@@ -69,11 +69,28 @@ export default function HeroVisual() {
     let lastSpawn = 0;
 
     const draw = (timestamp: number) => {
+      // Guard first frame: timeRef starts at 0, so first dt would be huge
+      if (timeRef.current === 0) {
+        timeRef.current = timestamp;
+        animRef.current = requestAnimationFrame(draw);
+        return;
+      }
       const dt = timestamp - timeRef.current;
       timeRef.current = timestamp;
 
-      const W = canvas.width;
-      const H = canvas.height;
+      // Sync canvas backing size to CSS size and devicePixelRatio
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const targetW = Math.max(1, Math.floor(rect.width * dpr));
+      const targetH = Math.max(1, Math.floor(rect.height * dpr));
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      const W = rect.width;
+      const H = rect.height;
 
       ctx.clearRect(0, 0, W, H);
 
@@ -183,8 +200,6 @@ export default function HeroVisual() {
       />
       <canvas
         ref={canvasRef}
-        width={520}
-        height={340}
         className="w-full h-full"
         style={{ maxWidth: 520, maxHeight: 340 }}
       />
