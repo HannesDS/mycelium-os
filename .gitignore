@@ -19,3 +19,4 @@ __pycache__/
 # Gas Town runtime (local only, not project files)
 .beads/
 .runtime/
+.claude/
