@@ -15,3 +15,7 @@ __pycache__/
 .agents/skills/
 .claude/skills/
 .junie/skills/
+
+# Gas Town runtime (local only, not project files)
+.beads/
+.runtime/
