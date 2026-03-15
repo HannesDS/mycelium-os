@@ -328,6 +328,90 @@ export async function fetchSession(id: string): Promise<SessionDetail> {
   return res.json();
 }
 
+export interface KnowledgeDocumentItem {
+  id: string;
+  title: string;
+  source_type: "text" | "file" | "url";
+  content_type: "pdf" | "markdown" | "text" | "url";
+  source_url: string | null;
+  original_filename: string | null;
+  content_preview: string;
+  access_scope: string[] | null;
+  is_active: boolean;
+  ingested_at: string;
+}
+
+export async function fetchKnowledge(query?: string): Promise<KnowledgeDocumentItem[]> {
+  const params = query ? `?q=${encodeURIComponent(query)}` : "";
+  const res = await fetch(`${API_BASE}/knowledge${params}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch knowledge: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function ingestText(
+  title: string,
+  content: string,
+  accessScope: string[] | null
+): Promise<KnowledgeDocumentItem> {
+  const form = new FormData();
+  form.append("source_type", "text");
+  form.append("title", title);
+  form.append("text_content", content);
+  if (accessScope) form.append("access_scope", JSON.stringify(accessScope));
+  const res = await fetch(`${API_BASE}/knowledge`, { method: "POST", body: form });
+  if (!res.ok) {
+    throw new Error(`Failed to ingest text: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function ingestFile(
+  file: File,
+  title: string | undefined,
+  accessScope: string[] | null
+): Promise<KnowledgeDocumentItem> {
+  const form = new FormData();
+  form.append("source_type", "file");
+  if (title) form.append("title", title);
+  form.append("file", file);
+  if (accessScope) form.append("access_scope", JSON.stringify(accessScope));
+  const res = await fetch(`${API_BASE}/knowledge`, { method: "POST", body: form });
+  if (!res.ok) {
+    throw new Error(`Failed to ingest file: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function ingestUrl(
+  url: string,
+  title: string | undefined,
+  accessScope: string[] | null
+): Promise<KnowledgeDocumentItem> {
+  const form = new FormData();
+  form.append("source_type", "url");
+  form.append("source_url", url);
+  if (title) form.append("title", title);
+  if (accessScope) form.append("access_scope", JSON.stringify(accessScope));
+  const res = await fetch(`${API_BASE}/knowledge`, { method: "POST", body: form });
+  if (!res.ok) {
+    throw new Error(`Failed to ingest URL: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function deleteKnowledgeDocument(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/knowledge/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    throw new Error(`Failed to delete document: ${res.status} ${res.statusText}`);
+  }
+}
+
+export function getKnowledgeDownloadUrl(id: string): string {
+  return `${API_BASE}/knowledge/${id}/download`;
+}
+
 export async function sendMessage(
   shroomId: string,
   message: string,

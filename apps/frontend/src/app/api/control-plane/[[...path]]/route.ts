@@ -18,6 +18,10 @@ const ALLOWED_PATHS: { method: string; pattern: RegExp }[] = [
   { method: "GET", pattern: /^sessions\/[^/]+$/ },
   { method: "POST", pattern: /^shrooms\/[^/]+\/message$/ },
   { method: "POST", pattern: /^demo\/trigger-escalation$/ },
+  { method: "GET", pattern: /^knowledge$/ },
+  { method: "POST", pattern: /^knowledge$/ },
+  { method: "GET", pattern: /^knowledge\/[^/]+\/download$/ },
+  { method: "DELETE", pattern: /^knowledge\/[^/]+$/ },
 ];
 
 function isAllowed(method: string, path: string): boolean {

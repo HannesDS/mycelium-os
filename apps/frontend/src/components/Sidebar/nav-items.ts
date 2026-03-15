@@ -31,7 +31,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/organisation", label: "Organisation", icon: Network, enabled: true },
   { href: "/skills", label: "Skills", icon: Wrench, enabled: true },
   { href: "/memory", label: "Memory", icon: Brain, enabled: false },
-  { href: "/knowledge", label: "Knowledge", icon: BookOpen, enabled: false },
+  { href: "/knowledge", label: "Knowledge", icon: BookOpen, enabled: true },
   { href: "/traces", label: "Traces", icon: List, enabled: true },
   { href: "/sessions", label: "Sessions", icon: Play, enabled: true },
 ];
