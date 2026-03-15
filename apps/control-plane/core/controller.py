@@ -5,7 +5,7 @@ import os
 from typing import Any
 
 from agno.agent import Agent
-from agno.db.postgres import PostgresDb
+from agno.db.mysql import MySQLDb
 from agno.models.ollama import Ollama
 from agno.models.openrouter import OpenRouter
 
@@ -70,8 +70,8 @@ def _build_system_prompt(manifest: ShroomManifest) -> str:
     return base
 
 
-def _create_agno_db() -> PostgresDb:
-    return PostgresDb(
+def _create_agno_db() -> MySQLDb:
+    return MySQLDb(
         db_url=DATABASE_URL,
         session_table="agno_sessions",
     )
@@ -88,7 +88,7 @@ def _filter_tools_by_skills(tools: list[Any], manifest_skills: list[str]) -> lis
 
 
 def _create_agent_with_model(
-    manifest: ShroomManifest, model_id: str, db: PostgresDb | None
+    manifest: ShroomManifest, model_id: str, db: MySQLDb | None
 ) -> Agent:
     tools = _filter_tools_by_skills(ALL_TOOLS, manifest.spec.skills)
     kwargs: dict = {
@@ -103,14 +103,14 @@ def _create_agent_with_model(
     return Agent(**kwargs)
 
 
-def create_agent(manifest: ShroomManifest, db: PostgresDb | None = None) -> Agent:
+def create_agent(manifest: ShroomManifest, db: MySQLDb | None = None) -> Agent:
     raw = manifest.spec.model
     model_id = raw if raw.startswith(OPENROUTER_PREFIX) else MODEL_MAP.get(raw, raw)
     return _create_agent_with_model(manifest, model_id, db)
 
 
 class ShroomController:
-    def __init__(self, db: PostgresDb | None = None) -> None:
+    def __init__(self, db: MySQLDb | None = None) -> None:
         self.manifests: dict[str, ShroomManifest] = {}
         self.agents: dict[str, Agent] = {}
         self.db = db or _create_agno_db()

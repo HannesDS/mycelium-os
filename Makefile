@@ -5,7 +5,7 @@ COMPOSE := docker compose
 FRONTEND := apps/frontend
 CONTROL_PLANE := apps/control-plane
 
-.PHONY: help up down dev test lint logs migrate clean psql storybook typecheck
+.PHONY: help up down dev test lint logs migrate clean dolt storybook typecheck
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -47,11 +47,11 @@ logs: ## Tail docker compose logs
 logs-%: ## Tail logs for a specific service (e.g. make logs-control-plane)
 	$(COMPOSE) logs -f --tail=100 $*
 
-migrate: ## Run Alembic migrations against local Postgres
-	cd $(CONTROL_PLANE) && DATABASE_URL=postgresql://mycelium:mycelium@localhost:5432/mycelium alembic upgrade head
+migrate: ## Run Alembic migrations against local Dolt
+	cd $(CONTROL_PLANE) && DATABASE_URL=mysql+pymysql://root@localhost:3306/mycelium alembic upgrade head
 
-psql: ## Open psql shell to local Postgres
-	docker exec -it $$($(COMPOSE) ps -q postgres) psql -U mycelium
+dolt: ## Open dolt sql shell to local Dolt (use `dolt log` and `dolt diff` for data history)
+	docker exec -it $$($(COMPOSE) ps -q dolt) dolt sql
 
 clean: ## Remove volumes, node_modules, rebuild from scratch
 	$(COMPOSE) down -v
