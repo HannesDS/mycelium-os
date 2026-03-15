@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import ipaddress
 import logging
 import uuid
 from datetime import datetime
 from typing import Annotated
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
@@ -12,6 +14,7 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from core.auth import get_principal
 from core.embeddings import embed_text
 from core.models import KnowledgeDocument
 from core.storage import delete_file, download_file, upload_file
@@ -19,6 +22,40 @@ from core.storage import delete_file, download_file, upload_file
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
+
+# 50 MB upload limit; 5 MB fetch limit for URL ingestion
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+MAX_FETCH_BYTES = 5 * 1024 * 1024
+
+# Private/loopback/link-local ranges to block in URL ingestion (SSRF prevention)
+_BLOCKED_NETWORKS = [
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("169.254.0.0/16"),  # link-local / AWS metadata
+    ipaddress.ip_network("::1/128"),
+    ipaddress.ip_network("fc00::/7"),
+    ipaddress.ip_network("fe80::/10"),
+]
+
+
+def _validate_ingest_url(url: str) -> None:
+    """Raise HTTPException if the URL is unsafe (SSRF risk)."""
+    parsed = urlparse(url)
+    if parsed.scheme not in ("https", "http"):
+        raise HTTPException(status_code=422, detail="Only http/https URLs are supported")
+    hostname = parsed.hostname
+    if not hostname:
+        raise HTTPException(status_code=422, detail="Invalid URL: no hostname")
+    # Block bare IP literals in private ranges
+    try:
+        addr = ipaddress.ip_address(hostname)
+        for net in _BLOCKED_NETWORKS:
+            if addr in net:
+                raise HTTPException(status_code=422, detail="URL resolves to a private/internal address")
+    except ValueError:
+        pass  # hostname is a DNS name — runtime DNS resolution is outside our control, but we block the common cases
 
 
 # ── DB dependency ─────────────────────────────────────────────────────────────
@@ -112,6 +149,7 @@ def _ingest_document(
 def list_knowledge(
     q: str | None = Query(default=None, description="Semantic search query"),
     db: Session = Depends(get_db),
+    _principal: str = Depends(get_principal),
 ) -> list[KnowledgeDocumentResponse]:
     if q:
         embedding = embed_text(q)
@@ -167,6 +205,7 @@ async def ingest_document(
     access_scope: Annotated[str | None, Form(description='JSON array of shroom IDs or "all"')] = None,
     file: UploadFile | None = File(default=None),
     db: Session = Depends(get_db),
+    _principal: str = Depends(get_principal),
 ) -> KnowledgeDocumentResponse:
     import json as _json
 
@@ -192,7 +231,9 @@ async def ingest_document(
     elif source_type == "file":
         if file is None:
             raise HTTPException(status_code=422, detail="file required for file source")
-        file_bytes = await file.read()
+        file_bytes = await file.read(MAX_UPLOAD_BYTES + 1)
+        if len(file_bytes) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail=f"File exceeds maximum size of {MAX_UPLOAD_BYTES // (1024*1024)} MB")
         filename = file.filename or "upload"
         mime = file.content_type or "application/octet-stream"
 
@@ -224,11 +265,25 @@ async def ingest_document(
     elif source_type == "url":
         if not source_url:
             raise HTTPException(status_code=422, detail="source_url required for url source")
+        _validate_ingest_url(source_url)
         try:
-            async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+            async with httpx.AsyncClient(follow_redirects=False, timeout=15) as client:
                 resp = await client.get(source_url)
+                # Validate redirect targets manually to prevent SSRF via redirects
+                while resp.is_redirect:
+                    redirect_url = resp.headers.get("location", "")
+                    _validate_ingest_url(redirect_url)
+                    resp = await client.get(redirect_url)
                 resp.raise_for_status()
-                fetched = resp.text
+                # Enforce max fetch size
+                content_bytes = b""
+                async for chunk in resp.aiter_bytes(chunk_size=8192):
+                    content_bytes += chunk
+                    if len(content_bytes) > MAX_FETCH_BYTES:
+                        raise HTTPException(status_code=413, detail=f"Fetched content exceeds maximum size of {MAX_FETCH_BYTES // (1024*1024)} MB")
+                fetched = content_bytes.decode("utf-8", errors="replace")
+        except HTTPException:
+            raise
         except httpx.HTTPError as e:
             raise HTTPException(status_code=422, detail=f"Failed to fetch URL: {e}") from e
 
@@ -249,7 +304,11 @@ async def ingest_document(
 
 
 @router.get("/{doc_id}/download", summary="Download original file or content")
-def download_document(doc_id: uuid.UUID, db: Session = Depends(get_db)) -> Response:
+def download_document(
+    doc_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _principal: str = Depends(get_principal),
+) -> Response:
     doc = db.query(KnowledgeDocument).filter(
         KnowledgeDocument.id == doc_id,
         KnowledgeDocument.is_active == True,  # noqa: E712
@@ -275,7 +334,11 @@ def download_document(doc_id: uuid.UUID, db: Session = Depends(get_db)) -> Respo
 
 
 @router.delete("/{doc_id}", status_code=204, summary="Soft-delete a document")
-def delete_document(doc_id: uuid.UUID, db: Session = Depends(get_db)) -> None:
+def delete_document(
+    doc_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _principal: str = Depends(get_principal),
+) -> None:
     doc = db.query(KnowledgeDocument).filter(
         KnowledgeDocument.id == doc_id,
         KnowledgeDocument.is_active == True,  # noqa: E712
