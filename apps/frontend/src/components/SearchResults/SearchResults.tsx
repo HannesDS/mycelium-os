@@ -18,7 +18,7 @@ export function SearchResults({ query, results, onDelete, deleting }: SearchResu
         <Search className="w-3.5 h-3.5" />
         <span>
           {results.length} result{results.length !== 1 ? "s" : ""} for{" "}
-          <span className="text-neutral-300 font-medium">"{query}"</span>
+          <span className="text-neutral-300 font-medium">&ldquo;{query}&rdquo;</span>
         </span>
       </div>
       <KnowledgeList documents={results} onDelete={onDelete} deleting={deleting} />

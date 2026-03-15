@@ -27,7 +27,7 @@ export function KnowledgeList({ documents, onDelete, deleting }: KnowledgeListPr
   if (documents.length === 0) {
     return (
       <div className="text-center py-16 text-neutral-500 text-sm">
-        No documents yet. Use "Ingest" to add your first document.
+        No documents yet. Use &ldquo;Ingest&rdquo; to add your first document.
       </div>
     );
   }
