@@ -119,6 +119,15 @@ async def approve_proposal(
             approval.resolved_by = principal_id
             db.commit()
             raise HTTPException(status_code=502, detail=f"Constitution write failed: {exc}")
+        except Exception as exc:
+            # DB write inside apply_change failed after YAML was already written.
+            # Mark approval failed so the audit trail reflects the incomplete state.
+            logger.error("Unexpected error applying constitution change %s: %s", approval_id, exc)
+            approval.status = "failed"
+            approval.resolved_at = datetime.now(timezone.utc)
+            approval.resolved_by = principal_id
+            db.commit()
+            raise HTTPException(status_code=502, detail="Constitution change failed: audit record could not be persisted. YAML may have been partially applied — check git history.")
 
     audit_entry = AuditLog(
         entity_type="approval",
