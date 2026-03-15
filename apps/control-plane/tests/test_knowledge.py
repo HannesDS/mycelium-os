@@ -180,11 +180,17 @@ def test_ingest_url_missing_url_returns_422(client):
 
 
 def test_ingest_url_fetches_and_stores(client):
+    content = b"Pricing: Enterprise \xe2\x82\xac2,400/month"
+
+    async def _aiter_bytes(chunk_size=8192):
+        yield content
+
     with patch("routers.knowledge.embed_text", return_value=None), \
          patch("httpx.AsyncClient") as mock_client_cls:
         mock_resp = MagicMock()
-        mock_resp.text = "Pricing: Enterprise €2,400/month"
+        mock_resp.is_redirect = False
         mock_resp.raise_for_status = MagicMock()
+        mock_resp.aiter_bytes = _aiter_bytes
         mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=MagicMock(
             get=AsyncMock(return_value=mock_resp)
         ))
