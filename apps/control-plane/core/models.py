@@ -4,11 +4,14 @@ import uuid
 from datetime import datetime
 
 from decimal import Decimal
-from sqlalchemy import JSON, DateTime, ForeignKey, Numeric, Text, Uuid
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Numeric, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from core.database import Base
+
+EMBEDDING_DIM = 768  # nomic-embed-text dimensions
 
 
 class ShroomEventRecord(Base):
@@ -101,3 +104,22 @@ class ConstitutionChange(Base):
     applied_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+
+class KnowledgeDocument(Base):
+    __tablename__ = "knowledge_documents"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    source_type: Mapped[str] = mapped_column(Text, nullable=False)  # text | file | url
+    content_type: Mapped[str] = mapped_column(Text, nullable=False)  # pdf | markdown | text | url
+    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    original_filename: Mapped[str | None] = mapped_column(Text, nullable=True)
+    content_preview: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    minio_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    access_scope: Mapped[list | None] = mapped_column(JSON, nullable=True)  # None = all shrooms
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    ingested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    embedding: Mapped[list | None] = mapped_column(Vector(EMBEDDING_DIM), nullable=True)
