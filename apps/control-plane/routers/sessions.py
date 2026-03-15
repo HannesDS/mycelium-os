@@ -9,8 +9,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from core.auth import get_principal
 from core.controller import ShroomController
 from core.models import AuditLog
+from core.session_bindings import get_session_bindings_for_principal
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +31,7 @@ def get_controller(request: Request) -> ShroomController:
     return controller
 
 
-def get_db(request: Request) -> Session:
+def get_db_session(request: Request) -> Session:
     factory = getattr(request.app.state, "db_session_factory", None)
     if factory is None:
         raise HTTPException(status_code=503, detail="Database not initialized")
@@ -120,7 +122,9 @@ def _runs_to_message_history(runs: list[Any]) -> list[MessageTurn]:
 
 @router.get("", response_model=SessionListResponse, summary="List shroom sessions")
 def list_sessions(
+    principal_id: str = Depends(get_principal),
     controller: ShroomController = Depends(get_controller),
+    db: Session = Depends(get_db_session),
     status: str | None = Query(  # noqa: B008
         default="active",
         description="active or completed",
@@ -149,6 +153,8 @@ def list_sessions(
         filtered = [s for s in all_sessions if (s.updated_at or 0) >= active_cutoff]
     else:
         filtered = [s for s in all_sessions if (s.updated_at or 0) < active_cutoff][:50]
+    bound_ids = get_session_bindings_for_principal(db, principal_id)
+    filtered = [s for s in filtered if getattr(s, "session_id", str(s)) in bound_ids]
     filtered.sort(key=lambda s: s.updated_at or 0, reverse=True)
     items: list[SessionListItem] = []
     for s in filtered:
@@ -177,8 +183,9 @@ def list_sessions(
 @router.get("/{session_id}", response_model=SessionDetailResponse, summary="Get session detail")
 def get_session(
     session_id: str,
+    principal_id: str = Depends(get_principal),
     controller: ShroomController = Depends(get_controller),
-    db_session: Session = Depends(get_db),
+    db_session: Session = Depends(get_db_session),
 ):
     db = controller.db
     session_obj = None
@@ -186,6 +193,9 @@ def get_session(
         session_obj = db.get_session(session_id=session_id, session_type="agent")
     if not session_obj:
         raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
+    bound_ids = get_session_bindings_for_principal(db_session, principal_id)
+    if session_id not in bound_ids:
+        raise HTTPException(status_code=403, detail="Session not owned")
     owning_shroom = getattr(session_obj, "agent_id", None) or "unknown"
     runs = getattr(session_obj, "runs", None) or []
     created = getattr(session_obj, "created_at", None)

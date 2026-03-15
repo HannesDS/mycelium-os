@@ -54,8 +54,12 @@ Data plane = ephemeral, isolated, observable. Never put governance logic here.
 Shroom activity → NATS event bus → WebSocket bridge → Frontend (Next.js + canvas)
 ```
 
+Authenticated REST calls (events, sessions, message, demo) go through the Next.js proxy at `/api/control-plane/*`, which adds `X-API-Key` from server env. The API key never reaches the client. WebSocket connects directly to the control plane.
+
 Every shroom emits structured ShroomEvents. The visual office consumes the event stream.
 Mock shrooms emit the same events as real ones — the frontend never knows the difference.
+
+See `docs/design/ARCHITECTURE.md` for Mermaid diagrams.
 
 ### Repo structure
 
@@ -260,6 +264,8 @@ The **Orchestrator** = Cursor (this IDE). It reads this file every session for p
 **@ mention these for context:**
 - `@CLAUDE.md` — always
 - `@openspec/changes/<name>/` — the change being implemented
+- `@docs/design/ARCHITECTURE.md` — system diagrams, concepts, tech stack
+- `@docs/dev-flow/CONFIGURATION.md` — env vars, API proxy, auth
 - `@docs/project-state/BACKLOG.md` — for dependency order
 - `@docs/project-state/OPEN-QUESTIONS.md` — before MYC-22+
 - `@docs/design/SHROOM-EVENT-SCHEMA.md` — for event work

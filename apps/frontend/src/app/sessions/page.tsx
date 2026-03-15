@@ -9,6 +9,7 @@ import { SessionDetail as SessionDetailComponent } from "@/components/SessionDet
 
 type Tab = "active" | "completed";
 
+
 export default function SessionsPage() {
   const [tab, setTab] = useState<Tab>("active");
   const [sessions, setSessions] = useState<SessionListItem[]>([]);

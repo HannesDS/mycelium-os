@@ -7,12 +7,7 @@ import { ZENIK_SHROOMS } from "@/types/shroom-events";
 import { ShroomNode } from "./shroom-node";
 import { SpeechBubble } from "./speech-bubble";
 import { ThoughtBubble } from "./thought-bubble";
-import {
-  injectEvent,
-  getEventsForShroom,
-  getCurrentTask,
-  getCurrentStatus,
-} from "@/lib/mock-event-loop";
+import { approveProposal, rejectProposal, triggerEscalation } from "@/lib/api";
 import { startEventSource } from "@/lib/event-source";
 import { ShroomSidePanel } from "@/components/ShroomSidePanel";
 import { HumanInboxCard } from "@/components/HumanInboxCard";
@@ -97,11 +92,6 @@ function clampInBounds(
   };
 }
 
-const ESCALATION_PAYLOAD = "New enterprise lead — Triodos Bank. Proposal ready for approval.";
-const CEO_THOUGHT = "Reviewing proposal...";
-const APPROVED_MESSAGE = "Proposal approved — sending to Triodos Bank";
-const REJECTED_MESSAGE = "Proposal rejected — following up with CEO";
-
 type EscalationPhase = "idle" | "escalating" | "ceo_reviewing" | "inbox_visible" | "resolved";
 
 export function ZenikOfficeCanvas() {
@@ -115,8 +105,46 @@ export function ZenikOfficeCanvas() {
   const [escalationPhase, setEscalationPhase] = useState<EscalationPhase>("idle");
   const [inboxVisible, setInboxVisible] = useState(false);
   const [inboxDismissing, setInboxDismissing] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState<{
+    approvalId: string;
+    summary: string;
+  } | null>(null);
+  const [shroomEventHistory, setShroomEventHistory] = useState<
+    Record<string, ShroomEvent[]>
+  >({});
   const bubbleIdRef = useRef(0);
-  const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const getEventsForShroom = useCallback(
+    (shroomId: string) =>
+      (shroomEventHistory[shroomId] ?? []).slice(0, 5),
+    [shroomEventHistory],
+  );
+  const getCurrentTask = useCallback(
+    (shroomId: string) => {
+      const history = shroomEventHistory[shroomId] ?? [];
+      const last = history[0];
+      if (!last || last.event === "idle") return null;
+      return last.payload_summary;
+    },
+    [shroomEventHistory],
+  );
+  const getCurrentStatus = useCallback(
+    (
+      shroomId: string,
+    ): "idle" | "working" | "in conversation" => {
+      const history = shroomEventHistory[shroomId] ?? [];
+      const last = history[0];
+      if (!last) return "idle";
+      if (last.event === "idle") return "idle";
+      if (
+        last.event === "message_sent" ||
+        last.event === "decision_received"
+      )
+        return "in conversation";
+      return "working";
+    },
+    [shroomEventHistory],
+  );
 
   const toPx = useCallback(
     (px: number, py: number) => ({
@@ -143,7 +171,13 @@ export function ZenikOfficeCanvas() {
   }, []);
 
   useEffect(() => {
-    const unsub = startEventSource((event: ShroomEvent) => {
+    const unsub = startEventSource(
+      (event: ShroomEvent) => {
+        setShroomEventHistory((prev) => {
+        const history = prev[event.shroom_id] ?? [];
+        const next = [event, ...history].slice(0, 20);
+        return { ...prev, [event.shroom_id]: next };
+      });
       if (event.event === "message_sent" && event.to) {
         const to = event.to;
         setSpeechBubbles((prev) => {
@@ -233,106 +267,51 @@ export function ZenikOfficeCanvas() {
     [toPx, drift, dimensions]
   );
 
-  const triggerEscalation = useCallback(() => {
+  const notifyBadgeRefresh = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("approvals-updated"));
+  }, []);
+
+  const onTriggerEscalation = useCallback(async () => {
     if (escalationPhase !== "idle") return;
     setEscalationPhase("escalating");
-    injectEvent({
-      shroom_id: "sales-shroom",
-      event: "escalation_raised",
-      to: "ceo-shroom",
-      topic: "lead_qualified",
-      timestamp: new Date().toISOString(),
-      payload_summary: ESCALATION_PAYLOAD,
-    });
-    injectEvent({
-      shroom_id: "sales-shroom",
-      event: "message_sent",
-      to: "ceo-shroom",
-      topic: "lead_qualified",
-      timestamp: new Date().toISOString(),
-      payload_summary: ESCALATION_PAYLOAD,
-    });
-    setSpeechBubbles((prev) => [
-      ...prev,
-      {
-        id: `s-${++bubbleIdRef.current}`,
-        from: "sales-shroom",
-        to: "ceo-shroom",
-        message: ESCALATION_PAYLOAD,
-        opacity: 0,
-        createdAt: Date.now(),
-      },
-    ].slice(-SPEECH_MAX));
-    const t1 = setTimeout(() => {
-      setEscalationPhase("ceo_reviewing");
-      injectEvent({
-        shroom_id: "ceo-shroom",
-        event: "message_sent",
-        to: "sales-shroom",
-        topic: "proposal_review",
-        timestamp: new Date().toISOString(),
-        payload_summary: CEO_THOUGHT,
-      });
-      setThoughtBubbles((prev) => [
-        ...prev,
-        {
-          id: `t-${++bubbleIdRef.current}`,
-          shroomId: "ceo-shroom",
-          message: CEO_THOUGHT,
-          opacity: 0,
-          createdAt: Date.now(),
-        },
-      ].slice(-THOUGHT_MAX));
-    }, 2000);
-    const t2 = setTimeout(() => {
+    try {
+      const { approval_id, summary } = await triggerEscalation();
+      setPendingApproval({ approvalId: approval_id, summary });
       setInboxVisible(true);
       setEscalationPhase("inbox_visible");
-    }, 4000);
-    timeoutRefs.current.push(t1, t2);
-  }, [escalationPhase]);
+      notifyBadgeRefresh();
+    } catch {
+      setEscalationPhase("idle");
+    }
+  }, [escalationPhase, notifyBadgeRefresh]);
 
-  useEffect(() => {
-    return () => {
-      timeoutRefs.current.forEach(clearTimeout);
-      timeoutRefs.current = [];
-    };
-  }, []);
-
-  const handleApprove = useCallback(() => {
+  const handleApprove = useCallback(async () => {
+    if (!pendingApproval) return;
     setInboxDismissing(true);
-    injectEvent({
-      shroom_id: "sales-shroom",
-      event: "decision_received",
-      topic: "proposal_approved",
-      timestamp: new Date().toISOString(),
-      payload_summary: APPROVED_MESSAGE,
-      metadata: { approved: true },
-    });
-    const t = setTimeout(() => {
+    try {
+      await approveProposal(pendingApproval.approvalId);
+      notifyBadgeRefresh();
+    } finally {
       setInboxVisible(false);
       setInboxDismissing(false);
       setEscalationPhase("idle");
-    }, 600);
-    timeoutRefs.current.push(t);
-  }, []);
+      setPendingApproval(null);
+    }
+  }, [pendingApproval, notifyBadgeRefresh]);
 
-  const handleReject = useCallback(() => {
+  const handleReject = useCallback(async () => {
+    if (!pendingApproval) return;
     setInboxDismissing(true);
-    injectEvent({
-      shroom_id: "sales-shroom",
-      event: "decision_received",
-      topic: "proposal_rejected",
-      timestamp: new Date().toISOString(),
-      payload_summary: REJECTED_MESSAGE,
-      metadata: { approved: false },
-    });
-    const t = setTimeout(() => {
+    try {
+      await rejectProposal(pendingApproval.approvalId);
+      notifyBadgeRefresh();
+    } finally {
       setInboxVisible(false);
       setInboxDismissing(false);
       setEscalationPhase("idle");
-    }, 600);
-    timeoutRefs.current.push(t);
-  }, []);
+      setPendingApproval(null);
+    }
+  }, [pendingApproval, notifyBadgeRefresh]);
 
   return (
     <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-[#0d0d0d]">
@@ -454,7 +433,7 @@ export function ZenikOfficeCanvas() {
       <button
         type="button"
         className="absolute bottom-6 right-6 z-20 px-6 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        onClick={triggerEscalation}
+        onClick={onTriggerEscalation}
         disabled={escalationPhase !== "idle"}
       >
         Trigger escalation
@@ -462,6 +441,9 @@ export function ZenikOfficeCanvas() {
       <HumanInboxCard
         isVisible={inboxVisible}
         isDismissing={inboxDismissing}
+        title="Decision required"
+        from="Sales Shroom"
+        summary={pendingApproval?.summary ?? ""}
         onApprove={handleApprove}
         onReject={handleReject}
       />

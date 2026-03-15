@@ -4,13 +4,32 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { fetchPendingApprovalCount } from "@/lib/api";
 import { NAV_ITEMS } from "./nav-items";
 
 const BREAKPOINT = 1024;
+const POLL_INTERVAL_MS = 30_000;
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    const poll = () => {
+      fetchPendingApprovalCount()
+        .then(setPendingCount)
+        .catch(() => setPendingCount(0));
+    };
+    poll();
+    const id = setInterval(poll, POLL_INTERVAL_MS);
+    const onUpdate = () => poll();
+    window.addEventListener("approvals-updated", onUpdate);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("approvals-updated", onUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${BREAKPOINT - 1}px)`);
@@ -68,8 +87,18 @@ export function Sidebar() {
               );
             }
 
+            const badge =
+              item.href === "/approvals" && pendingCount > 0 ? (
+                <span
+                  className="ml-auto min-w-[1.25rem] h-5 px-1.5 rounded-full bg-amber-500/90 text-black text-xs font-semibold flex items-center justify-center"
+                  aria-label={`${pendingCount} pending approval${pendingCount !== 1 ? "s" : ""}`}
+                >
+                  {pendingCount > 99 ? "99+" : pendingCount}
+                </span>
+              ) : null;
+
             return (
-              <li key={item.href}>
+              <li key={item.href} className="relative">
                 <Link
                   href={item.href}
                   data-testid={`nav-item-${item.label.toLowerCase()}`}
@@ -81,8 +110,21 @@ export function Sidebar() {
                       : "text-neutral-400 hover:bg-white/5 hover:text-white"
                   }`}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  {!collapsed && <span>{item.label}</span>}
+                  <span className="relative">
+                    <Icon className="w-4 h-4 shrink-0" />
+                    {collapsed && pendingCount > 0 && item.href === "/approvals" && (
+                      <span
+                        className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-[#0a0a0f]"
+                        aria-label={`${pendingCount} pending`}
+                      />
+                    )}
+                  </span>
+                  {!collapsed && (
+                    <>
+                      <span>{item.label}</span>
+                      {badge}
+                    </>
+                  )}
                 </Link>
               </li>
             );

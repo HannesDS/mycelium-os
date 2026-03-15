@@ -16,6 +16,8 @@ dependencies = [
     "alembic>=1.14",
     "nats-py>=2.9.0",
     "pytest>=9.0.2",
+    "a2a-sdk>=0.3.25",
+    "httpx>=0.28.0",
 ]
 
 [project.optional-dependencies]

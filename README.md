@@ -20,8 +20,9 @@ The platform governs how they communicate, escalate, evolve — and makes it vis
 git clone https://github.com/HannesDS/mycelium-os.git
 cd mycelium-os
 
-# 2. Copy env file
+# 2. Copy env file and set DEV_API_KEY
 cp .env.example .env
+# Edit .env: set DEV_API_KEY=your-dev-key and DEMO_ENABLED=true for local dev
 
 # 3. Start infrastructure + control plane
 make up
@@ -56,6 +57,14 @@ pnpm dev                        # Next.js dev server at :3000
 | Ollama | localhost:11435 (default host port) | Local LLM runtime |
 
 If `make up` fails with `bind: address already in use` on Ollama, set `OLLAMA_HOST_PORT` in `.env` to a free port and run `make up` again.
+
+### Authentication (required)
+
+Set `DEV_API_KEY` in `.env` (same value for control plane and frontend). The frontend proxy at `/api/control-plane/*` adds it server-side; the key never reaches the browser. See [docs/dev-flow/CONFIGURATION.md](docs/dev-flow/CONFIGURATION.md).
+
+### OpenRouter (optional)
+
+To use cloud models instead of local Ollama, set `OPENROUTER_API_KEY` in `.env` (get a key at [openrouter.ai/settings/keys](https://openrouter.ai/settings/keys)). In `mycelium.yaml`, set shroom models to `openrouter/<model-id>` (e.g. `openrouter/anthropic/claude-3.5-sonnet`). If the key is missing when an OpenRouter model is used, the API returns a clear error.
 
 ## Project structure
 
@@ -108,7 +117,9 @@ Event flow:
 Shroom activity → NATS event bus → WebSocket bridge → Frontend canvas
 ```
 
-See [docs/adrs/](docs/adrs/) for locked architecture decisions.
+- [docs/design/ARCHITECTURE.md](docs/design/ARCHITECTURE.md) — Mermaid diagrams, concepts, tech stack
+- [docs/dev-flow/CONFIGURATION.md](docs/dev-flow/CONFIGURATION.md) — env vars, API proxy
+- [docs/adrs/](docs/adrs/) — locked architecture decisions
 
 ## Contributing
 

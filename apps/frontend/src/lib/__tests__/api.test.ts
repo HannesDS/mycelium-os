@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchShrooms, fetchShroom, fetchConstitution, sendMessage } from "../api";
+import {
+  fetchShrooms,
+  fetchShroom,
+  fetchConstitution,
+  fetchPendingApprovalCount,
+  sendMessage,
+} from "../api";
 import type { ShroomSummary, ShroomDetail, ConstitutionData } from "../api";
 
 const mockSummary: ShroomSummary = {
@@ -41,7 +47,7 @@ describe("fetchShrooms", () => {
 
     const result = await fetchShrooms();
     expect(result).toEqual([mockSummary]);
-    expect(fetch).toHaveBeenCalledWith("http://localhost:8000/shrooms");
+    expect(fetch).toHaveBeenCalledWith("/api/control-plane/shrooms");
   });
 
   it("throws on non-ok response", async () => {
@@ -72,9 +78,7 @@ describe("fetchShroom", () => {
 
     const result = await fetchShroom("sales-shroom");
     expect(result).toEqual(mockDetail);
-    expect(fetch).toHaveBeenCalledWith(
-      "http://localhost:8000/shrooms/sales-shroom"
-    );
+    expect(fetch).toHaveBeenCalledWith("/api/control-plane/shrooms/sales-shroom");
   });
 
   it("throws on 404", async () => {
@@ -129,7 +133,7 @@ describe("fetchConstitution", () => {
 
     const result = await fetchConstitution();
     expect(result).toEqual(mockConstitution);
-    expect(fetch).toHaveBeenCalledWith("http://localhost:8000/constitution");
+    expect(fetch).toHaveBeenCalledWith("/api/control-plane/constitution");
   });
 
   it("throws on non-ok response", async () => {
@@ -141,6 +145,39 @@ describe("fetchConstitution", () => {
 
     await expect(fetchConstitution()).rejects.toThrow(
       "Failed to fetch constitution: 503 Service Unavailable"
+    );
+  });
+});
+
+describe("fetchPendingApprovalCount", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("returns count on success", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ count: 3 }),
+    });
+
+    const result = await fetchPendingApprovalCount();
+    expect(result).toBe(3);
+    expect(fetch).toHaveBeenCalledWith("/api/control-plane/approvals/pending-count");
+  });
+
+  it("throws on non-ok response", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      status: 503,
+      statusText: "Service Unavailable",
+    });
+
+    await expect(fetchPendingApprovalCount()).rejects.toThrow(
+      "Failed to fetch pending count: 503 Service Unavailable"
     );
   });
 });
@@ -167,7 +204,7 @@ describe("sendMessage", () => {
     const result = await sendMessage("ceo-shroom", "What is your role?");
     expect(result).toEqual(mockResponse);
     expect(fetch).toHaveBeenCalledWith(
-      "http://localhost:8000/shrooms/ceo-shroom/message",
+      "/api/control-plane/shrooms/ceo-shroom/message",
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json" },

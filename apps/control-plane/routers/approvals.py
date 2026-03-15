@@ -9,7 +9,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
+from core.auth import get_principal
+from core.events import ShroomEvent, ShroomEventType
+from core.event_service import emit_event
 from core.models import Approval, AuditLog
+from core.nats_client import NatsEventBus
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +51,23 @@ def get_db(request: Request):
         session.close()
 
 
+def get_nats_bus(request: Request) -> NatsEventBus:
+    bus = getattr(request.app.state, "nats_bus", None)
+    if bus is None:
+        raise HTTPException(status_code=503, detail="NATS bus not initialized")
+    return bus
+
+
+class PendingCountResponse(BaseModel):
+    count: int
+
+
+@router.get("/pending-count", response_model=PendingCountResponse, summary="Get pending approval count")
+def get_pending_count(db: Session = Depends(get_db)):
+    count = db.query(Approval).filter(Approval.status == "pending").count()
+    return PendingCountResponse(count=count)
+
+
 @router.get("", response_model=list[ApprovalResponse], summary="List proposals")
 def list_approvals(
     status: ApprovalStatus | None = Query(None, description="Filter by status: pending, approved, rejected"),
@@ -60,9 +81,11 @@ def list_approvals(
 
 
 @router.post("/{approval_id}/approve", response_model=ApprovalResponse, summary="Approve a proposal")
-def approve_proposal(
+async def approve_proposal(
     approval_id: uuid.UUID,
+    principal_id: str = Depends(get_principal),
     db: Session = Depends(get_db),
+    nats_bus: NatsEventBus = Depends(get_nats_bus),
 ):
     approval = db.query(Approval).filter(Approval.id == approval_id).first()
     if not approval:
@@ -74,7 +97,7 @@ def approve_proposal(
         entity_type="approval",
         entity_id=approval.id,
         action="approved",
-        actor="human",
+        actor=principal_id,
         details={"shroom_id": approval.shroom_id, "summary": approval.summary},
     )
     db.add(audit_entry)
@@ -82,18 +105,28 @@ def approve_proposal(
 
     approval.status = "approved"
     approval.resolved_at = datetime.now(timezone.utc)
-    approval.resolved_by = "human"
+    approval.resolved_by = principal_id
     db.commit()
     db.refresh(approval)
+
+    await emit_event(db, nats_bus, ShroomEvent(
+        shroom_id=approval.shroom_id,
+        event=ShroomEventType.DECISION_RECEIVED,
+        topic="proposal_approved",
+        payload_summary=f"Proposal approved: {approval.summary}",
+        metadata={"approved": True, "approval_id": str(approval.id)},
+    ))
 
     logger.info("Approval %s approved by human", approval_id)
     return approval
 
 
 @router.post("/{approval_id}/reject", response_model=ApprovalResponse, summary="Reject a proposal")
-def reject_proposal(
+async def reject_proposal(
     approval_id: uuid.UUID,
+    principal_id: str = Depends(get_principal),
     db: Session = Depends(get_db),
+    nats_bus: NatsEventBus = Depends(get_nats_bus),
 ):
     approval = db.query(Approval).filter(Approval.id == approval_id).first()
     if not approval:
@@ -105,7 +138,7 @@ def reject_proposal(
         entity_type="approval",
         entity_id=approval.id,
         action="rejected",
-        actor="human",
+        actor=principal_id,
         details={"shroom_id": approval.shroom_id, "summary": approval.summary},
     )
     db.add(audit_entry)
@@ -113,9 +146,17 @@ def reject_proposal(
 
     approval.status = "rejected"
     approval.resolved_at = datetime.now(timezone.utc)
-    approval.resolved_by = "human"
+    approval.resolved_by = principal_id
     db.commit()
     db.refresh(approval)
+
+    await emit_event(db, nats_bus, ShroomEvent(
+        shroom_id=approval.shroom_id,
+        event=ShroomEventType.DECISION_RECEIVED,
+        topic="proposal_rejected",
+        payload_summary=f"Proposal rejected: {approval.summary}",
+        metadata={"approved": False, "approval_id": str(approval.id)},
+    ))
 
     logger.info("Approval %s rejected by human", approval_id)
     return approval

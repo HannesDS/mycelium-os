@@ -2,15 +2,21 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Any
 
 from agno.agent import Agent
 from agno.db.postgres import PostgresDb
 from agno.models.ollama import Ollama
+from agno.models.openrouter import OpenRouter
 
 from core.database import DATABASE_URL
 from core.manifest import ShroomManifest
+from core.skills import tool_skill_allowed
+from core.tools.web_browser import fetch_page
 
 logger = logging.getLogger(__name__)
+
+ALL_TOOLS: list[Any] = [fetch_page]
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 
@@ -18,6 +24,23 @@ MODEL_MAP = {
     "mistral-7b": "mistral:latest",
     "mistral:latest": "mistral:latest",
 }
+
+OPENROUTER_PREFIX = "openrouter/"
+
+
+def _resolve_model(model_id: str) -> Any:
+    if model_id.startswith(OPENROUTER_PREFIX):
+        openrouter_id = model_id[len(OPENROUTER_PREFIX) :]
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            raise ValueError(
+                "OPENROUTER_API_KEY must be set when using OpenRouter models. "
+                "Get a key at https://openrouter.ai/settings/keys"
+            )
+        return OpenRouter(id=openrouter_id, api_key=api_key)
+    ollama_id = MODEL_MAP.get(model_id, model_id)
+    return Ollama(id=ollama_id, host=OLLAMA_HOST)
+
 
 FALLBACK_MODELS = [
     "llama3.2:latest",
@@ -31,13 +54,20 @@ FALLBACK_MODELS = [
 
 def _build_system_prompt(manifest: ShroomManifest) -> str:
     skills = ", ".join(manifest.spec.skills) if manifest.spec.skills else "general"
-    return (
+    base = (
         f"You are {manifest.metadata.name} ({manifest.metadata.id}), "
         f"a shroom in the Mycelium OS organisation.\n"
         f"Your skills: {skills}.\n"
         f"You escalate unresolved issues to: {manifest.spec.escalates_to or 'human'}.\n"
         f"Always respond concisely and stay in character."
     )
+    if manifest.metadata.id == "ceo-shroom":
+        base += (
+            "\n\nWhen helping with setup, you can guide users to add shrooms by editing mycelium.yaml. "
+            "Available skills: web_browser, email, github, crm, lead_qualification, proposal_drafting, decision_routing, escalation_triage. "
+            "Shroom manifests follow the Shroom API format with metadata.id, metadata.name, spec.model, spec.skills, spec.escalates_to."
+        )
+    return base
 
 
 def _create_agno_db() -> PostgresDb:
@@ -47,14 +77,26 @@ def _create_agno_db() -> PostgresDb:
     )
 
 
+def _filter_tools_by_skills(tools: list[Any], manifest_skills: list[str]) -> list[Any]:
+    allowed = []
+    for t in tools:
+        skill = getattr(t, "skill", None) or getattr(t, "skill_id", None)
+        if skill and not tool_skill_allowed(str(skill), manifest_skills):
+            continue
+        allowed.append(t)
+    return allowed
+
+
 def _create_agent_with_model(
     manifest: ShroomManifest, model_id: str, db: PostgresDb | None
 ) -> Agent:
+    tools = _filter_tools_by_skills(ALL_TOOLS, manifest.spec.skills)
     kwargs: dict = {
         "name": manifest.metadata.id,
-        "model": Ollama(id=model_id, host=OLLAMA_HOST),
+        "model": _resolve_model(model_id),
         "instructions": [_build_system_prompt(manifest)],
         "markdown": True,
+        "tools": tools,
     }
     if db:
         kwargs["db"] = db
@@ -62,7 +104,8 @@ def _create_agent_with_model(
 
 
 def create_agent(manifest: ShroomManifest, db: PostgresDb | None = None) -> Agent:
-    model_id = MODEL_MAP.get(manifest.spec.model, manifest.spec.model)
+    raw = manifest.spec.model
+    model_id = raw if raw.startswith(OPENROUTER_PREFIX) else MODEL_MAP.get(raw, raw)
     return _create_agent_with_model(manifest, model_id, db)
 
 

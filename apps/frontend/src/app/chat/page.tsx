@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AlertCircle } from "lucide-react";
-import { fetchShrooms, sendMessage } from "@/lib/api";
+import { fetchShrooms, sendMessage, AuthError } from "@/lib/api";
 import type { ShroomSummary } from "@/lib/api";
 import type { ChatMessage } from "@/types/chat";
 import { ShroomSelector, ChatThread } from "@/components/Chat";
 
 type ConversationMap = Record<string, ChatMessage[]>;
+type SessionMap = Record<string, string>;
 
 function msgId() {
   return `msg-${crypto.randomUUID()}`;
@@ -17,6 +18,7 @@ export default function ChatPage() {
   const [shrooms, setShrooms] = useState<ShroomSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ConversationMap>({});
+  const [sessions, setSessions] = useState<SessionMap>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -61,7 +63,13 @@ export default function ChatPage() {
       setError(null);
 
       try {
-        const res = await sendMessage(selectedId, text);
+        const res = await sendMessage(selectedId, text, {
+          sessionId: sessions[selectedId],
+        });
+        if (res.session_id) {
+          const sid = res.session_id;
+          setSessions((prev) => ({ ...prev, [selectedId]: sid }));
+        }
         const shroomMsg: ChatMessage = {
           id: msgId(),
           sender: "shroom",
@@ -73,6 +81,12 @@ export default function ChatPage() {
           [selectedId]: [...(prev[selectedId] ?? []), shroomMsg],
         }));
       } catch (err) {
+        if (err instanceof AuthError && err.message.includes("Start a new")) {
+          setSessions((prev) => {
+            const { [selectedId]: _, ...rest } = prev;
+            return rest;
+          });
+        }
         const message =
           err instanceof Error ? err.message : "Something went wrong";
         setError(message);
@@ -80,7 +94,7 @@ export default function ChatPage() {
         setLoading(false);
       }
     },
-    [selectedId],
+    [selectedId, sessions],
   );
 
   return (

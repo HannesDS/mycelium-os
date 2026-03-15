@@ -15,10 +15,13 @@ from core.models import Approval
 from core.nats_client import NatsEventBus
 from routers.approvals import router as approvals_router
 from routers.constitution import router as constitution_router
+from routers.demo import router as demo_router
+from routers.event_log import router as event_log_router
 from routers.events import router as events_router, start_relay, stop_relay
 from routers.sessions import router as sessions_router
 from routers.org import router as org_router
 from routers.shrooms import router as shrooms_router
+from routers.skills_catalog import router as skills_catalog_router
 
 logger = logging.getLogger(__name__)
 
@@ -146,9 +149,20 @@ def create_app() -> FastAPI:
     app.include_router(shrooms_router)
     app.include_router(sessions_router)
     app.include_router(constitution_router)
+    app.include_router(event_log_router)
     app.include_router(events_router)
     app.include_router(approvals_router)
+    app.include_router(demo_router)
     app.include_router(org_router)
+    app.include_router(skills_catalog_router)
+
+    @app.get("/")
+    def root() -> dict[str, str]:
+        return {
+            "service": "Mycelium OS Control Plane",
+            "docs": "/docs",
+            "health": "/health",
+        }
 
     @app.get("/health")
     def health() -> dict[str, str]:

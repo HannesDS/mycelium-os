@@ -26,3 +26,7 @@ class ShroomEvent(BaseModel):
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     payload_summary: str
     metadata: dict[str, Any] | None = None
+    token_count: int | None = None
+    cost_usd: float | None = None
+    model: str | None = None
+    trace_id: str | None = None

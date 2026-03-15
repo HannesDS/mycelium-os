@@ -1,6 +1,6 @@
 "use client";
 
-import { Group, Line, Text } from "react-konva";
+import { Group, Line, Rect, Text } from "react-konva";
 import type { ZenikShroom } from "@/types/shroom-events";
 
 interface ShroomNodeProps {
@@ -33,8 +33,19 @@ export function ShroomNode({ shroom, x, y, driftX, driftY, t, onClick }: ShroomN
   const seed = shroom.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const points = getBlobPoints(t, seed);
 
+  const hitW = 80;
+  const hitH = BLOB_RADIUS * 2 + 20;
+
   return (
     <Group x={cx} y={cy} onClick={onClick} onTap={onClick} listening={!!onClick}>
+      <Rect
+        x={-hitW / 2}
+        y={-BLOB_RADIUS}
+        width={hitW}
+        height={hitH}
+        fill="transparent"
+        listening={!!onClick}
+      />
       <Line
         points={points}
         tension={0.5}
