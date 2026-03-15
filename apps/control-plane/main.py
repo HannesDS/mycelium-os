@@ -18,6 +18,7 @@ from routers.constitution import router as constitution_router
 from routers.demo import router as demo_router
 from routers.event_log import router as event_log_router
 from routers.events import router as events_router, start_relay, stop_relay
+from routers.knowledge import router as knowledge_router
 from routers.sessions import router as sessions_router
 from routers.org import router as org_router
 from routers.shrooms import router as shrooms_router
@@ -155,6 +156,7 @@ def create_app() -> FastAPI:
     app.include_router(demo_router)
     app.include_router(org_router)
     app.include_router(skills_catalog_router)
+    app.include_router(knowledge_router)
 
     @app.get("/")
     def root() -> dict[str, str]:

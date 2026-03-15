@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     ports:
       - "127.0.0.1:5432:5432"
     environment:
@@ -93,6 +93,10 @@ services:
       DATABASE_URL: postgresql://mycelium:mycelium@postgres:5432/mycelium
       NATS_URL: nats://nats:4222
       ALLOW_INSECURE_WS: "true"
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      KNOWLEDGE_BUCKET: knowledge
     depends_on:
       postgres:
         condition: service_healthy
