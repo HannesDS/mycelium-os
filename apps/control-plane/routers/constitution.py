@@ -230,6 +230,7 @@ def propose_constitution_change(
 def list_constitution_changes(
     request: Request,
     db: Session = Depends(_get_db),
+    _principal: str = Depends(get_principal),
 ):
     changes = (
         db.query(ConstitutionChange)
