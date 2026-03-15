@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 
 from core.auth import get_principal
+from core.constitution_writer import ConstitutionWriteError, ConstitutionWriterService, InvalidChangePayload
 from core.events import ShroomEvent, ShroomEventType
 from core.event_service import emit_event
 from core.models import Approval, AuditLog
@@ -80,9 +81,14 @@ def list_approvals(
     return query.all()
 
 
+def _get_writer(request: Request) -> ConstitutionWriterService | None:
+    return getattr(request.app.state, "constitution_writer", None)
+
+
 @router.post("/{approval_id}/approve", response_model=ApprovalResponse, summary="Approve a proposal")
 async def approve_proposal(
     approval_id: uuid.UUID,
+    request: Request,
     principal_id: str = Depends(get_principal),
     db: Session = Depends(get_db),
     nats_bus: NatsEventBus = Depends(get_nats_bus),
@@ -92,6 +98,27 @@ async def approve_proposal(
         raise HTTPException(status_code=404, detail="Approval not found")
     if approval.status != "pending":
         raise HTTPException(status_code=409, detail=f"Approval already {approval.status}")
+
+    # For constitution changes: apply atomically before marking approved
+    if approval.event_type == "constitution_change":
+        writer = _get_writer(request)
+        if writer is None:
+            raise HTTPException(status_code=503, detail="Constitution writer not initialized")
+        try:
+            writer.apply_change(
+                approval,
+                applied_by=principal_id,
+                controller=getattr(request.app.state, "controller", None),
+                app_state=request.app.state,
+            )
+        except InvalidChangePayload as exc:
+            raise HTTPException(status_code=422, detail=str(exc))
+        except ConstitutionWriteError as exc:
+            approval.status = "failed"
+            approval.resolved_at = datetime.now(timezone.utc)
+            approval.resolved_by = principal_id
+            db.commit()
+            raise HTTPException(status_code=502, detail=f"Constitution write failed: {exc}")
 
     audit_entry = AuditLog(
         entity_type="approval",

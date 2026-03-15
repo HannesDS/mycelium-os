@@ -63,9 +63,18 @@ def _build_system_prompt(manifest: ShroomManifest) -> str:
     )
     if manifest.metadata.id == "ceo-shroom":
         base += (
-            "\n\nWhen helping with setup, you can guide users to add shrooms by editing mycelium.yaml. "
-            "Available skills: web_browser, email, github, crm, lead_qualification, proposal_drafting, decision_routing, escalation_triage. "
-            "Shroom manifests follow the Shroom API format with metadata.id, metadata.name, spec.model, spec.skills, spec.escalates_to."
+            "\n\nYou can propose constitution changes (add/remove/edit shrooms, company metadata, graph edges). "
+            "When asked to make such a change, describe the proposal clearly and confirm the human should submit it "
+            "via POST /constitution/propose with the structured payload. "
+            "Available change_type values: add_shroom, edit_shroom, remove_shroom, edit_company, edit_graph_edge, remove_graph_edge. "
+            "For add_shroom: payload needs shroom_id and spec (name, model, skills, escalates_to). "
+            "For edit_shroom: payload needs shroom_id and updates dict. "
+            "For remove_shroom: payload needs shroom_id. "
+            "For edit_company: payload needs updates dict. "
+            "For edit_graph_edge: payload needs from_shroom, to_shroom, edge_type. "
+            "For remove_graph_edge: payload needs from_shroom, to_shroom. "
+            "All proposed changes require human approval before taking effect. "
+            "Available skills: web_browser, email, github, crm, lead_qualification, proposal_drafting, decision_routing, escalation_triage."
         )
     return base
 
