@@ -113,11 +113,15 @@ async def lifespan(app: FastAPI):
         controller.register(manifest)
 
     app.state.controller = controller
+    app.state.config_path = config_path
     session_factory = init_db()
     app.state.db_session_factory = session_factory
 
     _ensure_tables()
     _seed_approvals(session_factory)
+
+    from core.constitution_writer import ConstitutionWriterService
+    app.state.constitution_writer = ConstitutionWriterService(config_path, session_factory)
 
     nats_bus = NatsEventBus()
     await nats_bus.connect()

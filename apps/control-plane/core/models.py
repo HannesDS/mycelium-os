@@ -84,3 +84,20 @@ class AuditLog(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+
+class ConstitutionChange(Base):
+    __tablename__ = "constitution_changes"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    approval_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("approvals.id"), nullable=True
+    )
+    change_type: Mapped[str] = mapped_column(Text, nullable=False)
+    change_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    constitution_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False)
+    applied_by: Mapped[str] = mapped_column(Text, nullable=False)
+    applied_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
