@@ -47,8 +47,8 @@ def client(_db_session_factory):
     c.register(_make_manifest("billing-shroom", "Billing"))
     fake_agent = MagicMock()
     fake_agent.run.return_value = SimpleNamespace(content="hello")
-    c.agents["sales-shroom"] = fake_agent
-    c.agents["billing-shroom"] = fake_agent
+    c._runners["sales-shroom"] = fake_agent
+    c._runners["billing-shroom"] = fake_agent
     app.state.controller = c
     app.state.db_session_factory = _db_session_factory
     app.state.nats_bus = NatsEventBus()

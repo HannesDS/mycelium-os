@@ -223,15 +223,15 @@ async def send_message(
         await emit_event(db, nats_bus, ShroomEvent(
             shroom_id=shroom_id,
             event=ShroomEventType.ERROR,
-            topic="agent_error",
-            payload_summary=f"Agent processing failed for {shroom_id}",
+            topic="shroom_error",
+            payload_summary=f"Shroom processing failed for {shroom_id}",
         ))
         if model_not_found:
             raise HTTPException(
                 status_code=502,
                 detail=_build_model_error_detail(controller, shroom_id),
             )
-        raise HTTPException(status_code=502, detail="Agent processing failed")
+        raise HTTPException(status_code=502, detail="Shroom processing failed")
 
     append_bead(db, shroom_id, "task_completed", f"Responded: {content[:120]}")
     db.commit()

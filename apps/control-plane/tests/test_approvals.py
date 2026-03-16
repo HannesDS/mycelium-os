@@ -242,6 +242,20 @@ def test_approve_emits_decision_received_to_nats(client):
     assert call_args.metadata["approval_id"] == approval_id
 
 
+def test_approve_nats_failure_returns_500(client):
+    """NATS publish failure causes 500 — the caller knows the event was not emitted."""
+    from unittest.mock import AsyncMock
+
+    approvals = client.get("/approvals").json()
+    approval_id = approvals[0]["id"]
+
+    nats_bus = client.app.state.nats_bus
+    nats_bus.publish_event = AsyncMock(side_effect=RuntimeError("NATS unavailable"))
+
+    resp = client.post(f"/approvals/{approval_id}/approve")
+    assert resp.status_code == 500
+
+
 def test_reject_emits_decision_received_to_nats(client):
     approvals = client.get("/approvals").json()
     approval_id = approvals[0]["id"]

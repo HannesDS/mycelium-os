@@ -33,7 +33,7 @@ def test_resolve_model_openrouter_with_key():
     assert m.id == "anthropic/claude-3.5-sonnet"
 
 
-def test_create_agent_openrouter():
+def test_register_openrouter_shroom():
     with patch.dict("os.environ", {"OPENROUTER_API_KEY": "sk-test"}):
         manifest = ShroomManifest(
             apiVersion="mycelium.io/v1",
@@ -47,6 +47,6 @@ def test_create_agent_openrouter():
         )
         c = ShroomController()
         c.register(manifest)
-        agent = c.get_agent("test")
-        assert agent is not None
-        assert isinstance(agent.model, OpenRouter)
+        runner = c.get_agent("test")
+        assert runner is not None
+        assert isinstance(runner.model, OpenRouter)
