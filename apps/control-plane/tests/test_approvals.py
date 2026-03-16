@@ -255,6 +255,11 @@ def test_approve_nats_failure_returns_500(client):
     resp = client.post(f"/approvals/{approval_id}/approve")
     assert resp.status_code == 500
 
+    # Approval is persisted as approved even though the NATS event failed
+    approval = client.get(f"/approvals?status=approved").json()
+    approved_ids = [a["id"] for a in approval]
+    assert approval_id in approved_ids
+
 
 def test_reject_emits_decision_received_to_nats(client):
     approvals = client.get("/approvals").json()

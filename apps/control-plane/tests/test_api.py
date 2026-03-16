@@ -276,6 +276,7 @@ def test_missing_api_key_on_authenticated_endpoint_returns_401(controller, _db_s
     c = TestClient(app, raise_server_exceptions=False)
     resp = c.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
     assert resp.status_code == 401
+    assert resp.json()["detail"] == "Invalid or missing API key"
 
 
 def test_wrong_api_key_on_authenticated_endpoint_returns_401(controller, _db_session_factory):
@@ -289,3 +290,4 @@ def test_wrong_api_key_on_authenticated_endpoint_returns_401(controller, _db_ses
     c = TestClient(app, raise_server_exceptions=False, headers={"X-API-Key": "wrong-key"})
     resp = c.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
     assert resp.status_code == 401
+    assert resp.json()["detail"] == "Invalid or missing API key"
