@@ -66,6 +66,30 @@ def test_ws_accepts_when_insecure_mode(client, monkeypatch):
         assert ws is not None
 
 
+def test_ws_max_connections_rejects_when_full():
+    import asyncio
+    from routers.events import ConnectionManager
+    from unittest.mock import AsyncMock, MagicMock
+
+    loop = asyncio.new_event_loop()
+    try:
+        mgr = ConnectionManager(max_connections=2)
+        ws1, ws2, ws_overflow = MagicMock(), MagicMock(), MagicMock()
+        ws1.accept = AsyncMock()
+        ws2.accept = AsyncMock()
+        ws_overflow.close = AsyncMock()
+
+        loop.run_until_complete(mgr.accept(ws1))
+        loop.run_until_complete(mgr.accept(ws2))
+        assert mgr.count == 2
+
+        result = loop.run_until_complete(mgr.accept(ws_overflow))
+        assert result is False
+        ws_overflow.close.assert_awaited_once()
+    finally:
+        loop.close()
+
+
 def test_shroom_event_model_roundtrip():
     event = ShroomEvent(
         shroom_id="sales-shroom",

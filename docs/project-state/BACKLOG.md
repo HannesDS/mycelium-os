@@ -1,6 +1,6 @@
 # Mycelium OS — Project State & Backlog
 
-> Last updated: 2026-03-09
+> Last updated: 2026-03-15
 
 ---
 
@@ -82,7 +82,7 @@ After all 6 tickets:
 | MYC-28 | Sessions view | M | Needs control plane (done) |
 | MYC-29 | Knowledge base (shared RAG) | L | Needs TBD-3 (vector store) resolved |
 | MYC-36 | CEO-guided constitution evolution — dual persistence (DB + git) | L | MYC-18, MYC-26, MYC-30 |
-| MYC-37 | Repository sanity audit — docs, tests, and safe fixes | M | None |
+| MYC-37 | Repository sanity audit — docs, tests, and safe fixes | M | None | ← in progress |
 
 ### Phase 2
 | Ticket | Title | Size |

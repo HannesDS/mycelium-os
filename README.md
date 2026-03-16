@@ -51,7 +51,7 @@ pnpm dev                        # Next.js dev server at :3000
 | API docs | http://localhost:8000/docs | Interactive OpenAPI explorer |
 | PostgreSQL | localhost:5432 | Constitution, audit log, beads memory |
 | Neo4j | http://localhost:7474 | Shroom topology graph |
-| NATS | localhost:4222 | Event bus (JetStream) |
+| NATS | localhost:4222 | Event bus (Core NATS; JetStream deferred post-MVP) |
 | MinIO | http://localhost:9001 | S3-compatible object storage |
 | Mailhog | http://localhost:8025 | Dev email inbox |
 | Ollama | localhost:11435 (default host port) | Local LLM runtime |

@@ -110,7 +110,7 @@ def test_all_shrooms_have_required_fields(client):
 def test_message_success(client, controller):
     fake_agent = MagicMock()
     fake_agent.run.return_value = SimpleNamespace(content="hello from agent")
-    controller.agents["alpha-shroom"] = fake_agent
+    controller._runners["alpha-shroom"] = fake_agent
 
     resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
     assert resp.status_code == 200
@@ -125,11 +125,11 @@ def test_message_success(client, controller):
 def test_message_agent_error_returns_502(client, controller):
     fake_agent = MagicMock()
     fake_agent.run.side_effect = RuntimeError("boom")
-    controller.agents["alpha-shroom"] = fake_agent
+    controller._runners["alpha-shroom"] = fake_agent
 
     resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
     assert resp.status_code == 502
-    assert resp.json()["detail"] == "Agent processing failed"
+    assert resp.json()["detail"] == "Shroom processing failed"
 
 
 def test_message_unknown_shroom_returns_404(client):
@@ -140,7 +140,7 @@ def test_message_unknown_shroom_returns_404(client):
 def test_message_model_not_found_returns_actionable_error(client, controller):
     fake_agent = MagicMock()
     fake_agent.run.side_effect = RuntimeError("model 'mistral:latest' not found")
-    controller.agents["alpha-shroom"] = fake_agent
+    controller._runners["alpha-shroom"] = fake_agent
 
     with patch("routers.shrooms.find_first_available", return_value=None), \
          patch("routers.shrooms.list_available_models", return_value=[]):
@@ -150,13 +150,13 @@ def test_message_model_not_found_returns_actionable_error(client, controller):
     detail = resp.json()["detail"]
     assert "mistral:latest" in detail
     assert "ollama pull" in detail
-    assert "Agent processing failed" not in detail
+    assert "Shroom processing failed" not in detail
 
 
 def test_message_model_not_found_does_not_expose_model_inventory(client, controller):
     fake_agent = MagicMock()
     fake_agent.run.side_effect = RuntimeError("model 'mistral:latest' not found")
-    controller.agents["alpha-shroom"] = fake_agent
+    controller._runners["alpha-shroom"] = fake_agent
 
     with patch("routers.shrooms.find_first_available", return_value=None), \
          patch("routers.shrooms.list_available_models", return_value=["llama3.2:latest", "phi3:latest"]):
@@ -172,7 +172,7 @@ def test_message_model_not_found_does_not_expose_model_inventory(client, control
 def test_message_model_not_found_fallback_succeeds(client, controller):
     fake_agent = MagicMock()
     fake_agent.run.side_effect = RuntimeError("model 'mistral:latest' not found")
-    controller.agents["alpha-shroom"] = fake_agent
+    controller._runners["alpha-shroom"] = fake_agent
 
     fallback_agent = MagicMock()
     fallback_agent.run.return_value = SimpleNamespace(content="hello from fallback")
@@ -191,7 +191,7 @@ def test_message_model_not_found_fallback_succeeds(client, controller):
 def test_message_model_not_found_fallback_also_fails(client, controller):
     fake_agent = MagicMock()
     fake_agent.run.side_effect = RuntimeError("model 'mistral:latest' not found")
-    controller.agents["alpha-shroom"] = fake_agent
+    controller._runners["alpha-shroom"] = fake_agent
 
     fallback_agent = MagicMock()
     fallback_agent.run.side_effect = RuntimeError("fallback also broken")
@@ -210,18 +210,18 @@ def test_message_model_not_found_fallback_also_fails(client, controller):
 def test_message_generic_error_not_treated_as_model_error(client, controller):
     fake_agent = MagicMock()
     fake_agent.run.side_effect = RuntimeError("connection refused")
-    controller.agents["alpha-shroom"] = fake_agent
+    controller._runners["alpha-shroom"] = fake_agent
 
     resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
     assert resp.status_code == 502
-    assert resp.json()["detail"] == "Agent processing failed"
+    assert resp.json()["detail"] == "Shroom processing failed"
 
 
 def test_message_ollama_error_in_content_triggers_fallback(client, controller):
     raw_error = "Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible."
     fake_agent = MagicMock()
     fake_agent.run.return_value = SimpleNamespace(content=raw_error)
-    controller.agents["alpha-shroom"] = fake_agent
+    controller._runners["alpha-shroom"] = fake_agent
 
     with patch("routers.shrooms.find_first_available", return_value=None), \
          patch("routers.shrooms.list_available_models", return_value=[]):
@@ -238,7 +238,7 @@ def test_message_ollama_content_error_fallback_succeeds(client, controller):
     fake_agent.run.return_value = SimpleNamespace(
         content="Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible."
     )
-    controller.agents["alpha-shroom"] = fake_agent
+    controller._runners["alpha-shroom"] = fake_agent
 
     fallback_agent = MagicMock()
     fallback_agent.run.return_value = SimpleNamespace(content="fallback reply")
@@ -257,8 +257,35 @@ def test_generic_not_found_in_content_not_treated_as_ollama_error(client, contro
     fake_agent.run.return_value = SimpleNamespace(
         content="The file was not found in the repository."
     )
-    controller.agents["alpha-shroom"] = fake_agent
+    controller._runners["alpha-shroom"] = fake_agent
 
     resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
     assert resp.status_code == 200
     assert resp.json()["response"] == "The file was not found in the repository."
+
+
+def test_missing_api_key_on_authenticated_endpoint_returns_401(controller, _db_session_factory):
+    """POST /shrooms/{id}/message requires auth — no header should return 401."""
+    from main import app
+    from core.nats_client import NatsEventBus
+
+    app.state.controller = controller
+    app.state.db_session_factory = _db_session_factory
+    app.state.nats_bus = NatsEventBus()
+    # Client without auth header
+    c = TestClient(app, raise_server_exceptions=False)
+    resp = c.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
+    assert resp.status_code == 401
+
+
+def test_wrong_api_key_on_authenticated_endpoint_returns_401(controller, _db_session_factory):
+    """POST /shrooms/{id}/message with a wrong key should return 401."""
+    from main import app
+    from core.nats_client import NatsEventBus
+
+    app.state.controller = controller
+    app.state.db_session_factory = _db_session_factory
+    app.state.nats_bus = NatsEventBus()
+    c = TestClient(app, raise_server_exceptions=False, headers={"X-API-Key": "wrong-key"})
+    resp = c.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
+    assert resp.status_code == 401

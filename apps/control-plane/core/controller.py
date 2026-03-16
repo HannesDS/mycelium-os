@@ -121,15 +121,17 @@ def create_agent(manifest: ShroomManifest, db: PostgresDb | None = None) -> Agen
 class ShroomController:
     def __init__(self, db: PostgresDb | None = None) -> None:
         self.manifests: dict[str, ShroomManifest] = {}
-        self.agents: dict[str, Agent] = {}
+        # Agno Agent runners keyed by shroom_id — internal runtime only
+        self._runners: dict[str, Agent] = {}
         self.db = db or _create_agno_db()
 
     def register(self, manifest: ShroomManifest) -> None:
         self.manifests[manifest.metadata.id] = manifest
-        self.agents[manifest.metadata.id] = create_agent(manifest, self.db)
+        self._runners[manifest.metadata.id] = create_agent(manifest, self.db)
 
     def get_agent(self, shroom_id: str) -> Agent | None:
-        return self.agents.get(shroom_id)
+        """Return the underlying Agno Agent runner for this shroom."""
+        return self._runners.get(shroom_id)
 
     def get_resolved_model(self, shroom_id: str) -> str | None:
         m = self.manifests.get(shroom_id)
