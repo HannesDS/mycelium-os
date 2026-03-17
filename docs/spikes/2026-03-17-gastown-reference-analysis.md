@@ -1,4 +1,4 @@
-# Spike: Gastown Reference Analysis
+# Spike: Gas Town Reference Analysis
 
 **Date:** 2026-03-17
 **Bead:** mo-3ci
@@ -8,7 +8,7 @@
 
 ## 1. Scope
 
-Analyse the Gastown CLI (`gt` v0.12.0, `bd` v0.60.0) as a reference for Mycelium OS design.
+Analyse the Gas Town CLI (`gt` v0.12.0, `bd` v0.60.0) as a reference for Mycelium OS design.
 Focus: Mayor pattern, Convoy work-tracking, Formula workflows.
 
 Two questions to answer:
@@ -17,7 +17,7 @@ Two questions to answer:
 
 ---
 
-## 2. Gastown Concepts
+## 2. Gas Town Concepts
 
 ### 2.1 Mayor Pattern
 
@@ -48,7 +48,7 @@ A convoy is a persistent tracking unit that monitors a set of related issues acr
 onboarding flow in MYC-44) needs a similar fan-out/fan-in pattern: dispatch multiple
 shrooms to do parallel sub-tasks, then gate on a human decision, then continue.
 
-The workflow engine (MYC-49) is planned to implement this. Convoys are the Gastown
+The workflow engine (MYC-49) is planned to implement this. Convoys are the Gas Town
 equivalent of what MYC-49 will build at the Mycelium layer.
 
 ### 2.3 Formula Workflows
@@ -67,7 +67,7 @@ It also covers **domain workflows** with human gates:
 - `mol-idea-to-plan` = vague idea → approved beads plan (with human clarify + approve steps)
 - `shiny` = design → implement → review → test → submit
 
-The key insight: Gastown stores formulas as separate TOML files, not inside any rig's
+The key insight: Gas Town stores formulas as separate TOML files, not inside any rig's
 config. They are shared infrastructure the Mayor can pour into any rig.
 
 ---
@@ -150,10 +150,10 @@ Two systems use "beads" with different meanings:
 
 | System | "Beads" means | Location | Access |
 |--------|--------------|----------|--------|
-| **Gastown** | Dolt-backed issue tracker entries | `~/.beads/`, `bd` CLI | `bd show`, `bd create`, etc. |
+| **Gas Town** | Dolt-backed issue tracker entries | `~/.beads/`, `bd` CLI | `bd show`, `bd create`, etc. |
 | **Mycelium OS** | Shroom episodic memory records | `core/memory/beads.py`, `ShroomBead` model | Postgres via SQLAlchemy |
 
-The Gastown meaning is externally visible (CLI commands, prompts, docs, agent instructions).
+The Gas Town meaning is externally visible (CLI commands, prompts, docs, agent instructions).
 The Mycelium meaning is internal (Python model name, ADR-004 terminology, UI label in MYC-23).
 
 ### Risk
@@ -207,7 +207,7 @@ MYC-23 (Memory view) ships to avoid the rename showing up in the UI.
 | Question | Answer |
 |----------|--------|
 | Add constitution-level workflow layer before MYC-44? | **Yes** — add a minimal `workflows:` section to the constitution schema (half-day chore) before or alongside MYC-49. Keeps constitution as source of truth. |
-| Beads name collision? | **Real collision.** Gastown `bd` beads = issue tracker. Mycelium beads = episodic shroom memory. Rename Mycelium's layer to "episodes" in code, models, ADR, and UI. File as a chore bead before MYC-23 ships. |
+| Beads name collision? | **Real collision.** Gas Town `bd` beads = issue tracker. Mycelium beads = episodic shroom memory. Rename Mycelium's layer to "episodes" in code, models, ADR, and UI. File as a chore bead before MYC-23 ships. |
 
 ---
 
