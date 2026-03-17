@@ -11,7 +11,7 @@ const detail: ShroomDetail = {
   name: "Sales",
   model: "mistral-7b",
   skills: ["prospecting", "outreach"],
-  escalates_to: "ceo-shroom",
+  escalates_to: "root-shroom",
   sla_response_minutes: 60,
   can: [{ read: ["crm", "emails"] }, { write: ["draft_emails"] }],
   cannot: [{ execute: ["send_email", "payments"] }],
@@ -43,7 +43,7 @@ describe("ManifestPanel", () => {
     expect(screen.getByText("Sales")).toBeInTheDocument();
     expect(screen.getByText("mistral-7b")).toBeInTheDocument();
     expect(screen.getByText("running")).toBeInTheDocument();
-    expect(screen.getByText("ceo-shroom")).toBeInTheDocument();
+    expect(screen.getByText("root-shroom")).toBeInTheDocument();
     expect(screen.getByText("60 min")).toBeInTheDocument();
   });
 

@@ -25,7 +25,7 @@ def _make_manifest(shroom_id: str, name: str, skills: list[str] | None = None) -
         spec=ShroomSpec(
             model="mistral-7b",
             skills=skills or [],
-            escalates_to="ceo-shroom",
+            escalates_to="root-shroom",
         ),
     )
 

@@ -23,7 +23,7 @@ def _make_manifest(shroom_id: str, name: str) -> ShroomManifest:
         apiVersion="mycelium.io/v1",
         kind="Shroom",
         metadata=ShroomMetadata(id=shroom_id, name=name),
-        spec=ShroomSpec(model="mistral-7b", skills=[], escalates_to="ceo-shroom"),
+        spec=ShroomSpec(model="mistral-7b", skills=[], escalates_to="root-shroom"),
     )
 
 

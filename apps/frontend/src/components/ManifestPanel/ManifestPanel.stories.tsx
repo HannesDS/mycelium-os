@@ -16,7 +16,7 @@ const salesDetail: ShroomDetail = {
   name: "Sales",
   model: "mistral-7b",
   skills: ["prospecting", "outreach", "lead-qualification"],
-  escalates_to: "ceo-shroom",
+  escalates_to: "root-shroom",
   sla_response_minutes: 60,
   can: [
     { read: ["crm", "emails"] },
@@ -58,7 +58,7 @@ export const Closed = {
 export const MinimalShroom = {
   args: {
     detail: {
-      id: "ceo-shroom",
+      id: "root-shroom",
       name: "CEO",
       model: "mistral-7b",
       skills: ["decision-routing"],

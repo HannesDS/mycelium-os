@@ -13,7 +13,7 @@ const mockSummary: ShroomSummary = {
   name: "Sales",
   model: "mistral-7b",
   skills: ["prospecting"],
-  escalates_to: "ceo-shroom",
+  escalates_to: "root-shroom",
   status: "running",
 };
 
@@ -22,7 +22,7 @@ const mockDetail: ShroomDetail = {
   name: "Sales",
   model: "mistral-7b",
   skills: ["prospecting"],
-  escalates_to: "ceo-shroom",
+  escalates_to: "root-shroom",
   sla_response_minutes: 60,
   can: [{ read: ["crm", "emails"] }],
   cannot: [{ execute: ["send_email"] }],
@@ -103,7 +103,7 @@ const mockConstitution: ConstitutionData = {
         name: "Sales",
         model: "mistral-7b",
         skills: ["prospecting"],
-        escalates_to: "ceo-shroom",
+        escalates_to: "root-shroom",
         sla_response_minutes: 60,
         can: [{ read: ["crm"] }],
         cannot: [],
@@ -112,7 +112,7 @@ const mockConstitution: ConstitutionData = {
     },
   ],
   graph: {
-    edges: [{ from: "sales-shroom", to: "ceo-shroom", type: "reports-to" }],
+    edges: [{ from: "sales-shroom", to: "root-shroom", type: "reports-to" }],
   },
 };
 
@@ -193,7 +193,7 @@ describe("sendMessage", () => {
 
   it("sends POST and returns response", async () => {
     const mockResponse = {
-      shroom_id: "ceo-shroom",
+      shroom_id: "root-shroom",
       response: "I am the CEO shroom.",
     };
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -201,10 +201,10 @@ describe("sendMessage", () => {
       json: () => Promise.resolve(mockResponse),
     });
 
-    const result = await sendMessage("ceo-shroom", "What is your role?");
+    const result = await sendMessage("root-shroom", "What is your role?");
     expect(result).toEqual(mockResponse);
     expect(fetch).toHaveBeenCalledWith(
-      "/api/control-plane/shrooms/ceo-shroom/message",
+      "/api/control-plane/shrooms/root-shroom/message",
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -225,8 +225,8 @@ describe("sendMessage", () => {
         }),
     });
 
-    await expect(sendMessage("ceo-shroom", "hi")).rejects.toThrow(
-      "Failed to send message to ceo-shroom: Model 'mistral:latest' is not available",
+    await expect(sendMessage("root-shroom", "hi")).rejects.toThrow(
+      "Failed to send message to root-shroom: Model 'mistral:latest' is not available",
     );
   });
 
@@ -238,8 +238,8 @@ describe("sendMessage", () => {
       json: () => Promise.reject(new Error("not json")),
     });
 
-    await expect(sendMessage("ceo-shroom", "hi")).rejects.toThrow(
-      "Failed to send message to ceo-shroom: 500 Internal Server Error",
+    await expect(sendMessage("root-shroom", "hi")).rejects.toThrow(
+      "Failed to send message to root-shroom: 500 Internal Server Error",
     );
   });
 
@@ -251,8 +251,8 @@ describe("sendMessage", () => {
       json: () => Promise.resolve({}),
     });
 
-    await expect(sendMessage("ceo-shroom", "hi")).rejects.toThrow(
-      "Failed to send message to ceo-shroom: 500 Internal Server Error",
+    await expect(sendMessage("root-shroom", "hi")).rejects.toThrow(
+      "Failed to send message to root-shroom: 500 Internal Server Error",
     );
   });
 
@@ -261,7 +261,7 @@ describe("sendMessage", () => {
       new DOMException("The operation was aborted.", "AbortError"),
     );
 
-    await expect(sendMessage("ceo-shroom", "hi")).rejects.toThrow(
+    await expect(sendMessage("root-shroom", "hi")).rejects.toThrow(
       "Shroom is taking too long to respond. Try again.",
     );
   });

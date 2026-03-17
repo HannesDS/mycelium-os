@@ -50,7 +50,7 @@ export default function VisualOffice() {
     const escalationEvent = createEvent({
       shroom_id: "sales-shroom",
       event: "escalation_raised",
-      to: "ceo-shroom",
+      to: "root-shroom",
       topic: "lead_qualified",
       payload_summary: ESCALATION_PAYLOAD,
     });
@@ -64,7 +64,7 @@ export default function VisualOffice() {
       setPhase("ceo_reviewing");
       setCeoBubble(CEO_THOUGHT);
       const msgEvent = createEvent({
-        shroom_id: "ceo-shroom",
+        shroom_id: "root-shroom",
         event: "message_sent",
         to: "sales-shroom",
         topic: "proposal_review",
@@ -153,14 +153,14 @@ export default function VisualOffice() {
                 key={shroom.id}
                 shroom={shroom}
                 speechBubble={
-                  shroom.id === "ceo-shroom"
+                  shroom.id === "root-shroom"
                     ? ceoBubble
                     : shroom.id === "sales-shroom"
                       ? salesBubble
                       : null
                 }
                 pulse={
-                  shroom.id === "ceo-shroom"
+                  shroom.id === "root-shroom"
                     ? ceoPulse
                     : shroom.id === "sales-shroom"
                       ? salesPulse

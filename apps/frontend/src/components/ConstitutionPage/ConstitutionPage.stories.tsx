@@ -12,7 +12,7 @@ const mockData: ConstitutionData = {
         name: "Sales Development",
         model: "mistral-7b",
         skills: ["lead_qualification", "proposal_drafting"],
-        escalates_to: "ceo-shroom",
+        escalates_to: "root-shroom",
         sla_response_minutes: 60,
         can: [
           { read: ["crm", "emails"] },
@@ -29,7 +29,7 @@ const mockData: ConstitutionData = {
         name: "Delivery Management",
         model: "mistral-7b",
         skills: ["project_tracking", "delay_detection"],
-        escalates_to: "ceo-shroom",
+        escalates_to: "root-shroom",
         sla_response_minutes: 120,
         can: [{ read: ["project_board", "timesheets"] }],
         cannot: [{ execute: ["payments"] }],
@@ -42,7 +42,7 @@ const mockData: ConstitutionData = {
         name: "Billing Operations",
         model: "mistral-7b",
         skills: ["invoice_tracking", "payment_follow_up"],
-        escalates_to: "ceo-shroom",
+        escalates_to: "root-shroom",
         sla_response_minutes: 180,
         can: [
           { read: ["invoices", "payments"] },
@@ -58,7 +58,7 @@ const mockData: ConstitutionData = {
         name: "Compliance Officer",
         model: "mistral-7b",
         skills: ["contract_review", "renewal_tracking"],
-        escalates_to: "ceo-shroom",
+        escalates_to: "root-shroom",
         sla_response_minutes: 240,
         can: [{ read: ["contracts", "regulations"] }],
         cannot: [{ execute: ["sign_contract"] }],
@@ -66,7 +66,7 @@ const mockData: ConstitutionData = {
       },
     },
     {
-      id: "ceo-shroom",
+      id: "root-shroom",
       manifest: {
         name: "CEO",
         model: "mistral-7b",
@@ -81,10 +81,10 @@ const mockData: ConstitutionData = {
   ],
   graph: {
     edges: [
-      { from: "sales-shroom", to: "ceo-shroom", type: "reports-to" },
-      { from: "delivery-shroom", to: "ceo-shroom", type: "reports-to" },
-      { from: "billing-shroom", to: "ceo-shroom", type: "reports-to" },
-      { from: "compliance-shroom", to: "ceo-shroom", type: "reports-to" },
+      { from: "sales-shroom", to: "root-shroom", type: "reports-to" },
+      { from: "delivery-shroom", to: "root-shroom", type: "reports-to" },
+      { from: "billing-shroom", to: "root-shroom", type: "reports-to" },
+      { from: "compliance-shroom", to: "root-shroom", type: "reports-to" },
     ],
   },
 };

@@ -15,7 +15,7 @@ const SHROOM_COLORS: Record<string, string> = {
   "billing-shroom": "text-purple-400",
   "compliance-shroom": "text-teal-400",
   "delivery-shroom": "text-orange-400",
-  "ceo-shroom": "text-yellow-400",
+  "root-shroom": "text-yellow-400",
 };
 
 interface ProposalCardProps {

@@ -102,7 +102,7 @@ export default function Home() {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse" />
                 <span className="text-[#888888]">escalation_raised</span>
                 <span className="text-[#555555]">→</span>
-                <span className="text-[#4ade80]">ceo-shroom</span>
+                <span className="text-[#4ade80]">root-shroom</span>
               </div>
               <div className="absolute -top-4 -right-6 flex items-center gap-2 px-3 py-2 rounded-lg border border-[#1f1f1f] bg-[#0d0d0d] text-xs font-mono">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#22d3ee] animate-pulse" />
@@ -244,7 +244,7 @@ export default function Home() {
                   />
                   <EventLine
                     time="14:23:05"
-                    shroom="ceo-shroom"
+                    shroom="root-shroom"
                     event="decision_received"
                     detail="proposal_approved"
                     color="#4ade80"
@@ -314,7 +314,7 @@ export default function Home() {
                   </div>
                   <div className="border-t border-[#1f1f1f] pt-3 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[#fbbf24]" />
-                    <span className="text-[#fbbf24]">ceo-shroom</span>
+                    <span className="text-[#fbbf24]">root-shroom</span>
                     <span className="text-[#555555]">3 escalations pending</span>
                   </div>
                 </div>

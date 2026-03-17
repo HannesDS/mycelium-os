@@ -61,7 +61,7 @@ def _build_system_prompt(manifest: ShroomManifest) -> str:
         f"You escalate unresolved issues to: {manifest.spec.escalates_to or 'human'}.\n"
         f"Always respond concisely and stay in character."
     )
-    if manifest.metadata.id == "ceo-shroom":
+    if manifest.metadata.id == "root-shroom":
         base += (
             "\n\nYou can propose constitution changes (add/remove/edit shrooms, company metadata, graph edges). "
             "When asked to make such a change, describe the proposal clearly and confirm the human should submit it "

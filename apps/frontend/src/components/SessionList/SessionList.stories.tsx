@@ -30,7 +30,7 @@ const mockSessions: SessionListItem[] = [
   },
   {
     session_id: "sess-ghi-789",
-    shroom_id: "ceo-shroom",
+    shroom_id: "root-shroom",
     status: "completed",
     started: "2026-03-09T09:00:00Z",
     duration: "1h",

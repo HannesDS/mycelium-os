@@ -23,12 +23,12 @@ def _setup_app_for_org_graph() -> TestClient:
 
   controller = ShroomController()
   controller.register(_make_manifest("sales-shroom", "Sales"))
-  controller.register(_make_manifest("ceo-shroom", "CEO"))
+  controller.register(_make_manifest("root-shroom", "CEO"))
 
   config = MyceliumConfig(
     company={"name": "Acme AI Co", "instance": "dev"},
     shrooms=[],
-    graph={"edges": [{"from": "sales-shroom", "to": "ceo-shroom", "type": "reports-to"}]},
+    graph={"edges": [{"from": "sales-shroom", "to": "root-shroom", "type": "reports-to"}]},
   )
 
   test_app.state.controller = controller
@@ -50,11 +50,11 @@ def test_org_graph_returns_nodes_and_edges():
   graph = data["graph"]
 
   node_ids = {n["id"] for n in graph["nodes"]}
-  assert node_ids == {"sales-shroom", "ceo-shroom"}
+  assert node_ids == {"sales-shroom", "root-shroom"}
 
   edges = graph["edges"]
   assert edges == [
-    {"from": "sales-shroom", "to": "ceo-shroom", "type": "reports-to", "metadata": {}},
+    {"from": "sales-shroom", "to": "root-shroom", "type": "reports-to", "metadata": {}},
   ]
 
 
@@ -67,7 +67,7 @@ def test_org_graph_includes_activity_when_requested():
   data = resp.json()
   assert "activity" in data
   activity = {a["shroom_id"]: a for a in data["activity"]}
-  assert set(activity.keys()) == {"sales-shroom", "ceo-shroom"}
+  assert set(activity.keys()) == {"sales-shroom", "root-shroom"}
 
   state = activity["sales-shroom"]
   assert state["status"] in {"idle", "busy", "waiting", "error"}
@@ -95,7 +95,7 @@ def test_org_shroom_detail_returns_node_and_edges():
   assert data["node"]["id"] == "sales-shroom"
   assert data["incoming_edges"] == []
   assert data["outgoing_edges"] == [
-    {"from": "sales-shroom", "to": "ceo-shroom", "type": "reports-to", "metadata": {}},
+    {"from": "sales-shroom", "to": "root-shroom", "type": "reports-to", "metadata": {}},
   ]
 
 
@@ -111,16 +111,16 @@ def test_org_shroom_detail_returns_404_for_unknown_shroom():
 def test_org_graph_paths_returns_simple_path():
   client = _setup_app_for_org_graph()
 
-  resp = client.get("/org/graph/paths?from=sales-shroom&to=ceo-shroom")
+  resp = client.get("/org/graph/paths?from=sales-shroom&to=root-shroom")
   assert resp.status_code == 200
 
   data = resp.json()
   paths = data["paths"]
   assert len(paths) == 1
   path = paths[0]
-  assert path["nodes"] == ["sales-shroom", "ceo-shroom"]
+  assert path["nodes"] == ["sales-shroom", "root-shroom"]
   assert path["edges"] == [
-    {"from": "sales-shroom", "to": "ceo-shroom", "type": "reports-to", "metadata": {}},
+    {"from": "sales-shroom", "to": "root-shroom", "type": "reports-to", "metadata": {}},
   ]
 
 
@@ -141,7 +141,7 @@ def test_org_graph_paths_returns_self_path_single_node():
 def test_org_graph_paths_returns_empty_when_no_path_between_distinct_nodes():
   client = _setup_app_for_org_graph()
 
-  resp = client.get("/org/graph/paths?from=ceo-shroom&to=sales-shroom")
+  resp = client.get("/org/graph/paths?from=root-shroom&to=sales-shroom")
   assert resp.status_code == 200
 
   data = resp.json()
@@ -151,13 +151,13 @@ def test_org_graph_paths_returns_empty_when_no_path_between_distinct_nodes():
 def test_org_graph_paths_respects_edge_types_filter():
   client = _setup_app_for_org_graph()
 
-  resp = client.get("/org/graph/paths?from=sales-shroom&to=ceo-shroom")
+  resp = client.get("/org/graph/paths?from=sales-shroom&to=root-shroom")
   assert resp.status_code == 200
   data = resp.json()
   assert len(data["paths"]) == 1
 
   resp_filtered = client.get(
-    "/org/graph/paths?from=sales-shroom&to=ceo-shroom&edge_types=monitors",
+    "/org/graph/paths?from=sales-shroom&to=root-shroom&edge_types=monitors",
   )
   assert resp_filtered.status_code == 200
   data_filtered = resp_filtered.json()
@@ -167,13 +167,13 @@ def test_org_graph_paths_respects_edge_types_filter():
 def test_org_graph_paths_respects_max_length_limit():
   client = _setup_app_for_org_graph()
 
-  resp = client.get("/org/graph/paths?from=sales-shroom&to=ceo-shroom&max_length=1")
+  resp = client.get("/org/graph/paths?from=sales-shroom&to=root-shroom&max_length=1")
   assert resp.status_code == 200
   data = resp.json()
   assert len(data["paths"]) == 1
 
   resp_invalid = client.get(
-    "/org/graph/paths?from=sales-shroom&to=ceo-shroom&max_length=0",
+    "/org/graph/paths?from=sales-shroom&to=root-shroom&max_length=0",
   )
   assert resp_invalid.status_code == 422
 

@@ -7,19 +7,19 @@ shrooms:
   - examples/shrooms/delivery-shroom.yaml
   - examples/shrooms/billing-shroom.yaml
   - examples/shrooms/compliance-shroom.yaml
-  - examples/shrooms/ceo-shroom.yaml
+  - examples/shrooms/root-shroom.yaml
 
 graph:
   edges:
     - from: sales-shroom
-      to: ceo-shroom
+      to: root-shroom
       type: reports-to
     - from: delivery-shroom
-      to: ceo-shroom
+      to: root-shroom
       type: reports-to
     - from: billing-shroom
-      to: ceo-shroom
+      to: root-shroom
       type: reports-to
     - from: compliance-shroom
-      to: ceo-shroom
+      to: root-shroom
       type: reports-to

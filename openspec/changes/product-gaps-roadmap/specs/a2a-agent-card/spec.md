@@ -6,8 +6,8 @@ The control plane SHALL expose an Agent Card at `GET /.well-known/agent-card.jso
 
 #### Scenario: Agent Card returned for shroom
 
-- **GIVEN** shroom `ceo-shroom` exists
-- **WHEN** client requests `GET /shrooms/ceo-shroom/.well-known/agent-card.json`
+- **GIVEN** shroom `root-shroom` exists
+- **WHEN** client requests `GET /shrooms/root-shroom/.well-known/agent-card.json`
 - **THEN** the response SHALL be valid A2A AgentCard JSON with name, description, url, and skills derived from manifest
 
 #### Scenario: Skills mapped to AgentSkill

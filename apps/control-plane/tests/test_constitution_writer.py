@@ -73,7 +73,7 @@ def tmp_config(tmp_path) -> Path:
         "spec": {
             "model": "mistral-7b",
             "skills": ["skill_a"],
-            "escalates_to": "ceo-shroom",
+            "escalates_to": "root-shroom",
         },
     }
     (shrooms_dir / "alpha-shroom.yaml").write_text(yaml.dump(alpha_manifest))
@@ -81,19 +81,19 @@ def tmp_config(tmp_path) -> Path:
     ceo_manifest = {
         "apiVersion": "mycelium.io/v1",
         "kind": "Shroom",
-        "metadata": {"id": "ceo-shroom", "name": "CEO"},
+        "metadata": {"id": "root-shroom", "name": "CEO"},
         "spec": {"model": "mistral-7b", "skills": ["decision_routing"]},
     }
-    (shrooms_dir / "ceo-shroom.yaml").write_text(yaml.dump(ceo_manifest))
+    (shrooms_dir / "root-shroom.yaml").write_text(yaml.dump(ceo_manifest))
 
     config = {
         "company": {"name": "Test Co", "instance": "dev"},
         "shrooms": [
             "examples/shrooms/alpha-shroom.yaml",
-            "examples/shrooms/ceo-shroom.yaml",
+            "examples/shrooms/root-shroom.yaml",
         ],
         "graph": {
-            "edges": [{"from": "alpha-shroom", "to": "ceo-shroom", "type": "reports-to"}]
+            "edges": [{"from": "alpha-shroom", "to": "root-shroom", "type": "reports-to"}]
         },
     }
     config_path = tmp_path / "mycelium.yaml"
@@ -109,7 +109,7 @@ def writer(tmp_config, session_factory) -> ConstitutionWriterService:
 def _make_approval(payload: dict, event_type: str = "constitution_change") -> Approval:
     return Approval(
         id=uuid.uuid4(),
-        shroom_id="ceo-shroom",
+        shroom_id="root-shroom",
         event_type=event_type,
         summary="test change",
         payload=payload,
@@ -144,7 +144,7 @@ class TestValidateChangePayload:
             {
                 "change_type": "edit_graph_edge",
                 "from_shroom": "alpha-shroom",
-                "to_shroom": "ceo-shroom",
+                "to_shroom": "root-shroom",
                 "edge_type": "collaborates-with",
             }
         )
@@ -154,7 +154,7 @@ class TestValidateChangePayload:
             {
                 "change_type": "remove_graph_edge",
                 "from_shroom": "alpha-shroom",
-                "to_shroom": "ceo-shroom",
+                "to_shroom": "root-shroom",
             }
         )
 
@@ -188,14 +188,14 @@ def _base_config_and_manifests():
     config = MyceliumConfig(
         company={"name": "Test Co", "instance": "dev"},
         shrooms=["examples/shrooms/alpha-shroom.yaml"],
-        graph={"edges": [{"from": "alpha-shroom", "to": "ceo-shroom", "type": "reports-to"}]},
+        graph={"edges": [{"from": "alpha-shroom", "to": "root-shroom", "type": "reports-to"}]},
     )
     manifests = {
         "alpha-shroom": ShroomManifest(
             apiVersion="mycelium.io/v1",
             kind="Shroom",
             metadata=ShroomMetadata(id="alpha-shroom", name="Alpha"),
-            spec=ShroomSpec(model="mistral-7b", skills=["skill_a"], escalates_to="ceo-shroom"),
+            spec=ShroomSpec(model="mistral-7b", skills=["skill_a"], escalates_to="root-shroom"),
         )
     }
     return config, manifests
@@ -257,12 +257,12 @@ class TestApplyChangeToState:
         payload = {
             "change_type": "edit_graph_edge",
             "from_shroom": "alpha-shroom",
-            "to_shroom": "ceo-shroom",
+            "to_shroom": "root-shroom",
             "edge_type": "collaborates-with",
         }
         new_config, _ = _apply_change_to_state(payload, config, manifests, tmp_config)
         edges = new_config.graph["edges"]
-        matching = [e for e in edges if e["from"] == "alpha-shroom" and e["to"] == "ceo-shroom"]
+        matching = [e for e in edges if e["from"] == "alpha-shroom" and e["to"] == "root-shroom"]
         assert len(matching) == 1
         assert matching[0]["type"] == "collaborates-with"
 
@@ -283,11 +283,11 @@ class TestApplyChangeToState:
         payload = {
             "change_type": "remove_graph_edge",
             "from_shroom": "alpha-shroom",
-            "to_shroom": "ceo-shroom",
+            "to_shroom": "root-shroom",
         }
         new_config, _ = _apply_change_to_state(payload, config, manifests, tmp_config)
         edges = new_config.graph.get("edges", [])
-        assert not any(e.get("from") == "alpha-shroom" and e.get("to") == "ceo-shroom" for e in edges)
+        assert not any(e.get("from") == "alpha-shroom" and e.get("to") == "root-shroom" for e in edges)
 
 
 # ---------------------------------------------------------------------------

@@ -19,5 +19,5 @@ spec:
     - propose: [reschedule, escalate_delay]
   cannot:
     - execute: [payments, client_comms]
-  escalates_to: ceo-shroom
+  escalates_to: root-shroom
   sla_response_minutes: 120

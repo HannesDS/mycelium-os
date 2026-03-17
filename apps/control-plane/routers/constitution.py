@@ -205,7 +205,7 @@ def propose_constitution_change(
     summary = body.change_summary or _default_summary(payload)
 
     approval = Approval(
-        shroom_id="ceo-shroom",
+        shroom_id="root-shroom",
         event_type="constitution_change",
         summary=summary,
         payload=payload,

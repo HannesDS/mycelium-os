@@ -20,7 +20,7 @@ const SHROOM_POSITIONS: Record<string, { x: number; y: number }> = {
   "delivery-shroom": { x: 0.4, y: 0.55 },
   "billing-shroom": { x: 0.6, y: 0.55 },
   "compliance-shroom": { x: 0.25, y: 0.7 },
-  "ceo-shroom": { x: 0.55, y: 0.3 },
+  "root-shroom": { x: 0.55, y: 0.3 },
 };
 
 const WALLS: { x1: number; y1: number; x2: number; y2: number }[] = [

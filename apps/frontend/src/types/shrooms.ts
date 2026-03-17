@@ -10,5 +10,5 @@ export const SHROOMS: Shroom[] = [
   { id: "delivery-shroom", role: "Delivery Lead", x: 350, y: 150 },
   { id: "billing-shroom", role: "Billing & Finance", x: 350, y: 250 },
   { id: "compliance-shroom", role: "Compliance & Legal", x: 550, y: 150 },
-  { id: "ceo-shroom", role: "CEO / Decider", x: 400, y: 100 },
+  { id: "root-shroom", role: "CEO / Decider", x: 400, y: 100 },
 ];

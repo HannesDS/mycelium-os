@@ -6,7 +6,7 @@ The control plane SHALL provide `POST /sessions/{session_id}/messages` that acce
 
 #### Scenario: Post message to session
 
-- **GIVEN** session `sess-1` exists for `ceo-shroom`
+- **GIVEN** session `sess-1` exists for `root-shroom`
 - **WHEN** client calls `POST /sessions/sess-1/messages` with `{ "content": "Review the Triodos proposal" }`
 - **THEN** the control plane SHALL add the user message to the session
 - **AND** the control plane SHALL invoke the shroom (Agno) and return the assistant response
