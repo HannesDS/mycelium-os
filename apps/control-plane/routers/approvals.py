@@ -64,7 +64,10 @@ class PendingCountResponse(BaseModel):
 
 
 @router.get("/pending-count", response_model=PendingCountResponse, summary="Get pending approval count")
-def get_pending_count(db: Session = Depends(get_db)):
+def get_pending_count(
+    _principal: str = Depends(get_principal),
+    db: Session = Depends(get_db),
+):
     count = db.query(Approval).filter(Approval.status == "pending").count()
     return PendingCountResponse(count=count)
 
@@ -72,6 +75,7 @@ def get_pending_count(db: Session = Depends(get_db)):
 @router.get("", response_model=list[ApprovalResponse], summary="List proposals")
 def list_approvals(
     status: ApprovalStatus | None = Query(None, description="Filter by status: pending, approved, rejected"),
+    _principal: str = Depends(get_principal),
     db: Session = Depends(get_db),
 ):
     query = db.query(Approval)

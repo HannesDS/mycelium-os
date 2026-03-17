@@ -273,3 +273,31 @@ def test_reject_emits_decision_received_to_nats(client):
     assert call_args.event.value == "decision_received"
     assert call_args.shroom_id == "sales-shroom"
     assert call_args.metadata["approved"] is False
+
+
+# --- Auth-gate tests for previously-unauthenticated read endpoints ---
+
+@pytest.fixture()
+def unauthenticated_client(seeded_factory):
+    from main import app
+    from unittest.mock import AsyncMock, MagicMock
+    from core.controller import ShroomController
+
+    app.state.controller = ShroomController()
+    app.state.db_session_factory = seeded_factory
+    nats_bus = MagicMock()
+    nats_bus.publish_event = AsyncMock()
+    app.state.nats_bus = nats_bus
+    return TestClient(app, raise_server_exceptions=False)  # no X-API-Key header
+
+
+def test_pending_count_requires_auth(unauthenticated_client):
+    resp = unauthenticated_client.get("/approvals/pending-count")
+    assert resp.status_code == 401
+    assert resp.json()["detail"] == "Invalid or missing API key"
+
+
+def test_list_approvals_requires_auth(unauthenticated_client):
+    resp = unauthenticated_client.get("/approvals")
+    assert resp.status_code == 401
+    assert resp.json()["detail"] == "Invalid or missing API key"
