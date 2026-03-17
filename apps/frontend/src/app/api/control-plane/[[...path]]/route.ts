@@ -4,6 +4,13 @@ const CONTROL_PLANE_URL =
   process.env.CONTROL_PLANE_URL || "http://localhost:8000";
 const CONTROL_PLANE_API_KEY = process.env.CONTROL_PLANE_API_KEY;
 
+if (!CONTROL_PLANE_API_KEY) {
+  throw new Error(
+    "CONTROL_PLANE_API_KEY is not set. All proxied requests will be unauthenticated. " +
+      "Set CONTROL_PLANE_API_KEY in your environment before starting the server."
+  );
+}
+
 const ALLOWED_PATHS: { method: string; pattern: RegExp }[] = [
   { method: "GET", pattern: /^shrooms$/ },
   { method: "GET", pattern: /^shrooms\/[^/]+$/ },
@@ -84,9 +91,7 @@ async function proxy(request: NextRequest, pathSegments: string[]) {
       headers[k] = v;
     }
   });
-  if (CONTROL_PLANE_API_KEY) {
-    headers["X-API-Key"] = CONTROL_PLANE_API_KEY;
-  }
+  headers["X-API-Key"] = CONTROL_PLANE_API_KEY;
 
   let body: string | undefined;
   try {

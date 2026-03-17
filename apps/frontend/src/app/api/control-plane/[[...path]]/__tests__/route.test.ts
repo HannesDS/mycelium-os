@@ -80,4 +80,9 @@ describe("control-plane proxy route", () => {
     expect(res.status).toBe(403);
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  it("throws at module load time when CONTROL_PLANE_API_KEY is missing", async () => {
+    delete process.env.CONTROL_PLANE_API_KEY;
+    await expect(import("../route")).rejects.toThrow("CONTROL_PLANE_API_KEY is not set");
+  });
 });
