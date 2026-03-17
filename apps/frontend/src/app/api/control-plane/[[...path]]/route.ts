@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const CONTROL_PLANE_URL =
   process.env.CONTROL_PLANE_URL || "http://localhost:8000";
+const CONTROL_PLANE_API_KEY = process.env.CONTROL_PLANE_API_KEY;
 
 const ALLOWED_PATHS: { method: string; pattern: RegExp }[] = [
   { method: "GET", pattern: /^shrooms$/ },
@@ -79,10 +80,13 @@ async function proxy(request: NextRequest, pathSegments: string[]) {
   const headers: Record<string, string> = {};
   request.headers.forEach((v, k) => {
     const lower = k.toLowerCase();
-    if (lower !== "host" && lower !== "connection" && lower !== "content-length") {
+    if (lower !== "host" && lower !== "connection" && lower !== "content-length" && lower !== "x-api-key") {
       headers[k] = v;
     }
   });
+  if (CONTROL_PLANE_API_KEY) {
+    headers["X-API-Key"] = CONTROL_PLANE_API_KEY;
+  }
 
   let body: string | undefined;
   try {
