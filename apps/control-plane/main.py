@@ -109,14 +109,15 @@ async def lifespan(app: FastAPI):
     from core.manifest import load_mycelium_config
     app.state.mycelium_config = load_mycelium_config(config_path)
 
-    controller = ShroomController()
+    session_factory = init_db()
+    app.state.db_session_factory = session_factory
+
+    controller = ShroomController(session_factory=session_factory)
     for manifest in manifests.values():
         controller.register(manifest)
 
     app.state.controller = controller
     app.state.config_path = config_path
-    session_factory = init_db()
-    app.state.db_session_factory = session_factory
 
     _ensure_tables()
     _seed_approvals(session_factory)
