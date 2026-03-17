@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 const CONTROL_PLANE_URL =
   process.env.CONTROL_PLANE_URL || "http://localhost:8000";
-const CONTROL_PLANE_API_KEY = process.env.CONTROL_PLANE_API_KEY;
-
-if (!CONTROL_PLANE_API_KEY) {
+const _rawApiKey = process.env.CONTROL_PLANE_API_KEY;
+if (!_rawApiKey) {
   throw new Error(
     "CONTROL_PLANE_API_KEY is not set. All proxied requests will be unauthenticated. " +
       "Set CONTROL_PLANE_API_KEY in your environment before starting the server."
   );
 }
+const CONTROL_PLANE_API_KEY: string = _rawApiKey;
 
 const ALLOWED_PATHS: { method: string; pattern: RegExp }[] = [
   { method: "GET", pattern: /^shrooms$/ },
