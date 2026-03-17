@@ -52,7 +52,7 @@ export default function CodeSnippet() {
         </div>
         <div className="pl-6">
           <span className="text-[#888888]">escalates_to: </span>
-          <span className="text-[#a78bfa]">ceo-shroom</span>
+          <span className="text-[#a78bfa]">root-shroom</span>
         </div>
       </div>
     </div>

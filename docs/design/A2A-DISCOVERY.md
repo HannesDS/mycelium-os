@@ -11,7 +11,7 @@ GET /shrooms/{shroom_id}/.well-known/agent-card.json
 ## Example
 
 ```bash
-curl http://localhost:8000/shrooms/ceo-shroom/.well-known/agent-card.json
+curl http://localhost:8000/shrooms/root-shroom/.well-known/agent-card.json
 ```
 
 Response includes `name`, `description`, `url`, `skills` (as AgentSkill objects), and protocol metadata.

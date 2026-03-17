@@ -2,7 +2,7 @@
 
 ### Requirement: Captain shroom replaces CEO shroom
 
-The head-of-shrooms shroom SHALL be named "Captain" (id: captain-shroom). The human operator is the CEO. All references to ceo-shroom in manifests, nav, routes, and documentation SHALL be updated to captain-shroom.
+The head-of-shrooms shroom SHALL be named "Captain" (id: captain-shroom). The human operator is the CEO. All references to root-shroom in manifests, nav, routes, and documentation SHALL be updated to captain-shroom.
 
 #### Scenario: Captain shroom in constitution
 

@@ -12,7 +12,7 @@ function msgId() {
   return `msg-${crypto.randomUUID()}`;
 }
 
-const CEO_SHROOM_ID = "ceo-shroom";
+const ROOT_SHROOM_ID = "root-shroom";
 
 export default function CEOPage() {
   const [shrooms, setShrooms] = useState<ShroomSummary[]>([]);
@@ -35,12 +35,12 @@ export default function CEOPage() {
       });
   }, []);
 
-  const ceoShroom = shrooms.find((s) => s.id === CEO_SHROOM_ID);
+  const rootShroom = shrooms.find((s) => s.id === ROOT_SHROOM_ID);
   const isMinimalConfig = shrooms.length < 2;
 
   const handleSend = useCallback(
     async (text: string) => {
-      if (!ceoShroom) return;
+      if (!rootShroom) return;
 
       const humanMsg: ChatMessage = {
         id: msgId(),
@@ -54,7 +54,7 @@ export default function CEOPage() {
       setError(null);
 
       try {
-        const res = await sendMessage(CEO_SHROOM_ID, text, {
+        const res = await sendMessage(ROOT_SHROOM_ID, text, {
           sessionId: sessionId ?? undefined,
         });
         if (res.session_id) {
@@ -78,7 +78,7 @@ export default function CEOPage() {
         setLoading(false);
       }
     },
-    [ceoShroom, sessionId],
+    [rootShroom, sessionId],
   );
 
   if (connectionError) {
@@ -92,15 +92,15 @@ export default function CEOPage() {
     );
   }
 
-  if (!ceoShroom) {
+  if (!rootShroom) {
     return (
       <div className="flex h-full bg-[#0a0a0f] items-center justify-center">
         <div className="max-w-md text-center">
           <h1 className="text-xl font-semibold text-white">CEO setup</h1>
           <p className="mt-2 text-sm text-neutral-400">
-            Add ceo-shroom to your constitution to use this interface. Edit{" "}
+            Add root-shroom to your constitution to use this interface. Edit{" "}
             <code className="rounded bg-white/10 px-1 py-0.5">mycelium.yaml</code>{" "}
-            and add a shroom manifest for ceo-shroom.
+            and add a shroom manifest for root-shroom.
           </p>
           <Link
             href="/constitution"
@@ -133,9 +133,9 @@ export default function CEOPage() {
 
       <div className="flex-1 flex flex-col min-w-0">
         <ChatThread
-          shroomName={ceoShroom.name}
-          shroomRole={ceoShroom.id}
-          shroomModel={ceoShroom.model}
+          shroomName={rootShroom.name}
+          shroomRole={rootShroom.id}
+          shroomModel={rootShroom.model}
           messages={messages}
           onSend={handleSend}
           isLoading={loading}

@@ -29,13 +29,13 @@ shrooms:
       - propose: [send_email, book_meeting]
     cannot:
       - execute: [send_email, payments]
-    escalates_to: ceo-shroom
+    escalates_to: root-shroom
     sla_response_minutes: 60
 
 graph:
   edges:
     - from: sales-shroom
-      to: ceo-shroom
+      to: root-shroom
       type: reports-to
       # types: reports-to | requests-from | monitors | triggers | collaborates-with
 ```

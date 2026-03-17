@@ -47,7 +47,7 @@ def test_append_bead_links_to_previous(db: Session):
 
 def test_append_bead_links_only_same_shroom(db: Session):
     append_bead(db, "sales-shroom", "message_received", "Sales msg")
-    b2 = append_bead(db, "ceo-shroom", "message_received", "CEO msg")
+    b2 = append_bead(db, "root-shroom", "message_received", "CEO msg")
     assert b2.prev_bead_id is None
 
 
@@ -77,7 +77,7 @@ def test_get_recent_beads_limits_results(db: Session):
 
 def test_get_recent_beads_filters_by_shroom(db: Session):
     append_bead(db, "sales-shroom", "message_received", "sales")
-    append_bead(db, "ceo-shroom", "message_received", "ceo")
+    append_bead(db, "root-shroom", "message_received", "root")
     beads = get_recent_beads(db, "sales-shroom", n=10)
     assert len(beads) == 1
     assert beads[0].summary == "sales"
@@ -120,9 +120,9 @@ def test_retention_per_shroom(db: Session):
     for i in range(4):
         append_bead(db, "sales-shroom", "message_received", f"sales-{i}", max_beads=2)
     for i in range(3):
-        append_bead(db, "ceo-shroom", "message_received", f"ceo-{i}", max_beads=2)
+        append_bead(db, "root-shroom", "message_received", f"root-{i}", max_beads=2)
     assert len(get_recent_beads(db, "sales-shroom", n=10)) == 2
-    assert len(get_recent_beads(db, "ceo-shroom", n=10)) == 2
+    assert len(get_recent_beads(db, "root-shroom", n=10)) == 2
 
 
 def test_format_beads_for_context_empty():

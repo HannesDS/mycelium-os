@@ -6,11 +6,11 @@
 
 ## 2. Captain rename
 
-- [ ] 2.1 Rename ceo-shroom to captain-shroom in examples/shrooms/ and mycelium.yaml
+- [ ] 2.1 Rename root-shroom to captain-shroom in examples/shrooms/ and mycelium.yaml
 - [ ] 2.2 Update graph edges in mycelium.yaml: escalates_to captain-shroom
-- [ ] 2.3 Rename /ceo route to /captain; update nav item label to "Captain"
-- [ ] 2.4 Update controller system prompt: captain-shroom gets setup instructions (not ceo-shroom)
-- [ ] 2.5 Update all code references: ceo-shroom → captain-shroom (routers, tests, frontend)
+- [ ] 2.3 Rename /ceo route to /root (done: renamed to root-shroom); update nav item label to "Captain"
+- [ ] 2.4 Update controller system prompt: captain-shroom gets setup instructions (not root-shroom)
+- [ ] 2.5 Update all code references: root-shroom → captain-shroom (routers, tests, frontend)
 
 ## 3. Skills assignment
 

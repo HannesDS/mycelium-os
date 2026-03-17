@@ -22,7 +22,7 @@ const messages: ChatMessage[] = [
 
 const defaultProps = {
   shroomName: "CEO",
-  shroomRole: "ceo-shroom",
+  shroomRole: "root-shroom",
   shroomModel: "mistral-7b",
   messages: [],
   onSend: vi.fn(),
@@ -34,7 +34,7 @@ describe("ChatThread", () => {
   it("renders shroom header with name, role, and model", () => {
     render(<ChatThread {...defaultProps} />);
     expect(screen.getByText("CEO")).toBeInTheDocument();
-    expect(screen.getByText(/ceo-shroom/)).toBeInTheDocument();
+    expect(screen.getByText(/root-shroom/)).toBeInTheDocument();
     expect(screen.getByText(/mistral-7b/)).toBeInTheDocument();
   });
 

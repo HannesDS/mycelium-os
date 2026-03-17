@@ -27,7 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/chat", label: "Chat", icon: MessageSquare, enabled: true },
   { href: "/approvals", label: "Approvals", icon: CheckCircle, enabled: true },
   { href: "/constitution", label: "Constitution", icon: Scale, enabled: true },
-  { href: "/ceo", label: "CEO", icon: UserCircle, enabled: true },
+  { href: "/root", label: "Root", icon: UserCircle, enabled: true },
   { href: "/organisation", label: "Organisation", icon: Network, enabled: true },
   { href: "/skills", label: "Skills", icon: Wrench, enabled: true },
   { href: "/memory", label: "Memory", icon: Brain, enabled: false },

@@ -20,5 +20,5 @@ spec:
     - propose: [chase_email, flag_overdue]
   cannot:
     - execute: [payments, refunds]
-  escalates_to: ceo-shroom
+  escalates_to: root-shroom
   sla_response_minutes: 120
