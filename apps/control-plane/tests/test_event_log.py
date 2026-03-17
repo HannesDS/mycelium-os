@@ -22,7 +22,7 @@ def _make_manifest(shroom_id: str, name: str) -> ShroomManifest:
         apiVersion="mycelium.io/v1",
         kind="Shroom",
         metadata=ShroomMetadata(id=shroom_id, name=name),
-        spec=ShroomSpec(model="mistral-7b", skills=[], escalates_to="ceo-shroom"),
+        spec=ShroomSpec(model="mistral-7b", skills=[], escalates_to="root-shroom"),
     )
 
 
@@ -59,13 +59,13 @@ def _seed_events(session_factory):
     base = datetime(2026, 3, 11, 10, 0, 0, tzinfo=timezone.utc)
     for i, (shroom_id, evt) in enumerate([
         ("sales-shroom", "message_sent"),
-        ("ceo-shroom", "task_started"),
+        ("root-shroom", "task_started"),
         ("sales-shroom", "escalation_raised"),
     ]):
         session.add(ShroomEventRecord(
             shroom_id=shroom_id,
             event=evt,
-            to="ceo-shroom" if shroom_id == "sales-shroom" else None,
+            to="root-shroom" if shroom_id == "sales-shroom" else None,
             topic="lead",
             timestamp=base,
             payload_summary=f"Event {i}",

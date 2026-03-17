@@ -10,7 +10,7 @@
 {
   "shroom_id": "sales-shroom",
   "event": "message_sent",
-  "to": "ceo-shroom",
+  "to": "root-shroom",
   "topic": "lead_qualified",
   "timestamp": "2026-03-07T12:00:00Z",
   "payload_summary": "Human-readable one-liner describing what happened",
@@ -38,7 +38,7 @@
 | `task_started` | Shroom begins working on a task |
 | `task_completed` | Shroom finishes a task |
 | `escalation_raised` | Shroom proposes an action requiring approval |
-| `decision_received` | Shroom receives a decision (from human or ceo-shroom) |
+| `decision_received` | Shroom receives a decision (from human or root-shroom) |
 | `idle` | Shroom has no active tasks |
 | `error` | Shroom encountered an error |
 

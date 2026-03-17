@@ -26,7 +26,7 @@ def _make_manifest(shroom_id: str, name: str, skills: list[str] | None = None) -
         spec=ShroomSpec(
             model="mistral-7b",
             skills=skills or [],
-            escalates_to="ceo-shroom",
+            escalates_to="root-shroom",
         ),
     )
 
@@ -114,7 +114,7 @@ def test_constitution_shroom_manifest_has_full_details(client):
     assert manifest["name"] == "Alpha"
     assert manifest["model"] == "mistral-7b"
     assert manifest["skills"] == ["skill_a"]
-    assert manifest["escalates_to"] == "ceo-shroom"
+    assert manifest["escalates_to"] == "root-shroom"
     assert "can" in manifest
     assert "cannot" in manifest
 

@@ -17,7 +17,7 @@ const REJECTED_MESSAGE = "Proposal rejected — following up with CEO";
 type EscalationPhase =
   | "idle"
   | "escalating"
-  | "ceo_reviewing"
+  | "root_reviewing"
   | "inbox_visible"
   | "resolved";
 
@@ -28,9 +28,9 @@ export default function VisualOffice() {
   const [inboxDismissing, setInboxDismissing] = useState(false);
   const [decision, setDecision] = useState<"approved" | "rejected" | null>(null);
   const [salesShroomPos, setSalesShroomPos] = useState({ x: 150, y: 200 });
-  const [ceoBubble, setCeoBubble] = useState<string | null>(null);
+  const [rootBubble, setRootBubble] = useState<string | null>(null);
   const [salesBubble, setSalesBubble] = useState<string | null>(null);
-  const [ceoPulse, setCeoPulse] = useState(false);
+  const [rootPulse, setRootPulse] = useState(false);
   const [salesPulse, setSalesPulse] = useState<"none" | "green" | "red">("none");
   const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -50,21 +50,21 @@ export default function VisualOffice() {
     const escalationEvent = createEvent({
       shroom_id: "sales-shroom",
       event: "escalation_raised",
-      to: "ceo-shroom",
+      to: "root-shroom",
       topic: "lead_qualified",
       payload_summary: ESCALATION_PAYLOAD,
     });
     addEvent(escalationEvent);
 
-    setCeoBubble(ESCALATION_PAYLOAD);
-    setCeoPulse(true);
+    setRootBubble(ESCALATION_PAYLOAD);
+    setRootPulse(true);
     setSalesShroomPos({ x: 280, y: 150 });
 
     const t1 = setTimeout(() => {
-      setPhase("ceo_reviewing");
-      setCeoBubble(CEO_THOUGHT);
+      setPhase("root_reviewing");
+      setRootBubble(CEO_THOUGHT);
       const msgEvent = createEvent({
-        shroom_id: "ceo-shroom",
+        shroom_id: "root-shroom",
         event: "message_sent",
         to: "sales-shroom",
         topic: "proposal_review",
@@ -99,9 +99,9 @@ export default function VisualOffice() {
       setInboxDismissing(false);
       setPhase("idle");
       setDecision(null);
-      setCeoBubble(null);
+      setRootBubble(null);
       setSalesBubble(null);
-      setCeoPulse(false);
+      setRootPulse(false);
       setSalesShroomPos({ x: 150, y: 200 });
       setSalesPulse("none");
     }, 600);
@@ -126,9 +126,9 @@ export default function VisualOffice() {
       setInboxDismissing(false);
       setPhase("idle");
       setDecision(null);
-      setCeoBubble(null);
+      setRootBubble(null);
       setSalesBubble(null);
-      setCeoPulse(false);
+      setRootPulse(false);
       setSalesShroomPos({ x: 150, y: 200 });
       setSalesPulse("none");
     }, 600);
@@ -153,15 +153,15 @@ export default function VisualOffice() {
                 key={shroom.id}
                 shroom={shroom}
                 speechBubble={
-                  shroom.id === "ceo-shroom"
-                    ? ceoBubble
+                  shroom.id === "root-shroom"
+                    ? rootBubble
                     : shroom.id === "sales-shroom"
                       ? salesBubble
                       : null
                 }
                 pulse={
-                  shroom.id === "ceo-shroom"
-                    ? ceoPulse
+                  shroom.id === "root-shroom"
+                    ? rootPulse
                     : shroom.id === "sales-shroom"
                       ? salesPulse
                       : "none"

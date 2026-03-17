@@ -12,7 +12,7 @@ The control plane SHALL provide `GET /events` that returns ShroomEvents from an 
 
 #### Scenario: Filter by shroom
 
-- **GIVEN** events exist for `sales-shroom` and `ceo-shroom`
+- **GIVEN** events exist for `sales-shroom` and `root-shroom`
 - **WHEN** client requests `GET /events?shroom_id=sales-shroom`
 - **THEN** response SHALL return only events where `shroom_id` equals `sales-shroom`
 

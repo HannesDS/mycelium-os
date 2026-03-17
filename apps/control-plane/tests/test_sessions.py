@@ -25,7 +25,7 @@ def _make_manifest(shroom_id: str, name: str) -> ShroomManifest:
         spec=ShroomSpec(
             model="mistral-7b",
             skills=[],
-            escalates_to="ceo-shroom",
+            escalates_to="root-shroom",
         ),
     )
 
@@ -64,7 +64,7 @@ def mock_agno_db():
 def controller(mock_agno_db):
     c = ShroomController(db=mock_agno_db)
     c.register(_make_manifest("sales-shroom", "Sales"))
-    c.register(_make_manifest("ceo-shroom", "CEO"))
+    c.register(_make_manifest("root-shroom", "CEO"))
     return c
 
 

@@ -21,7 +21,7 @@ interface Packet {
 }
 
 const NODES: Node[] = [
-  { id: "ceo", x: 0.5, y: 0.18, label: "ceo-shroom", color: "#4ade80", pulseOffset: 0, radius: 7 },
+  { id: "root", x: 0.5, y: 0.18, label: "root-shroom", color: "#4ade80", pulseOffset: 0, radius: 7 },
   { id: "sales", x: 0.2, y: 0.42, label: "sales-shroom", color: "#22d3ee", pulseOffset: 0.6, radius: 6 },
   { id: "delivery", x: 0.5, y: 0.52, label: "delivery-shroom", color: "#a78bfa", pulseOffset: 1.2, radius: 6 },
   { id: "billing", x: 0.8, y: 0.42, label: "billing-shroom", color: "#fb923c", pulseOffset: 1.8, radius: 6 },

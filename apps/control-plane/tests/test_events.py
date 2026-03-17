@@ -12,13 +12,13 @@ def test_shroom_event_creation():
     event = ShroomEvent(
         shroom_id="sales-shroom",
         event=ShroomEventType.MESSAGE_SENT,
-        to="ceo-shroom",
+        to="root-shroom",
         topic="lead_qualified",
         payload_summary="Lead qualified — ready for demo booking",
     )
     assert event.shroom_id == "sales-shroom"
     assert event.event == ShroomEventType.MESSAGE_SENT
-    assert event.to == "ceo-shroom"
+    assert event.to == "root-shroom"
     assert event.timestamp
 
 
@@ -53,7 +53,7 @@ def test_shroom_event_type_values():
 
 def test_shroom_event_optional_fields():
     event = ShroomEvent(
-        shroom_id="ceo-shroom",
+        shroom_id="root-shroom",
         event=ShroomEventType.IDLE,
         payload_summary="At desk",
     )

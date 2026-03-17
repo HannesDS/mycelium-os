@@ -28,7 +28,7 @@ flowchart TB
     subgraph DataPlane["Data Plane"]
         Agno[Agno Runtime]
         Shroom1[sales-shroom]
-        Shroom2[ceo-shroom]
+        Shroom2[root-shroom]
         Shroom3[billing-shroom]
         Tools[web_browser, etc.]
     end

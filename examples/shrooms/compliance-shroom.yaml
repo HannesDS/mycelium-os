@@ -22,5 +22,5 @@ spec:
     - propose: [flag_renewal, request_review]
   cannot:
     - execute: [sign_contract, payments]
-  escalates_to: ceo-shroom
+  escalates_to: root-shroom
   sla_response_minutes: 240

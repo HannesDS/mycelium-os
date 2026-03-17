@@ -38,7 +38,7 @@ A chore ticket must land before any visual office feature work (Ticket A, B, or 
 4. **`docker-compose.yml`** — Dev-only stack: NATS, optional Postgres/Neo4j stubs. Must allow `pnpm dev` + NATS to run without full K8s.
 5. **WebSocket bridge** — Small Node.js service (or control-plane submodule) that subscribes to NATS subject(s), pushes to connected WebSocket clients. Expose on configurable port (e.g. 3001).
 6. **`agents/`** — At least one mock agent (e.g. `sales-agent`) that publishes events to NATS on a fixed subject. Event payload must match `CLAUDE.md` schema.
-7. **`mycelium.yaml`** — Constitution file with the 5 MVP agents from `CLAUDE.md` (sales, delivery, billing, compliance, ceo).
+7. **`mycelium.yaml`** — Constitution file with the 5 MVP agents from `CLAUDE.md` (sales, delivery, billing, compliance, root).
 
 **Acceptance criteria:**
 
