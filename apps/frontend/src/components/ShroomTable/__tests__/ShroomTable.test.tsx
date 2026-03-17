@@ -12,7 +12,7 @@ const shrooms: ShroomSummary[] = [
     name: "Sales",
     model: "mistral-7b",
     skills: ["prospecting"],
-    escalates_to: "ceo-shroom",
+    escalates_to: "root-shroom",
     status: "running",
   },
   {
@@ -20,11 +20,11 @@ const shrooms: ShroomSummary[] = [
     name: "Billing",
     model: "mistral-7b",
     skills: ["invoicing"],
-    escalates_to: "ceo-shroom",
+    escalates_to: "root-shroom",
     status: "running",
   },
   {
-    id: "ceo-shroom",
+    id: "root-shroom",
     name: "CEO",
     model: "mistral-7b",
     skills: ["decisions"],
@@ -57,7 +57,7 @@ describe("ShroomTable", () => {
     const ids = getRowCells().map((r) => r.id);
     expect(ids).toContain("sales-shroom");
     expect(ids).toContain("billing-shroom");
-    expect(ids).toContain("ceo-shroom");
+    expect(ids).toContain("root-shroom");
   });
 
   it("renders all required columns", () => {
@@ -113,7 +113,7 @@ describe("ShroomTable", () => {
   it("shows dash for null escalates_to", () => {
     const single: ShroomSummary[] = [
       {
-        id: "ceo-shroom",
+        id: "root-shroom",
         name: "CEO",
         model: "mistral-7b",
         skills: [],

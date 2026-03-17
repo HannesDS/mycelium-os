@@ -23,7 +23,7 @@ Every event must conform to this shape exactly:
 {
   "shroom_id": "sales-shroom",
   "event": "message_sent",
-  "to": "ceo-shroom",
+  "to": "root-shroom",
   "topic": "lead_qualified",
   "timestamp": "2026-03-07T12:00:00Z",
   "payload_summary": "Human-readable one-liner",

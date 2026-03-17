@@ -27,7 +27,7 @@ def _valid_manifest_data() -> dict:
         "spec": {
             "model": "mistral-7b",
             "skills": ["testing"],
-            "escalates_to": "ceo-shroom",
+            "escalates_to": "root-shroom",
             "sla_response_minutes": 60,
             "can": [{"read": ["data"]}],
             "cannot": [{"execute": ["payments"]}],
@@ -62,7 +62,7 @@ def test_load_shroom_manifest(config_dir):
     assert manifest.metadata.name == "Test Shroom"
     assert manifest.spec.model == "mistral-7b"
     assert "testing" in manifest.spec.skills
-    assert manifest.spec.escalates_to == "ceo-shroom"
+    assert manifest.spec.escalates_to == "root-shroom"
 
 
 def test_load_all_shroom_manifests(config_dir):

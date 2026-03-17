@@ -125,13 +125,13 @@ shrooms:                          # ← always "shrooms:", never "agents:"
       - propose: [send_email, book_meeting]
     cannot:
       - execute: [send_email, payments]
-    escalates_to: ceo-shroom
+    escalates_to: root-shroom
     sla_response_minutes: 60
 
 graph:
   edges:
     - from: sales-shroom
-      to: ceo-shroom
+      to: root-shroom
       type: reports-to       # reports-to | requests-from | monitors | triggers | collaborates-with
 ```
 
@@ -143,7 +143,7 @@ graph:
 {
   "shroom_id": "sales-shroom",
   "event": "message_sent",        // message_sent | task_started | task_completed | escalation_raised | decision_received | idle | error
-  "to": "ceo-shroom",             // optional
+  "to": "root-shroom",             // optional
   "topic": "lead_qualified",
   "timestamp": "ISO-8601",
   "payload_summary": "Human-readable one-liner",
@@ -225,7 +225,7 @@ Five mock shrooms simulating a digital agency:
 - `delivery-shroom` — tracks project, flags delay, escalates
 - `billing-shroom` — detects overdue invoice, proposes chase email
 - `compliance-shroom` — flags contract renewal
-- `ceo-shroom` — receives escalations, routes decisions, escalates to human
+- `root-shroom` — receives escalations, routes decisions, escalates to human
 
 The human owner receives one real proposal to approve. That interaction is the MVP demo.
 

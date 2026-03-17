@@ -10,7 +10,7 @@
 - `delivery-shroom` — Delivery Lead
 - `billing-shroom` — Billing & Finance
 - `compliance-shroom` — Compliance & Legal
-- `ceo-shroom` — CEO / Decider
+- `root-shroom` — CEO / Decider
 
 ## Event schema
 

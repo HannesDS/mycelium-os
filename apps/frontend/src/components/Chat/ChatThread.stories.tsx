@@ -45,7 +45,7 @@ const sampleMessages: ChatMessage[] = [
 export const Empty = {
   args: {
     shroomName: "CEO",
-    shroomRole: "ceo-shroom",
+    shroomRole: "root-shroom",
     shroomModel: "mistral-7b",
     messages: [],
     onSend: () => {},

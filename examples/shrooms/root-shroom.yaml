@@ -1,7 +1,7 @@
 apiVersion: mycelium.io/v1
 kind: Shroom
 metadata:
-  id: ceo-shroom
+  id: root-shroom
   name: "CEO / Decider"
 spec:
   model: mistral-7b

@@ -17,7 +17,7 @@ const mvpShrooms: ShroomSummary[] = [
     name: "Sales",
     model: "mistral-7b",
     skills: ["prospecting", "outreach"],
-    escalates_to: "ceo-shroom",
+    escalates_to: "root-shroom",
     status: "running",
   },
   {
@@ -25,7 +25,7 @@ const mvpShrooms: ShroomSummary[] = [
     name: "Delivery",
     model: "mistral-7b",
     skills: ["project-tracking"],
-    escalates_to: "ceo-shroom",
+    escalates_to: "root-shroom",
     status: "running",
   },
   {
@@ -33,7 +33,7 @@ const mvpShrooms: ShroomSummary[] = [
     name: "Billing",
     model: "mistral-7b",
     skills: ["invoicing"],
-    escalates_to: "ceo-shroom",
+    escalates_to: "root-shroom",
     status: "running",
   },
   {
@@ -41,11 +41,11 @@ const mvpShrooms: ShroomSummary[] = [
     name: "Compliance",
     model: "mistral-7b",
     skills: ["contract-review"],
-    escalates_to: "ceo-shroom",
+    escalates_to: "root-shroom",
     status: "running",
   },
   {
-    id: "ceo-shroom",
+    id: "root-shroom",
     name: "CEO",
     model: "mistral-7b",
     skills: ["decision-routing"],

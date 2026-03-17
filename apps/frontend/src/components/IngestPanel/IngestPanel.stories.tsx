@@ -15,7 +15,7 @@ const MVP_SHROOMS = [
   "delivery-shroom",
   "billing-shroom",
   "compliance-shroom",
-  "ceo-shroom",
+  "root-shroom",
 ];
 
 export const TextTab = {

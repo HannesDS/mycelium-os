@@ -3,5 +3,5 @@ export const SHROOM_COLORS: Record<string, string> = {
   "delivery-shroom": "#f59e0b",
   "billing-shroom": "#10b981",
   "compliance-shroom": "#ef4444",
-  "ceo-shroom": "#8b5cf6",
+  "root-shroom": "#8b5cf6",
 };

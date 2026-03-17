@@ -33,7 +33,7 @@ const sampleDocs: KnowledgeDocumentItem[] = [
     original_filename: null,
     content_preview:
       "All personal data must be processed in accordance with GDPR Article 5 principles. Data minimisation applies to all shroom operations.",
-    access_scope: ["compliance-shroom", "ceo-shroom"],
+    access_scope: ["compliance-shroom", "root-shroom"],
     is_active: true,
     ingested_at: "2026-03-12T14:30:00Z",
   },

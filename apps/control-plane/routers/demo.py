@@ -69,7 +69,7 @@ async def trigger_escalation(
     await emit_event(db, nats_bus, ShroomEvent(
         shroom_id="sales-shroom",
         event=ShroomEventType.ESCALATION_RAISED,
-        to="ceo-shroom",
+        to="root-shroom",
         topic="lead_qualified",
         timestamp=ts,
         payload_summary=summary,
@@ -78,7 +78,7 @@ async def trigger_escalation(
     await emit_event(db, nats_bus, ShroomEvent(
         shroom_id="sales-shroom",
         event=ShroomEventType.MESSAGE_SENT,
-        to="ceo-shroom",
+        to="root-shroom",
         topic="lead_qualified",
         timestamp=ts,
         payload_summary=summary,

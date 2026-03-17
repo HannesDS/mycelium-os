@@ -180,11 +180,11 @@ After `docker compose up`:
 ## Running the MVP demo
 
 The MVP demo shows:
-1. Five mock shrooms running (sales, delivery, billing, compliance, ceo)
+1. Five mock shrooms running (sales, delivery, billing, compliance, root)
 2. Mock shrooms emit real events to NATS
 3. The visual office shows shrooms active, communicating, escalating
-4. The sales-shroom escalates a lead proposal to ceo-shroom
-5. ceo-shroom escalates to the human owner
+4. The sales-shroom escalates a lead proposal to root-shroom
+5. root-shroom escalates to the human owner
 6. Human owner sees the proposal in the Approvals inbox (MYC-26)
 7. Human approves → `decision_received` event emitted → audit log written
 

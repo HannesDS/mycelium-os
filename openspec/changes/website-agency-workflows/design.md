@@ -26,7 +26,7 @@ Mycelium OS control plane uses Agno for shroom execution. Chat fails when Ollama
 - **Alternative**: Single provider only — rejected; flexibility needed.
 
 ### Captain rename
-- **Choice**: Rename `ceo-shroom` → `captain-shroom` in manifest, nav, routes, controller. Display name "Captain".
+- **Choice**: Rename `root-shroom` → `captain-shroom` in manifest, nav, routes, controller. Display name "Captain".
 - **Rationale**: Human is CEO; shroom is operational head.
 - **Alternative**: "Coordinator", "Lead" — Captain is concise and implies leadership of shrooms.
 
@@ -56,12 +56,12 @@ Mycelium OS control plane uses Agno for shroom execution. Chat fails when Ollama
 
 - **[Risk]** Agno Workflow API may differ from docs → Mitigation: Spike early; fallback to sequential Python if needed
 - **[Risk]** Skills overrides add complexity → Mitigation: Keep merge logic simple; document override precedence
-- **[Risk]** Captain rename touches many files → Mitigation: Grep for ceo-shroom; batch replace; test constitution load
+- **[Risk]** Captain rename touches many files → Mitigation: Grep for root-shroom; batch replace; test constitution load
 
 ## Migration Plan
 
 1. Add `shroom_skill_overrides` migration
-2. Rename ceo-shroom → captain-shroom (manifest, examples, nav, routes)
+2. Rename root-shroom → captain-shroom (manifest, examples, nav, routes)
 3. Add workflow loader; register workflows
 4. Add NATS event listener for auto-workflows
 5. Deploy; verify chat with OpenRouter and Ollama

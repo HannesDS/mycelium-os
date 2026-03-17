@@ -65,7 +65,7 @@ After all 6 tickets:
 1. `docker compose up`, open localhost:3000
 2. Dashboard with sidebar nav, visual office canvas on home page
 3. Navigate to Shrooms — see 5 shrooms with status and manifests
-4. Navigate to Chat — talk to ceo-shroom, get real LLM response
+4. Navigate to Chat — talk to root-shroom, get real LLM response
 5. Navigate to Approvals — see pending proposals, approve/reject
 6. Canvas shows real events via NATS/WebSocket
 7. Constitution page shows the governance rules
@@ -142,4 +142,4 @@ MYCELIUM OS
 | `delivery-shroom` | Delivery | Tracks project, flags delay, escalates |
 | `billing-shroom` | Billing | Detects overdue invoice, proposes chase email |
 | `compliance-shroom` | Compliance | Flags contract renewal |
-| `ceo-shroom` | CEO | Receives escalations, routes decisions, escalates to human |
+| `root-shroom` | CEO | Receives escalations, routes decisions, escalates to human |

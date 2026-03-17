@@ -12,11 +12,11 @@ const shrooms: ShroomSummary[] = [
     name: "Sales",
     model: "mistral-7b",
     skills: [],
-    escalates_to: "ceo-shroom",
+    escalates_to: "root-shroom",
     status: "running",
   },
   {
-    id: "ceo-shroom",
+    id: "root-shroom",
     name: "CEO",
     model: "mistral-7b",
     skills: [],
@@ -58,12 +58,12 @@ describe("ShroomSelector", () => {
     render(
       <ShroomSelector
         shrooms={shrooms}
-        selectedId="ceo-shroom"
+        selectedId="root-shroom"
         onSelect={vi.fn()}
       />,
     );
 
-    const selected = screen.getByTestId("shroom-option-ceo-shroom");
+    const selected = screen.getByTestId("shroom-option-root-shroom");
     expect(selected.className).toContain("bg-white/10");
 
     const unselected = screen.getByTestId("shroom-option-sales-shroom");
@@ -79,6 +79,6 @@ describe("ShroomSelector", () => {
       />,
     );
     expect(screen.getByText("sales-shroom")).toBeInTheDocument();
-    expect(screen.getByText("ceo-shroom")).toBeInTheDocument();
+    expect(screen.getByText("root-shroom")).toBeInTheDocument();
   });
 });

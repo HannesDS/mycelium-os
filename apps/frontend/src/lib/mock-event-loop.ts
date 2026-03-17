@@ -2,12 +2,12 @@ import type { ShroomEvent } from "@/types/shroom-events";
 import { ZENIK_SHROOMS } from "@/types/shroom-events";
 
 const MESSAGE_SENT_PAIRS: [string, string, string][] = [
-  ["sales-shroom", "ceo-shroom", "Lead qualified — ready for demo booking"],
-  ["delivery-shroom", "ceo-shroom", "Sprint 12 velocity report attached"],
-  ["billing-shroom", "ceo-shroom", "Overdue invoice flagged for Acme Corp"],
-  ["compliance-shroom", "ceo-shroom", "Contract renewal flagged for Acme Corp"],
-  ["ceo-shroom", "delivery-shroom", "Prioritise the compliance dashboard"],
-  ["ceo-shroom", "sales-shroom", "Approve outreach to Triodos Bank"],
+  ["sales-shroom", "root-shroom", "Lead qualified — ready for demo booking"],
+  ["delivery-shroom", "root-shroom", "Sprint 12 velocity report attached"],
+  ["billing-shroom", "root-shroom", "Overdue invoice flagged for Acme Corp"],
+  ["compliance-shroom", "root-shroom", "Contract renewal flagged for Acme Corp"],
+  ["root-shroom", "delivery-shroom", "Prioritise the compliance dashboard"],
+  ["root-shroom", "sales-shroom", "Approve outreach to Triodos Bank"],
   ["delivery-shroom", "billing-shroom", "Project milestone reached — invoice ready"],
   ["sales-shroom", "billing-shroom", "New deal closed — generate invoice"],
 ];
@@ -17,7 +17,7 @@ const THOUGHT_BUBBLES: [string, string][] = [
   ["delivery-shroom", "Tracking milestones..."],
   ["billing-shroom", "Reconciling invoices..."],
   ["compliance-shroom", "Reviewing terms..."],
-  ["ceo-shroom", "Reviewing escalations..."],
+  ["root-shroom", "Reviewing escalations..."],
 ];
 
 const eventHistory: Map<string, ShroomEvent[]> = new Map();
