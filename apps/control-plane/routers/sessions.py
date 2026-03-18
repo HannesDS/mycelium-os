@@ -133,11 +133,11 @@ def list_sessions(
     if status not in ("active", "completed"):
         status = "active"
     shroom_ids = set(controller.manifests)
-    db = controller.db
+    agno_db = controller.db
     all_sessions: list[Any] = []
     for shroom_id in shroom_ids:
         try:
-            sessions = db.get_sessions(
+            sessions = agno_db.get_sessions(
                 session_type="agent",
                 component_id=shroom_id,
                 limit=100,

@@ -24,7 +24,7 @@ cd mycelium-os
 cp .env.example .env
 # Edit .env: set DEV_API_KEY=your-dev-key and DEMO_ENABLED=true for local dev
 
-# 3. Start infrastructure + control plane
+# 3. Start infrastructure + control plane (must run before make dev)
 make up
 
 # 4. In a second terminal — start the frontend
@@ -37,10 +37,12 @@ open http://localhost:3000
 Or without make:
 
 ```bash
-docker compose up -d            # infra + control plane
-pnpm install                    # frontend deps
-pnpm dev                        # Next.js dev server at :3000
+docker compose up -d            # infra + control plane (required before pnpm dev)
+pnpm install                   # frontend deps
+pnpm dev                       # Next.js dev server at :3000
 ```
+
+If `curl http://localhost:8000/shrooms` fails with connection refused, run `make up` first.
 
 ## What's running
 
@@ -57,6 +59,12 @@ pnpm dev                        # Next.js dev server at :3000
 | Ollama | localhost:11435 (default host port) | Local LLM runtime |
 
 If `make up` fails with `bind: address already in use` on Ollama, set `OLLAMA_HOST_PORT` in `.env` to a free port and run `make up` again.
+
+**Mistral model (docker compose):** The control plane uses Ollama inside the container. Pull the model into the container so it persists in the volume:
+
+```bash
+docker compose exec ollama ollama pull mistral
+```
 
 ### Authentication (required)
 

@@ -100,11 +100,19 @@ async function proxy(request: NextRequest, pathSegments: string[]) {
     body = undefined;
   }
 
-  const res = await fetch(url, {
-    method: request.method,
-    headers: Object.keys(headers).length ? headers : undefined,
-    body: body || undefined,
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 600_000);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: request.method,
+      headers: Object.keys(headers).length ? headers : undefined,
+      body: body || undefined,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const responseHeaders = new Headers();
   res.headers.forEach((v, k) => {
