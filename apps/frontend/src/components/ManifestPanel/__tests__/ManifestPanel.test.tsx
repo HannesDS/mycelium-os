@@ -47,12 +47,77 @@ describe("ManifestPanel", () => {
     expect(screen.getByText("60 min")).toBeInTheDocument();
   });
 
-  it("renders permissions", () => {
+  it("renders permissions on overview tab", () => {
     render(
       <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
     );
     expect(screen.getByText(/read/)).toBeInTheDocument();
     expect(screen.getAllByText(/crm/).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows Skills & MCPs tab", () => {
+    render(
+      <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    expect(screen.getByRole("tab", { name: /Skills & MCPs/i })).toBeInTheDocument();
+  });
+
+  it("switches to skills tab and shows skills and mcps", async () => {
+    render(
+      <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    await userEvent.click(screen.getByRole("tab", { name: /Skills & MCPs/i }));
+    expect(screen.getByText("prospecting")).toBeInTheDocument();
+    expect(screen.getByText("outreach")).toBeInTheDocument();
+    expect(screen.getByText("crm-mcp")).toBeInTheDocument();
+  });
+
+  it("resets active tab to overview when detail changes", async () => {
+    const { rerender } = render(
+      <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    const skillsTab = screen.getByRole("tab", { name: /Skills & MCPs/i });
+    const overviewTab = screen.getByRole("tab", { name: /Overview/i });
+
+    await userEvent.click(skillsTab);
+    expect(skillsTab).toHaveAttribute("aria-selected", "true");
+
+    const nextDetail = { ...detail, id: `${detail.id}-next` };
+    rerender(
+      <ManifestPanel detail={nextDetail} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    expect(overviewTab).toHaveAttribute("aria-selected", "true");
+    expect(skillsTab).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("resets active tab to overview when panel is reopened", async () => {
+    const { rerender } = render(
+      <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    await userEvent.click(screen.getByRole("tab", { name: /Skills & MCPs/i }));
+    expect(screen.getByRole("tab", { name: /Skills & MCPs/i })).toHaveAttribute("aria-selected", "true");
+
+    // Close panel — tabs unmount (component returns null)
+    rerender(
+      <ManifestPanel detail={detail} isOpen={false} isLoading={false} onClose={vi.fn()} />
+    );
+    // Reopen — tabs remount fresh; re-query rather than using stale references
+    rerender(
+      <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    expect(screen.getByRole("tab", { name: /Overview/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /Skills & MCPs/i })).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("shows empty state when no skills or mcps configured", async () => {
+    const detailEmpty = { ...detail, skills: [], mcps: [] };
+    render(
+      <ManifestPanel detail={detailEmpty} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    await userEvent.click(screen.getByRole("tab", { name: /Skills & MCPs/i }));
+    expect(screen.getAllByText(/None configured/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("prospecting")).not.toBeInTheDocument();
+    expect(screen.queryByText("crm-mcp")).not.toBeInTheDocument();
   });
 
   it("calls onClose when Close button is clicked", async () => {

@@ -1,5 +1,36 @@
 from __future__ import annotations
 
+MCP_CATALOG: dict[str, dict[str, str]] = {
+    "crm": {
+        "name": "CRM",
+        "description": "Read and write CRM records and pipeline data",
+    },
+    "email": {
+        "name": "Email",
+        "description": "Send, receive, and manage email via SMTP/IMAP",
+    },
+    "calendar": {
+        "name": "Calendar",
+        "description": "Read and write calendar events and availability",
+    },
+    "slack": {
+        "name": "Slack",
+        "description": "Post and read messages in Slack channels",
+    },
+    "github": {
+        "name": "GitHub",
+        "description": "Access repositories, issues, and pull requests via GitHub API",
+    },
+    "postgres": {
+        "name": "Postgres",
+        "description": "Query and mutate a Postgres database",
+    },
+    "web": {
+        "name": "Web Browser",
+        "description": "Fetch and parse arbitrary web pages",
+    },
+}
+
 SKILLS_CATALOG: dict[str, dict[str, str]] = {
     "web_browser": {
         "name": "Web Browser",
@@ -38,6 +69,10 @@ SKILLS_CATALOG: dict[str, dict[str, str]] = {
         "description": "Query company knowledge base documents via semantic search",
     },
 }
+
+
+def get_mcp_info(mcp_id: str) -> dict[str, str] | None:
+    return MCP_CATALOG.get(mcp_id)
 
 
 def get_skill_info(skill_id: str) -> dict[str, str] | None:
