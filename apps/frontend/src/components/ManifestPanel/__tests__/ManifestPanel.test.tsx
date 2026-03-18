@@ -94,20 +94,19 @@ describe("ManifestPanel", () => {
     const { rerender } = render(
       <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
     );
-    const skillsTab = screen.getByRole("tab", { name: /Skills & MCPs/i });
-    const overviewTab = screen.getByRole("tab", { name: /Overview/i });
+    await userEvent.click(screen.getByRole("tab", { name: /Skills & MCPs/i }));
+    expect(screen.getByRole("tab", { name: /Skills & MCPs/i })).toHaveAttribute("aria-selected", "true");
 
-    await userEvent.click(skillsTab);
-    expect(skillsTab).toHaveAttribute("aria-selected", "true");
-
+    // Close panel — tabs unmount (component returns null)
     rerender(
       <ManifestPanel detail={detail} isOpen={false} isLoading={false} onClose={vi.fn()} />
     );
+    // Reopen — tabs remount fresh; re-query rather than using stale references
     rerender(
       <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
     );
-    expect(overviewTab).toHaveAttribute("aria-selected", "true");
-    expect(skillsTab).toHaveAttribute("aria-selected", "false");
+    expect(screen.getByRole("tab", { name: /Overview/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /Skills & MCPs/i })).toHaveAttribute("aria-selected", "false");
   });
 
   it("shows empty state when no skills or mcps configured", async () => {
