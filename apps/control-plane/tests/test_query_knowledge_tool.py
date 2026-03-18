@@ -154,14 +154,17 @@ def test_no_shroom_id_returns_all_accessible_documents(tool, seeded_db):
 # ── Vector search path (embed_text returns embedding) ─────────────────────────
 
 
-def test_vector_search_db_error_falls_back_to_text_search(tool, seeded_db):
-    """When embed_text returns an embedding but db.execute raises, fall back to text search."""
+def test_vector_search_db_execute_error_falls_back_to_text_search(tool, seeded_db):
+    """When embed_text returns an embedding but db.execute raises, _vector_search catches it
+    and returns [], causing _run_search to fall back to text search."""
+    from unittest.mock import MagicMock
+    mock_result = MagicMock()
+    mock_result.fetchall.side_effect = Exception("pgvector unavailable")
     with (
         patch("core.tools.knowledge.embed_text", return_value=[0.1] * 768),
-        patch("core.tools.knowledge._vector_search", side_effect=Exception("pgvector unavailable")),
+        patch("sqlalchemy.orm.Session.execute", return_value=mock_result),
     ):
         result = tool("privacy")
-    # text search fallback must still find the document
     assert "Privacy Policy" in result
 
 
