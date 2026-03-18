@@ -104,20 +104,93 @@ make psql        # Open psql shell to local Postgres
 
 ## Architecture
 
+```mermaid
+flowchart TB
+    %% ── Human layer ──────────────────────────────────────────────
+    Human(["👤 Human operator"])
+
+    subgraph Browser["Browser"]
+        direction LR
+        Dashboard["Dashboard\n(Next.js)"]
+        Canvas["Visual Office\nCanvas (Konva)"]
+    end
+
+    %% ── Frontend proxy ───────────────────────────────────────────
+    subgraph FE["Frontend — Next.js :3000"]
+        Proxy["API proxy\n/api/control-plane/*\n(injects X-API-Key)"]
+        WSClient["WebSocket client\n/ws/events"]
+    end
+
+    %% ── Control plane ────────────────────────────────────────────
+    subgraph CP["Control Plane — FastAPI :8000"]
+        Auth["Auth\nget_principal()"]
+        Router["REST routers\n/shrooms /approvals\n/constitution /knowledge\n/sessions /traces"]
+        Controller["ShroomController\n(Agno runtime)"]
+        WSServer["WebSocket bridge\n/ws/events"]
+        EmitEvent["emit_event()\naudit-before-publish"]
+    end
+
+    %% ── Shrooms (data plane) ──────────────────────────────────────
+    subgraph DP["Data Plane — Agno runtime"]
+        Root["🍄 root-shroom\n(constitutional anchor)"]
+        Sales["🍄 sales-shroom"]
+        Billing["🍄 billing-shroom"]
+        Delivery["🍄 delivery-shroom"]
+        Compliance["🍄 compliance-shroom"]
+    end
+
+    %% ── Infrastructure ────────────────────────────────────────────
+    subgraph Infra["Infrastructure (Docker Compose)"]
+        PG[("PostgreSQL :5432\nconstitution · audit log\nknowledge · sessions")]
+        NATS["NATS :4222\nevent bus"]
+        Neo4j[("Neo4j :7474\nshroom topology")]
+        MinIO["MinIO :9001\nobject storage"]
+        Ollama["Ollama :11435\nlocal LLM"]
+        OR["OpenRouter\ncloud LLM (optional)"]
+    end
+
+    %% ── Constitution ──────────────────────────────────────────────
+    Constitution["📜 mycelium.yaml\n(source of truth)"]
+
+    %% ── Connections ───────────────────────────────────────────────
+    Human -- "chat · approve · browse" --> Dashboard
+    Dashboard --> Proxy
+    Canvas --> WSClient
+
+    Proxy -- "REST calls\n(server-side key)" --> Auth
+    WSClient -- "live events" --> WSServer
+
+    Auth --> Router
+    Router --> Controller
+    Router -- "read/write" --> PG
+
+    Controller -- "spawn · run" --> Root & Sales & Billing & Delivery & Compliance
+    Controller -- "publish events" --> EmitEvent
+    Controller -- "graph queries" --> Neo4j
+    Controller -- "load constitution" --> Constitution
+
+    Root & Sales & Billing & Delivery & Compliance -- "LLM calls" --> Ollama
+    Root & Sales & Billing & Delivery & Compliance -.->|"optional"| OR
+    Root & Sales & Billing & Delivery & Compliance -- "tool: query_knowledge" --> PG
+    Root & Sales & Billing & Delivery & Compliance -- "escalate / delegate" --> Root
+
+    EmitEvent -- "write audit log" --> PG
+    EmitEvent -- "publish ShroomEvent" --> NATS
+    NATS --> WSServer
+    WSServer -- "push to browser" --> Canvas
+
+    Constitution -- "defines shrooms\n& graph edges" --> Controller
+```
+
 Two planes — always kept separate:
 
-**Control Plane** — immutable, signed, version-controlled  
+**Control Plane** — immutable, signed, version-controlled
 Constitution (`mycelium.yaml`), graph DB, escalation engine, audit log.
 
-**Data Plane** — ephemeral, isolated, observable  
+**Data Plane** — ephemeral, isolated, observable
 Shroom sandboxes, tool execution, MCP connectors, object storage.
 
-Event flow:
-```
-Shroom activity → NATS event bus → WebSocket bridge → Frontend canvas
-```
-
-- [docs/design/ARCHITECTURE.md](docs/design/ARCHITECTURE.md) — Mermaid diagrams, concepts, tech stack
+- [docs/design/ARCHITECTURE.md](docs/design/ARCHITECTURE.md) — detailed diagrams, concepts, tech stack
 - [docs/dev-flow/CONFIGURATION.md](docs/dev-flow/CONFIGURATION.md) — env vars, API proxy
 - [docs/adrs/](docs/adrs/) — locked architecture decisions
 
