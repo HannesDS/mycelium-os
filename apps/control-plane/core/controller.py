@@ -9,6 +9,7 @@ from agno.db.postgres import PostgresDb
 from agno.models.ollama import Ollama
 from agno.models.openrouter import OpenRouter
 
+from core.agno_hooks import on_run_end, on_run_start
 from core.database import DATABASE_URL
 from core.manifest import ShroomManifest
 from core.skills import tool_skill_allowed
@@ -106,6 +107,8 @@ def _create_agent_with_model(
         "instructions": [_build_system_prompt(manifest)],
         "markdown": True,
         "tools": tools,
+        "pre_hooks": [on_run_start],
+        "post_hooks": [on_run_end],
     }
     if db:
         kwargs["db"] = db

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -46,7 +46,7 @@ def client(_db_session_factory):
     c.register(_make_manifest("sales-shroom", "Sales"))
     c.register(_make_manifest("billing-shroom", "Billing"))
     fake_agent = MagicMock()
-    fake_agent.run.return_value = SimpleNamespace(content="hello")
+    fake_agent.arun = AsyncMock(return_value=SimpleNamespace(content="hello"))
     c._runners["sales-shroom"] = fake_agent
     c._runners["billing-shroom"] = fake_agent
     app.state.controller = c

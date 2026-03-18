@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import yaml
@@ -109,7 +109,7 @@ def test_all_shrooms_have_required_fields(client):
 
 def test_message_success(client, controller):
     fake_agent = MagicMock()
-    fake_agent.run.return_value = SimpleNamespace(content="hello from agent")
+    fake_agent.arun = AsyncMock(return_value=SimpleNamespace(content="hello from agent"))
     controller._runners["alpha-shroom"] = fake_agent
 
     resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
@@ -117,14 +117,14 @@ def test_message_success(client, controller):
     data = resp.json()
     assert data["shroom_id"] == "alpha-shroom"
     assert data["response"] == "hello from agent"
-    fake_agent.run.assert_called_once()
-    call_arg = fake_agent.run.call_args[0][0]
+    fake_agent.arun.assert_called_once()
+    call_arg = fake_agent.arun.call_args[0][0]
     assert "hi" in call_arg
 
 
 def test_message_agent_error_returns_502(client, controller):
     fake_agent = MagicMock()
-    fake_agent.run.side_effect = RuntimeError("boom")
+    fake_agent.arun = AsyncMock(side_effect=RuntimeError("boom"))
     controller._runners["alpha-shroom"] = fake_agent
 
     resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
@@ -139,7 +139,7 @@ def test_message_unknown_shroom_returns_404(client):
 
 def test_message_model_not_found_returns_actionable_error(client, controller):
     fake_agent = MagicMock()
-    fake_agent.run.side_effect = RuntimeError("model 'mistral:latest' not found")
+    fake_agent.arun = AsyncMock(side_effect=RuntimeError("model 'mistral:latest' not found"))
     controller._runners["alpha-shroom"] = fake_agent
 
     with patch("routers.shrooms.find_first_available", return_value=None), \
@@ -155,7 +155,7 @@ def test_message_model_not_found_returns_actionable_error(client, controller):
 
 def test_message_model_not_found_does_not_expose_model_inventory(client, controller):
     fake_agent = MagicMock()
-    fake_agent.run.side_effect = RuntimeError("model 'mistral:latest' not found")
+    fake_agent.arun = AsyncMock(side_effect=RuntimeError("model 'mistral:latest' not found"))
     controller._runners["alpha-shroom"] = fake_agent
 
     with patch("routers.shrooms.find_first_available", return_value=None), \
@@ -171,7 +171,7 @@ def test_message_model_not_found_does_not_expose_model_inventory(client, control
 
 def test_message_model_not_found_fallback_succeeds(client, controller):
     fake_agent = MagicMock()
-    fake_agent.run.side_effect = RuntimeError("model 'mistral:latest' not found")
+    fake_agent.arun = AsyncMock(side_effect=RuntimeError("model 'mistral:latest' not found"))
     controller._runners["alpha-shroom"] = fake_agent
 
     fallback_agent = MagicMock()
@@ -190,7 +190,7 @@ def test_message_model_not_found_fallback_succeeds(client, controller):
 
 def test_message_model_not_found_fallback_also_fails(client, controller):
     fake_agent = MagicMock()
-    fake_agent.run.side_effect = RuntimeError("model 'mistral:latest' not found")
+    fake_agent.arun = AsyncMock(side_effect=RuntimeError("model 'mistral:latest' not found"))
     controller._runners["alpha-shroom"] = fake_agent
 
     fallback_agent = MagicMock()
@@ -209,7 +209,7 @@ def test_message_model_not_found_fallback_also_fails(client, controller):
 
 def test_message_generic_error_not_treated_as_model_error(client, controller):
     fake_agent = MagicMock()
-    fake_agent.run.side_effect = RuntimeError("connection refused")
+    fake_agent.arun = AsyncMock(side_effect=RuntimeError("connection refused"))
     controller._runners["alpha-shroom"] = fake_agent
 
     resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
@@ -220,7 +220,7 @@ def test_message_generic_error_not_treated_as_model_error(client, controller):
 def test_message_ollama_error_in_content_triggers_fallback(client, controller):
     raw_error = "Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible."
     fake_agent = MagicMock()
-    fake_agent.run.return_value = SimpleNamespace(content=raw_error)
+    fake_agent.arun = AsyncMock(return_value=SimpleNamespace(content=raw_error))
     controller._runners["alpha-shroom"] = fake_agent
 
     with patch("routers.shrooms.find_first_available", return_value=None), \
@@ -235,9 +235,9 @@ def test_message_ollama_error_in_content_triggers_fallback(client, controller):
 
 def test_message_ollama_content_error_fallback_succeeds(client, controller):
     fake_agent = MagicMock()
-    fake_agent.run.return_value = SimpleNamespace(
+    fake_agent.arun = AsyncMock(return_value=SimpleNamespace(
         content="Failed to connect to Ollama. Please check that Ollama is downloaded, running and accessible."
-    )
+    ))
     controller._runners["alpha-shroom"] = fake_agent
 
     fallback_agent = MagicMock()
@@ -254,9 +254,9 @@ def test_message_ollama_content_error_fallback_succeeds(client, controller):
 
 def test_generic_not_found_in_content_not_treated_as_ollama_error(client, controller):
     fake_agent = MagicMock()
-    fake_agent.run.return_value = SimpleNamespace(
+    fake_agent.arun = AsyncMock(return_value=SimpleNamespace(
         content="The file was not found in the repository."
-    )
+    ))
     controller._runners["alpha-shroom"] = fake_agent
 
     resp = client.post("/shrooms/alpha-shroom/message", json={"message": "hi"})
