@@ -33,6 +33,10 @@ SKILLS_CATALOG: dict[str, dict[str, str]] = {
         "name": "Escalation Triage",
         "description": "Triage and prioritize escalations",
     },
+    "knowledge_base": {
+        "name": "Knowledge Base",
+        "description": "Query company knowledge base documents via semantic search",
+    },
 }
 
 

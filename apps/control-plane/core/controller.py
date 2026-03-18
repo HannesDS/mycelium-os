@@ -16,7 +16,7 @@ from core.tools.web_browser import fetch_page
 
 logger = logging.getLogger(__name__)
 
-ALL_TOOLS: list[Any] = [fetch_page]
+_BASE_TOOLS: list[Any] = [fetch_page]
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 
@@ -74,7 +74,7 @@ def _build_system_prompt(manifest: ShroomManifest) -> str:
             "For edit_graph_edge: payload needs from_shroom, to_shroom, edge_type. "
             "For remove_graph_edge: payload needs from_shroom, to_shroom. "
             "All proposed changes require human approval before taking effect. "
-            "Available skills: web_browser, email, github, crm, lead_qualification, proposal_drafting, decision_routing, escalation_triage."
+            "Available skills: web_browser, email, github, crm, lead_qualification, proposal_drafting, decision_routing, escalation_triage, knowledge_base."
         )
     return base
 
@@ -97,9 +97,9 @@ def _filter_tools_by_skills(tools: list[Any], manifest_skills: list[str]) -> lis
 
 
 def _create_agent_with_model(
-    manifest: ShroomManifest, model_id: str, db: PostgresDb | None
+    manifest: ShroomManifest, model_id: str, db: PostgresDb | None, tools: list[Any] | None = None
 ) -> Agent:
-    tools = _filter_tools_by_skills(ALL_TOOLS, manifest.spec.skills)
+    tools = _filter_tools_by_skills(tools if tools is not None else _BASE_TOOLS, manifest.spec.skills)
     kwargs: dict = {
         "name": manifest.metadata.id,
         "model": _resolve_model(model_id),
@@ -112,22 +112,26 @@ def _create_agent_with_model(
     return Agent(**kwargs)
 
 
-def create_agent(manifest: ShroomManifest, db: PostgresDb | None = None) -> Agent:
+def create_agent(manifest: ShroomManifest, db: PostgresDb | None = None, tools: list[Any] | None = None) -> Agent:
     raw = manifest.spec.model
     model_id = raw if raw.startswith(OPENROUTER_PREFIX) else MODEL_MAP.get(raw, raw)
-    return _create_agent_with_model(manifest, model_id, db)
+    return _create_agent_with_model(manifest, model_id, db, tools)
 
 
 class ShroomController:
-    def __init__(self, db: PostgresDb | None = None) -> None:
+    def __init__(self, db: PostgresDb | None = None, session_factory: Any = None) -> None:
         self.manifests: dict[str, ShroomManifest] = {}
         # Agno Agent runners keyed by shroom_id — internal runtime only
         self._runners: dict[str, Agent] = {}
         self.db = db or _create_agno_db()
+        self._tools: list[Any] = list(_BASE_TOOLS)
+        if session_factory is not None:
+            from core.tools.knowledge import make_query_knowledge_tool
+            self._tools.append(make_query_knowledge_tool(session_factory))
 
     def register(self, manifest: ShroomManifest) -> None:
         self.manifests[manifest.metadata.id] = manifest
-        self._runners[manifest.metadata.id] = create_agent(manifest, self.db)
+        self._runners[manifest.metadata.id] = create_agent(manifest, self.db, self._tools)
 
     def get_agent(self, shroom_id: str) -> Agent | None:
         """Return the underlying Agno Agent runner for this shroom."""
@@ -143,7 +147,7 @@ class ShroomController:
         manifest = self.manifests.get(shroom_id)
         if not manifest:
             return None
-        return _create_agent_with_model(manifest, model_id, self.db)
+        return _create_agent_with_model(manifest, model_id, self.db, self._tools)
 
     def list_shrooms(self) -> list[dict]:
         return [
