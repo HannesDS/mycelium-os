@@ -141,6 +141,7 @@ def test_shroom_cannot_access_other_shrooms_document(tool, seeded_db):
     with patch("core.tools.knowledge.embed_text", return_value=None):
         result = tool("invoice", shroom_id="sales-shroom")
     assert "Finance Handbook" not in result
+    assert "No relevant documents found" in result
 
 
 def test_no_shroom_id_returns_all_accessible_documents(tool, seeded_db):
@@ -148,6 +149,30 @@ def test_no_shroom_id_returns_all_accessible_documents(tool, seeded_db):
     with patch("core.tools.knowledge.embed_text", return_value=None):
         result = tool("invoice")
     assert "Finance Handbook" in result
+
+
+# ── Vector search path (embed_text returns embedding) ─────────────────────────
+
+
+def test_vector_search_db_error_falls_back_to_text_search(tool, seeded_db):
+    """When embed_text returns an embedding but db.execute raises, fall back to text search."""
+    with (
+        patch("core.tools.knowledge.embed_text", return_value=[0.1] * 768),
+        patch("core.tools.knowledge._vector_search", side_effect=Exception("pgvector unavailable")),
+    ):
+        result = tool("privacy")
+    # text search fallback must still find the document
+    assert "Privacy Policy" in result
+
+
+def test_vector_search_empty_rows_falls_back_to_text_search(tool, seeded_db):
+    """When embed_text returns an embedding but vector search returns no rows, fall back to text search."""
+    with (
+        patch("core.tools.knowledge.embed_text", return_value=[0.1] * 768),
+        patch("core.tools.knowledge._vector_search", return_value=[]),
+    ):
+        result = tool("privacy")
+    assert "Privacy Policy" in result
 
 
 # ── make_query_knowledge_tool factory ────────────────────────────────────────
