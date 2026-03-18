@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from core.agno_hooks import HookContext, reset_run_context, set_run_context
 from core.auth import get_principal
 from core.controller import FALLBACK_MODELS, OLLAMA_HOST, ShroomController
 from core.session_bindings import get_binding, upsert_binding
@@ -195,8 +196,10 @@ async def send_message(
     cost_usd: float | None = None
     model_id: str | None = None
 
+    _hook_ctx = HookContext(db=db, nats_bus=nats_bus, shroom_id=shroom_id, session_id=session_id)
+    _hook_token = set_run_context(_hook_ctx)
     try:
-        run_response = agent.run(augmented, session_id=session_id)
+        run_response = await agent.arun(augmented, session_id=session_id)
         content = run_response.content if run_response.content else "No response generated."
         if run_response.metrics:
             token_count = run_response.metrics.total_tokens or None
@@ -212,6 +215,8 @@ async def send_message(
         if is_model_not_found_error(exc):
             model_not_found = True
             content = _try_fallback(controller, shroom_id, augmented, session_id)
+    finally:
+        reset_run_context(_hook_token)
 
     if content and looks_like_ollama_error(content):
         logger.warning("Ollama error in response content for '%s': %s", shroom_id, content[:200])
