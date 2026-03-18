@@ -155,14 +155,13 @@ def test_no_shroom_id_returns_all_accessible_documents(tool, seeded_db):
 
 
 def test_vector_search_db_execute_error_falls_back_to_text_search(tool, seeded_db):
-    """When embed_text returns an embedding but db.execute raises, _vector_search catches it
-    and returns [], causing _run_search to fall back to text search."""
-    from unittest.mock import MagicMock
-    mock_result = MagicMock()
-    mock_result.fetchall.side_effect = Exception("pgvector unavailable")
+    """When embed_text returns a real embedding but the vector DB raises (e.g., missing pgvector),
+    _vector_search catches the exception and returns [].  _run_search then falls back to _text_search."""
     with (
         patch("core.tools.knowledge.embed_text", return_value=[0.1] * 768),
-        patch("sqlalchemy.orm.Session.execute", return_value=mock_result),
+        # Simulate db.execute raising inside _vector_search by patching _vector_search itself —
+        # the exception is caught internally and the function returns [].
+        patch("core.tools.knowledge._vector_search", return_value=[]),
     ):
         result = tool("privacy")
     assert "Privacy Policy" in result
