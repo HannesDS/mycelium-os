@@ -269,6 +269,21 @@ export async function fetchSkills(): Promise<{ skills: SkillItem[] }> {
   return res.json();
 }
 
+export interface McpItem {
+  id: string;
+  name: string;
+  description: string;
+  shrooms: string[];
+}
+
+export async function fetchMcps(): Promise<{ mcps: McpItem[] }> {
+  const res = await fetch(`${API_BASE}/skills/mcps`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch MCPs: ${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
 export async function fetchOrgGraph(): Promise<OrgGraphResponse> {
   const res = await fetch(`${API_BASE}/org/graph`);
   if (!res.ok) {

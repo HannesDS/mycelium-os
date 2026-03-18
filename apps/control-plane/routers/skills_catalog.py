@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from core.controller import ShroomController
-from core.skills import SKILLS_CATALOG
+from core.skills import MCP_CATALOG, SKILLS_CATALOG
 
 router = APIRouter(prefix="/skills", tags=["skills"])
 
@@ -13,6 +13,27 @@ def get_controller(request: Request) -> ShroomController:
     if controller is None:
         raise HTTPException(status_code=503, detail="Control plane not initialized")
     return controller
+
+
+@router.get("/mcps")
+def list_mcps(controller: ShroomController = Depends(get_controller)):
+    all_mcp_ids: set[str] = set(MCP_CATALOG)
+    for m in controller.manifests.values():
+        all_mcp_ids.update(m.spec.mcps)
+    catalog = [
+        {
+            "id": mcp_id,
+            "name": MCP_CATALOG.get(mcp_id, {}).get("name", mcp_id),
+            "description": MCP_CATALOG.get(mcp_id, {}).get("description", ""),
+            "shrooms": [
+                m.metadata.id
+                for m in controller.manifests.values()
+                if mcp_id in m.spec.mcps
+            ],
+        }
+        for mcp_id in sorted(all_mcp_ids)
+    ]
+    return {"mcps": catalog}
 
 
 @router.get("")

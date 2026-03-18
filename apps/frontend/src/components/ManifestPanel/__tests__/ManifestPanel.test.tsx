@@ -47,12 +47,29 @@ describe("ManifestPanel", () => {
     expect(screen.getByText("60 min")).toBeInTheDocument();
   });
 
-  it("renders permissions", () => {
+  it("renders permissions on overview tab", () => {
     render(
       <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
     );
     expect(screen.getByText(/read/)).toBeInTheDocument();
     expect(screen.getAllByText(/crm/).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows Skills & MCPs tab", () => {
+    render(
+      <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    expect(screen.getByRole("tab", { name: /Skills & MCPs/i })).toBeInTheDocument();
+  });
+
+  it("switches to skills tab and shows skills and mcps", async () => {
+    render(
+      <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    await userEvent.click(screen.getByRole("tab", { name: /Skills & MCPs/i }));
+    expect(screen.getByText("prospecting")).toBeInTheDocument();
+    expect(screen.getByText("outreach")).toBeInTheDocument();
+    expect(screen.getByText("crm-mcp")).toBeInTheDocument();
   });
 
   it("calls onClose when Close button is clicked", async () => {
