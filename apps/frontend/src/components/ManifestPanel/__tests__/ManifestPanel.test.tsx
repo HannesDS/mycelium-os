@@ -72,6 +72,55 @@ describe("ManifestPanel", () => {
     expect(screen.getByText("crm-mcp")).toBeInTheDocument();
   });
 
+  it("resets active tab to overview when detail changes", async () => {
+    const { rerender } = render(
+      <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    const skillsTab = screen.getByRole("tab", { name: /Skills & MCPs/i });
+    const overviewTab = screen.getByRole("tab", { name: /Overview/i });
+
+    await userEvent.click(skillsTab);
+    expect(skillsTab).toHaveAttribute("aria-selected", "true");
+
+    const nextDetail = { ...detail, id: `${detail.id}-next` };
+    rerender(
+      <ManifestPanel detail={nextDetail} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    expect(overviewTab).toHaveAttribute("aria-selected", "true");
+    expect(skillsTab).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("resets active tab to overview when panel is reopened", async () => {
+    const { rerender } = render(
+      <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    const skillsTab = screen.getByRole("tab", { name: /Skills & MCPs/i });
+    const overviewTab = screen.getByRole("tab", { name: /Overview/i });
+
+    await userEvent.click(skillsTab);
+    expect(skillsTab).toHaveAttribute("aria-selected", "true");
+
+    rerender(
+      <ManifestPanel detail={detail} isOpen={false} isLoading={false} onClose={vi.fn()} />
+    );
+    rerender(
+      <ManifestPanel detail={detail} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    expect(overviewTab).toHaveAttribute("aria-selected", "true");
+    expect(skillsTab).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("shows empty state when no skills or mcps configured", async () => {
+    const detailEmpty = { ...detail, skills: [], mcps: [] };
+    render(
+      <ManifestPanel detail={detailEmpty} isOpen={true} isLoading={false} onClose={vi.fn()} />
+    );
+    await userEvent.click(screen.getByRole("tab", { name: /Skills & MCPs/i }));
+    expect(screen.getAllByText(/None configured/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("prospecting")).not.toBeInTheDocument();
+    expect(screen.queryByText("crm-mcp")).not.toBeInTheDocument();
+  });
+
   it("calls onClose when Close button is clicked", async () => {
     const onClose = vi.fn();
     render(

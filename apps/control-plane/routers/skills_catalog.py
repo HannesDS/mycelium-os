@@ -20,19 +20,19 @@ def list_mcps(controller: ShroomController = Depends(get_controller)):
     all_mcp_ids: set[str] = set(MCP_CATALOG)
     for m in controller.manifests.values():
         all_mcp_ids.update(m.spec.mcps)
-    catalog = [
-        {
+    catalog = []
+    for mcp_id in sorted(all_mcp_ids):
+        meta = MCP_CATALOG.get(mcp_id) or {}
+        catalog.append({
             "id": mcp_id,
-            "name": MCP_CATALOG.get(mcp_id, {}).get("name", mcp_id),
-            "description": MCP_CATALOG.get(mcp_id, {}).get("description", ""),
+            "name": meta.get("name", mcp_id),
+            "description": meta.get("description", ""),
             "shrooms": [
                 m.metadata.id
                 for m in controller.manifests.values()
                 if mcp_id in m.spec.mcps
             ],
-        }
-        for mcp_id in sorted(all_mcp_ids)
-    ]
+        })
     return {"mcps": catalog}
 
 

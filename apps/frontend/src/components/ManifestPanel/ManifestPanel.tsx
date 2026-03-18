@@ -139,7 +139,7 @@ export function ManifestPanel({
         </div>
 
         {!isLoading && detail && (
-          <div className="flex border-b border-white/10 px-5">
+          <div role="tablist" className="flex border-b border-white/10 px-5">
             <button
               type="button"
               role="tab"
