@@ -20,7 +20,7 @@
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `CONTROL_PLANE_URL` | No | Control plane base URL for the **proxy** (default: `http://localhost:8000`). Server-side only. |
-| `DEV_API_KEY` | Yes* | Same as control plane. Used by the proxy to add `X-API-Key` to forwarded requests. |
+| `CONTROL_PLANE_API_KEY` | Yes | Injected by the proxy on every forwarded request as `X-API-Key`. Must match `DEV_API_KEY` on the control plane. Fails fast on startup if missing. |
 | `NEXT_PUBLIC_CONTROL_PLANE_URL` | For WebSocket | Control plane URL for **direct** WebSocket connection. Not a secret; used for `/ws/events`. |
 
 ### Infrastructure (docker compose)
@@ -35,16 +35,14 @@
 
 ## API proxy
 
-Authenticated control-plane calls go through the Next.js API proxy at `/api/control-plane/*`. The proxy is gated by a session cookie:
-
-1. On first page load, middleware sets an httpOnly, SameSite=Strict cookie (signed with `DEV_API_KEY`)
-2. Proxy requests require this cookie; otherwise 401
-3. Only allowlisted paths/methods are forwarded (see `ALLOWED_PATHS` in the route handler)
+Authenticated control-plane calls go through the Next.js API proxy at `/api/control-plane/*`:
 
 1. Browser calls `fetch('/api/control-plane/events')` (no API key in client code)
-2. Next.js route handler reads `DEV_API_KEY` from server env
-3. Proxy forwards to `CONTROL_PLANE_URL/events` with `X-API-Key` header
+2. Next.js route handler reads `CONTROL_PLANE_API_KEY` from server env (fails fast if missing)
+3. Proxy forwards to `CONTROL_PLANE_URL/events` with `X-API-Key: <key>` header
 4. Control plane validates the key via `get_principal`
+
+Only allowlisted paths/methods are forwarded (see `ALLOWED_PATHS` in the route handler). Client-supplied `X-API-Key` headers are stripped and replaced by the server-side value.
 
 **Never use `NEXT_PUBLIC_*` for secrets.** Values with that prefix are embedded in the client bundle and visible to anyone.
 
@@ -57,20 +55,24 @@ cp .env.example .env
 Edit `.env`:
 
 ```
-DEV_API_KEY=your-dev-key-here
+DEV_API_KEY=your-dev-key-here          # control plane validates this
+CONTROL_PLANE_API_KEY=your-dev-key-here # must match DEV_API_KEY; used by frontend proxy
 DEMO_ENABLED=true
 CONTROL_PLANE_URL=http://localhost:8000
-```
-
-For WebSocket (visual office), set in `.env.local` or `.env`:
-
-```
 NEXT_PUBLIC_CONTROL_PLANE_URL=http://localhost:8000
 ```
 
+Then start with `make dev` (sources `.env` automatically) or export vars manually:
+
+```bash
+set -a && . .env && set +a && pnpm dev
+```
+
+> **Note:** `make dev` now auto-sources the root `.env` so `CONTROL_PLANE_API_KEY` is
+> available to Next.js. If you run `pnpm dev` directly, export the vars first.
+
 ## Production
 
-- Set `DEV_API_KEY` to a strong, unique value
+- Set `DEV_API_KEY` (control plane) and `CONTROL_PLANE_API_KEY` (frontend proxy) to the same strong, unique value
 - Set `DEMO_ENABLED=false` (or omit)
-- Replace `DEV_API_KEY` with real auth (JWT, session, OIDC) before multi-user deployment
-- Rotate `DEV_API_KEY` if it was ever exposed
+- Replace with real auth (JWT, session, OIDC) before multi-user deployment

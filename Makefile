@@ -18,7 +18,7 @@ down: ## Stop all services
 	$(COMPOSE) down
 
 dev: node_modules ## Start frontend dev server
-	pnpm dev
+	@[ -f .env ] && set -a && . ./.env && set +a; pnpm dev
 
 node_modules: $(FRONTEND)/package.json package.json
 	pnpm install
