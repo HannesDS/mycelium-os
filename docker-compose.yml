@@ -97,6 +97,9 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
       KNOWLEDGE_BUCKET: knowledge
+      DEV_API_KEY: ${DEV_API_KEY:-}
+      DEV_PRINCIPAL_ID: ${DEV_PRINCIPAL_ID:-dev-user}
+      DEMO_ENABLED: ${DEMO_ENABLED:-false}
     depends_on:
       postgres:
         condition: service_healthy
