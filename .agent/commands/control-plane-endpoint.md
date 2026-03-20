@@ -1,0 +1,1 @@
+../skills/control-plane-endpoint/SKILL.md

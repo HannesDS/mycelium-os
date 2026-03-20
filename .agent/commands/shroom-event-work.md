@@ -1,0 +1,1 @@
+../skills/shroom-event-work/SKILL.md
