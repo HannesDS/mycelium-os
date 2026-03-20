@@ -11,14 +11,16 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 
-# Skills — canonical location is .cursor/skills/ only
+# Skills — canonical: .agent/skills/<name>/; .cursor/skills and .claude/skills are symlinks
 .agents/skills/
-.claude/skills/
 .junie/skills/
 
 # Gas Town (added by gt)
 .runtime/
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/skills/**
 .logs/
 state.json
 .beads/
+.tmp-skills/
